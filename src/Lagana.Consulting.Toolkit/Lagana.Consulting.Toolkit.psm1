@@ -54,5 +54,13 @@ Export-ModuleMember -Function @(
   'Get-LcAdGroups',
   'Get-LcAdUsers',
   'Get-LcAdComputers',
-  'Get-LcAdSpns'
+  'Get-LcAdSpns',
+
+  'Get-LcAdOuDelegationAcls',
+  'Get-LcGpoInventory',
+  'Get-LcGpoLinks',
+  'Get-LcUsersSidHistory',
+  'Get-LcServiceAccountCandidates',
+  'Get-LcPrivilegedAccounts',
+  'Get-LcRiskSummary'
 )
