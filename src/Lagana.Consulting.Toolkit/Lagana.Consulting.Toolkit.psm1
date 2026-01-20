@@ -32,5 +32,13 @@ Export-ModuleMember -Function @(
   # Forest + domains
   'Get-LcAdForest',
   'Get-LcAdDomains',
-  'Get-LcKnownUpnSuffixes'
+  'Get-LcKnownUpnSuffixes',
+
+  'Get-LcAdForestSummary',
+  'Get-LcAdForestUpnSuffixes',
+  'Get-LcAdReplicationSites',
+  'Get-LcAdReplicationSubnets',
+  'Get-LcAdReplicationSiteLinks',
+  'Get-LcAdForestTrusts'
+
 )
