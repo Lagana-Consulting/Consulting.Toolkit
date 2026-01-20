@@ -56,7 +56,15 @@
     'Get-LcUsersSidHistory',
     'Get-LcServiceAccountCandidates',
     'Get-LcPrivilegedAccounts',
-    'Get-LcRiskSummary'
+    'Get-LcRiskSummary',
+
+    #ADMT Functions
+    'Find-LcAdObjectConflicts',
+    'Export-LcAdmtIncludeFileUsers',
+    'Export-LcAdmtIncludeFileGroups',
+    'Export-LcAdmtIncludeFileComputers',
+    'Export-LcAdmtOptionFile'
+
   )
 
   CmdletsToExport   = @()
