@@ -51,4 +51,8 @@ Export-ModuleMember -Function @(
   'Get-LcAdFineGrainedPasswordPolicyAssignments',
   'Get-LcAdOrganizationalUnits'
 
+  'Get-LcAdGroups',
+  'Get-LcAdUsers',
+  'Get-LcAdComputers',
+  'Get-LcAdSpns'
 )
