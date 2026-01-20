@@ -39,6 +39,10 @@ Export-ModuleMember -Function @(
   'Get-LcAdReplicationSites',
   'Get-LcAdReplicationSubnets',
   'Get-LcAdReplicationSiteLinks',
-  'Get-LcAdForestTrusts'
+  'Get-LcAdForestTrusts',
+
+  'Get-LcAdDomainContext',
+  'New-LcDomainRunFolder'
+
 
 )
