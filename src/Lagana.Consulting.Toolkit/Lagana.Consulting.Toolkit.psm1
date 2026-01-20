@@ -15,9 +15,22 @@ Get-ChildItem -Path $PublicPath -Filter *.ps1 -File -ErrorAction SilentlyContinu
 
 # Export only public functions
 Export-ModuleMember -Function @(
+  # Logging / export
   'New-LcLog',
   'Write-LcLog',
   'Export-LcCsv',
+
+  # Tenant safety / auth
   'Confirm-LcTenant',
-  'Connect-LcGraph'
+  'Connect-LcGraph',
+
+  # Run layout + schema
+  'New-LcRunLayout',
+  'Write-LcSchemaCsv',
+  'Get-LcSchemaDefinitions',
+
+  # Forest + domains
+  'Get-LcAdForest',
+  'Get-LcAdDomains',
+  'Get-LcKnownUpnSuffixes'
 )

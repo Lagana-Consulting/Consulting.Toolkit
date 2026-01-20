@@ -8,12 +8,25 @@
   Description       = 'Reusable PowerShell toolkit for consulting automation.'
   PowerShellVersion = '5.1'
 
-  FunctionsToExport = @(
+    FunctionsToExport = @(
+    # Logging / export
     'New-LcLog',
     'Write-LcLog',
     'Export-LcCsv',
+
+    # Tenant safety / auth
     'Confirm-LcTenant',
-    'Connect-LcGraph'
+    'Connect-LcGraph',
+
+    # Run layout + schema
+    'New-LcRunLayout',
+    'Write-LcSchemaCsv',
+    'Get-LcSchemaDefinitions',
+
+    # Forest + domains
+    'Get-LcAdForest',
+    'Get-LcAdDomains',
+    'Get-LcKnownUpnSuffixes'
   )
 
   CmdletsToExport   = @()
@@ -22,10 +35,10 @@
 
   PrivateData = @{
     PSData = @{
-      Tags = @('PowerShell','Toolkit','Consulting')
+      Tags = @('PowerShell','Toolkit','Consulting','ActiveDirectory','MicrosoftGraph')
       ProjectUri = ''
       LicenseUri = ''
-      ReleaseNotes = 'Initial scaffold.'
+      ReleaseNotes = 'Initial scaffold with helpers, run layout, schema, and forest/domain enumeration.'
     }
   }
 }
