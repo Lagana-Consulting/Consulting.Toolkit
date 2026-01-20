@@ -44,5 +44,11 @@ Export-ModuleMember -Function @(
   'Get-LcAdDomainContext',
   'New-LcDomainRunFolder'
 
+  'Get-LcAdDomainSummary',
+  'Get-LcAdDomainControllers',
+  'Get-LcAdDefaultPasswordPolicy',
+  'Get-LcAdFineGrainedPasswordPolicies',
+  'Get-LcAdFineGrainedPasswordPolicyAssignments',
+  'Get-LcAdOrganizationalUnits'
 
 )
