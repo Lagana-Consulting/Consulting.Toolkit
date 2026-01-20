@@ -13,6 +13,7 @@
     'New-LcLog',
     'Write-LcLog',
     'Export-LcCsv',
+    'Export-LcCsvSafe',
 
     # Tenant safety / auth
     'Confirm-LcTenant',
