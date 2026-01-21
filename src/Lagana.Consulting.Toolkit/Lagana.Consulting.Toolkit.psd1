@@ -1,6 +1,6 @@
 @{
   RootModule        = 'Lagana.Consulting.Toolkit.psm1'
-  ModuleVersion     = '0.1.0'
+  ModuleVersion     = '0.1.1'
   GUID              = '8593c972-06bc-4b0a-a680-0a61fcda0c3e'
   Author            = 'Lagana Consulting'
   CompanyName       = 'Lagana Consulting'
@@ -103,7 +103,7 @@
       Tags         = @('PowerShell', 'Toolkit', 'Consulting', 'ActiveDirectory', 'MicrosoftGraph')
       ProjectUri   = ''
       LicenseUri   = ''
-      ReleaseNotes = 'Initial scaffold with helpers, run layout, schema, and forest/domain enumeration.'
+      ReleaseNotes = 'Weak policy property fix; extended assessments integration and discovery updates.'
     }
   }
 }
