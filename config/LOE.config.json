@@ -1,0 +1,204 @@
+{
+    "metadata": {
+        "version": "1.0",
+        "description": "LOE Configuration for AD Migration Planning",
+        "company": "Lagana Consulting",
+        "lastUpdated": "2026-01-21"
+    },
+    "phases": [
+        {
+            "id": 1,
+            "name": "Assessment & Planning",
+            "description": "Discovery, analysis, wave planning, and validation",
+            "defaultDays": 3,
+            "tasks": [
+                {
+                    "name": "Discovery Review",
+                    "baseDays": 1,
+                    "multipliers": {
+                        "domainsPerDay": 0.5,
+                        "usersPerDay": 0
+                    }
+                },
+                {
+                    "name": "Wave Design & Schedule",
+                    "baseDays": 1,
+                    "multipliers": {
+                        "complexityScore": 0.02
+                    }
+                },
+                {
+                    "name": "Pre-migration Testing & Validation",
+                    "baseDays": 1,
+                    "multipliers": {
+                        "waveCount": 0.5
+                    }
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Remediation & Pre-migration",
+            "description": "Fix naming conflicts, SPNs, groups, AdminSDHolder, disabled accounts",
+            "defaultDays": 5,
+            "tasks": [
+                {
+                    "name": "Naming Conflict Resolution",
+                    "baseDays": 0.5,
+                    "multipliers": {
+                        "duplicateObjectsCount": 0.1
+                    }
+                },
+                {
+                    "name": "SPN Cleanup & Validation",
+                    "baseDays": 1,
+                    "multipliers": {
+                        "duplicateSpnsCount": 0.05
+                    }
+                },
+                {
+                    "name": "Empty Groups Cleanup",
+                    "baseDays": 0.5,
+                    "multipliers": {
+                        "emptyGroupsCount": 0.02
+                    }
+                },
+                {
+                    "name": "AdminSDHolder Review & Cleanup",
+                    "baseDays": 1,
+                    "multipliers": {
+                        "adminSdHolderImpactCount": 0.05
+                    }
+                },
+                {
+                    "name": "Disabled Accounts Remediation",
+                    "baseDays": 1,
+                    "multipliers": {
+                        "disabledAccountsCount": 0.01
+                    }
+                },
+                {
+                    "name": "Token Bloat Mitigation",
+                    "baseDays": 0.5,
+                    "multipliers": {
+                        "tokenBloatCount": 0.1
+                    }
+                },
+                {
+                    "name": "Cross-Domain Group Cleanup",
+                    "baseDays": 1,
+                    "multipliers": {
+                        "crossDomainGroupCount": 0.1
+                    }
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "name": "Migration Execution",
+            "description": "Execute user waves, computer waves, and group migrations",
+            "defaultDays": 10,
+            "tasks": [
+                {
+                    "name": "User Wave Migrations",
+                    "baseDays": 0,
+                    "multipliers": {
+                        "usersPerWave": 2,
+                        "waveCount": 2
+                    },
+                    "notes": "2 days per wave (~500 users)"
+                },
+                {
+                    "name": "Computer Wave Migrations",
+                    "baseDays": 0,
+                    "multipliers": {
+                        "computersPerWave": 1.5,
+                        "waveCount": 2
+                    },
+                    "notes": "1.5 days per wave (~250 computers)"
+                },
+                {
+                    "name": "Cross-Domain Group Dependency Handling",
+                    "baseDays": 1,
+                    "multipliers": {
+                        "crossDomainGroupCount": 0.15
+                    }
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "name": "Post-Migration & Cutover",
+            "description": "Validation, cutover, decommission, reporting",
+            "defaultDays": 3,
+            "tasks": [
+                {
+                    "name": "Post-migration Validation",
+                    "baseDays": 1,
+                    "multipliers": {}
+                },
+                {
+                    "name": "Cutover & Final Validation",
+                    "baseDays": 1,
+                    "multipliers": {}
+                },
+                {
+                    "name": "Reporting & Knowledge Transfer",
+                    "baseDays": 1,
+                    "multipliers": {}
+                }
+            ]
+        }
+    ],
+    "riskFactors": [
+        {
+            "name": "High Group Nesting",
+            "indicator": "groupsWithDeepNestingCount",
+            "multiplier": 1.15,
+            "description": "Groups with nesting depth ≥ 3"
+        },
+        {
+            "name": "Deep OU Structure",
+            "indicator": "ouDepthCount",
+            "multiplier": 1.1,
+            "description": "Domains with OU depth ≥ 6"
+        },
+        {
+            "name": "Significant Cross-Domain Dependencies",
+            "indicator": "crossDomainGroupCount",
+            "multiplier": 1.2,
+            "description": "Groups with cross-domain members"
+        },
+        {
+            "name": "Multiple Trusts",
+            "indicator": "trustCount",
+            "multiplier": 1.15,
+            "description": "Forest or domain trusts"
+        },
+        {
+            "name": "Legacy Encryption Types",
+            "indicator": "rc4OnlyObjectsCount",
+            "multiplier": 1.1,
+            "description": "Objects with RC4-only encryption"
+        },
+        {
+            "name": "High Stale Account Percentage",
+            "indicator": "stalePct",
+            "multiplier": 1.05,
+            "description": "Stale accounts > 10%"
+        }
+    ],
+    "waveDefaults": {
+        "usersPerWave": 500,
+        "computersPerWave": 250,
+        "daysPerUserWave": 2,
+        "daysPerComputerWave": 1.5,
+        "waveBuffer": 0.5
+    },
+    "reporting": {
+        "includeWaveSchedule": true,
+        "includeRiskAnalysis": true,
+        "includeAssumptions": true,
+        "includeDependencies": true
+    }
+}

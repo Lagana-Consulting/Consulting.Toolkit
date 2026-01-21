@@ -31,6 +31,11 @@ Export-ModuleMember -Function @(
   'Get-LcSchemaDefinitions',
   'Export-LcSchemas',
   'New-LcAssessmentReport',
+  'New-LcMigrationPlanningReport',
+  'New-LcMigrationLoeExcel',
+  'New-LcEnvironmentComparisonReport',
+  'New-LcMigrationReadinessChecklist',
+  'Invoke-LcDiscoveryComparison',
 
   # Forest + domains
   'Get-LcAdForest',
