@@ -23,6 +23,7 @@
     'New-LcRunLayout',
     'Write-LcSchemaCsv',
     'Get-LcSchemaDefinitions',
+    'Export-LcSchemas',
 
     # Forest + domains
     'Get-LcAdForest',
