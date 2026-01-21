@@ -4,7 +4,7 @@ function Get-LcAdUsers {
     [Parameter(Mandatory)]
     $DomainContext,
 
-    [datetime]$Now = (Get-Date),
+    $Now = (Get-Date),
 
     # For routability flags – pass the set from Get-LcKnownUpnSuffixes -AsHashSet
     [hashtable]$KnownUpnSuffixSet

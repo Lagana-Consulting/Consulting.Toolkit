@@ -2,11 +2,14 @@ function Get-LcAdComputers {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext,
 
-    [datetime]$Now = (Get-Date)
+    $Now = (Get-Date)
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-ADComputer -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available (Get-ADComputer missing)."

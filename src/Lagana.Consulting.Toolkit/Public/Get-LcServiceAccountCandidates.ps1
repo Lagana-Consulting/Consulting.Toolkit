@@ -4,7 +4,7 @@ function Get-LcServiceAccountCandidates {
     [Parameter(Mandatory)]
     $DomainContext,
 
-    [datetime]$Now = (Get-Date)
+    $Now = (Get-Date)
   )
 
   if (-not $DomainContext) {
@@ -19,7 +19,7 @@ function Get-LcServiceAccountCandidates {
   $server = [string]$DomainContext.Server
   $nowUtc = $Now.ToUniversalTime()
 
-  $props = @('Enabled','UserPrincipalName','ServicePrincipalName','PasswordLastSet','PasswordNeverExpires','LastLogonTimestamp','whenCreated','description')
+  $props = @('Enabled', 'UserPrincipalName', 'ServicePrincipalName', 'PasswordLastSet', 'PasswordNeverExpires', 'LastLogonTimestamp', 'whenCreated', 'description')
 
   $users = @(Get-ADUser -Filter * -Server $server -Properties $props -ErrorAction Stop)
 
@@ -41,21 +41,21 @@ function Get-LcServiceAccountCandidates {
     if (-not $candidate) { continue }
 
     [pscustomobject]@{
-      DomainFqdn        = $domain
-      SamAccountName    = $name
-      Enabled           = [bool]$u.Enabled
-      UserPrincipalName = [string]$u.UserPrincipalName
-      WhenCreated       = $u.whenCreated
-      SPNCount          = [int]$spnCount
+      DomainFqdn           = $domain
+      SamAccountName       = $name
+      Enabled              = [bool]$u.Enabled
+      UserPrincipalName    = [string]$u.UserPrincipalName
+      WhenCreated          = $u.whenCreated
+      SPNCount             = [int]$spnCount
       PasswordNeverExpires = $pwdNever
-      LastLogonDays     = $lastLogonDays
-      PasswordAgeDays   = $passwordAgeDays
-      HeuristicFlags    = (@(
-        if ($spnCount -gt 0) { 'HasSPN' }
-        if ($pwdNever) { 'PwdNeverExpires' }
-        if ($looksLikeSvc) { 'NamePattern' }
-      ) | Where-Object { $_ }) -join ';'
-      Description       = [string]$u.description
+      LastLogonDays        = $lastLogonDays
+      PasswordAgeDays      = $passwordAgeDays
+      HeuristicFlags       = (@(
+          if ($spnCount -gt 0) { 'HasSPN' }
+          if ($pwdNever) { 'PwdNeverExpires' }
+          if ($looksLikeSvc) { 'NamePattern' }
+        ) | Where-Object { $_ }) -join ';'
+      Description          = [string]$u.description
     }
   }
 }
