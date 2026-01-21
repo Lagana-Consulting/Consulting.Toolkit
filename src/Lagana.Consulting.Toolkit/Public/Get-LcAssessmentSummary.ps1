@@ -36,7 +36,7 @@ function Get-LcAssessmentSummary {
     )
 
     $forest = Get-LcAdForest -ForestName $ForestName
-    $domains = Get-LcAdDomains -Forest $forest
+    $domains = @(Get-LcAdDomains -Forest $forest)
 
     $usersTotal = $AllUsers.Count
     $groupsTotal = $AllGroups.Count
