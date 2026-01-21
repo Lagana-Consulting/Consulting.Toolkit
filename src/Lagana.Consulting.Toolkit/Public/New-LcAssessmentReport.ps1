@@ -43,7 +43,18 @@ function New-LcAssessmentReport {
 
     # Read migration risk flags
     $riskFile = Get-ChildItem -Path $DiscoveryOutputPath -Filter "*Migration__RiskFlags*" -File | Select-Object -First 1
-    $risks = if ($riskFile) { @(Import-Csv $riskFile.FullName) } else { @() }
+    $risks = if ($riskFile) {
+        @(Import-Csv $riskFile.FullName)
+    } else {
+        @()
+    }
+
+    # Validate that risks have the expected structure
+    if (@($risks).Count -gt 0 -and -not (Get-Member -InputObject $risks[0] -Name 'Flags' -ErrorAction SilentlyContinue)) {
+        Write-Warning "Risk flags CSV doesn't have a 'Flags' column. Available properties: $(($risks[0] | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name) -join ', ')"
+        # Add an empty Flags property to all risks so processing doesn't break
+        $risks = $risks | Add-Member -NotePropertyName 'Flags' -NotePropertyValue '' -Force -PassThru
+    }
 
     # Read migration risk summary
     $riskSummaryFile = Get-ChildItem -Path $DiscoveryOutputPath -Filter "*Migration__RiskFlagsSummary*" -File | Select-Object -First 1
@@ -75,14 +86,17 @@ function New-LcAssessmentReport {
     }
 
     foreach ($risk in $risks) {
-        $flagCount = ($risk.Flags -split ';').Count
+        # Handle missing or null Flags property
+        $flags = if ($null -ne $risk.Flags -and $risk.Flags.Trim() -ne '') { $risk.Flags } else { '' }
+        $flagCount = if ($flags -ne '') { ($flags -split ';').Count } else { 0 }
+
         if ($flagCount -ge 3) {
             $riskCounts.Critical++
         } elseif ($flagCount -eq 2) {
             $riskCounts.High++
         } elseif ($flagCount -eq 1) {
             # Determine medium vs low by flag type
-            if ($risk.Flags -match 'PasswordAgeOver365d|Kerberos_NoAES') {
+            if ($flags -match 'PasswordAgeOver365d|Kerberos_NoAES') {
                 $riskCounts.Medium++
             } else {
                 $riskCounts.Low++
@@ -410,7 +424,7 @@ function New-LcAssessmentReport {
 
     # Add findings from risk flags data
     if (@($risks).Count -gt 0) {
-        $staleCount = @($risks | Where-Object { $_.Flags -match 'StaleLastLogonOver180d' }).Count
+        $staleCount = @($risks | Where-Object { $null -ne $_.Flags -and $_.Flags -match 'StaleLastLogonOver180d' }).Count
         if ($staleCount -gt 0) {
             $findings += @{
                 Level       = 'high'
@@ -420,7 +434,7 @@ function New-LcAssessmentReport {
             }
         }
 
-        $pwAgeCount = @($risks | Where-Object { $_.Flags -match 'PasswordAgeOver365d' }).Count
+        $pwAgeCount = @($risks | Where-Object { $null -ne $_.Flags -and $_.Flags -match 'PasswordAgeOver365d' }).Count
         if ($pwAgeCount -gt 0) {
             $findings += @{
                 Level       = 'high'
@@ -430,7 +444,7 @@ function New-LcAssessmentReport {
             }
         }
 
-        $aesCount = @($risks | Where-Object { $_.Flags -match 'Kerberos_NoAES' }).Count
+        $aesCount = @($risks | Where-Object { $null -ne $_.Flags -and $_.Flags -match 'Kerberos_NoAES' }).Count
         if ($aesCount -gt 0) {
             $findings += @{
                 Level       = 'high'
@@ -440,7 +454,7 @@ function New-LcAssessmentReport {
             }
         }
 
-        $upnCount = @($risks | Where-Object { $_.Flags -match 'UPN_NonRoutableSuffix' }).Count
+        $upnCount = @($risks | Where-Object { $null -ne $_.Flags -and $_.Flags -match 'UPN_NonRoutableSuffix' }).Count
         if ($upnCount -gt 0) {
             $findings += @{
                 Level       = 'medium'
@@ -450,7 +464,7 @@ function New-LcAssessmentReport {
             }
         }
 
-        $disabledCount = @($risks | Where-Object { $_.Flags -match 'Disabled' }).Count
+        $disabledCount = @($risks | Where-Object { $null -ne $_.Flags -and $_.Flags -match 'Disabled' }).Count
         if ($disabledCount -gt 0) {
             $findings += @{
                 Level       = 'low'
