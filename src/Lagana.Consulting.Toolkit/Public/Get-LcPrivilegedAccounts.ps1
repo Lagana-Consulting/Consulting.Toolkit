@@ -3,7 +3,7 @@ function Get-LcPrivilegedAccounts {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext
+    $DomainContext
   )
 
   if (-not (Get-Command Get-ADGroup -ErrorAction SilentlyContinue)) {

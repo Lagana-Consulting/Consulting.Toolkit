@@ -3,7 +3,7 @@ function Get-LcAdDefaultPasswordPolicy {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext
+    $DomainContext
   )
 
   if (-not (Get-Command Get-ADDefaultDomainPasswordPolicy -ErrorAction SilentlyContinue)) {
@@ -21,15 +21,15 @@ function Get-LcAdDefaultPasswordPolicy {
   }
 
   [pscustomobject]@{
-    DomainFqdn                 = $domain
-    ComplexityEnabled          = [bool]$pol.ComplexityEnabled
-    MinPasswordLength          = $pol.MinPasswordLength
-    PasswordHistoryCount       = $pol.PasswordHistoryCount
-    MinPasswordAgeDays         = [math]::Round($pol.MinPasswordAge.TotalDays, 2)
-    MaxPasswordAgeDays         = [math]::Round($pol.MaxPasswordAge.TotalDays, 2)
-    LockoutThreshold           = $pol.LockoutThreshold
-    LockoutDurationMinutes     = [math]::Round($pol.LockoutDuration.TotalMinutes, 2)
+    DomainFqdn                      = $domain
+    ComplexityEnabled               = [bool]$pol.ComplexityEnabled
+    MinPasswordLength               = $pol.MinPasswordLength
+    PasswordHistoryCount            = $pol.PasswordHistoryCount
+    MinPasswordAgeDays              = [math]::Round($pol.MinPasswordAge.TotalDays, 2)
+    MaxPasswordAgeDays              = [math]::Round($pol.MaxPasswordAge.TotalDays, 2)
+    LockoutThreshold                = $pol.LockoutThreshold
+    LockoutDurationMinutes          = [math]::Round($pol.LockoutDuration.TotalMinutes, 2)
     LockoutObservationWindowMinutes = [math]::Round($pol.LockoutObservationWindow.TotalMinutes, 2)
-    ReversibleEncryptionEnabled= [bool]$pol.ReversibleEncryptionEnabled
+    ReversibleEncryptionEnabled     = [bool]$pol.ReversibleEncryptionEnabled
   }
 }

@@ -3,7 +3,7 @@ function Get-LcGpoLinks {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext,
+    $DomainContext,
 
     [ValidateSet('OneLevel','Subtree')]
     [string]$Scope = 'OneLevel'

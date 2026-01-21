@@ -3,7 +3,7 @@ function Get-LcGpoInventory {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext,
+    $DomainContext,
 
     [string]$LogPath
   )

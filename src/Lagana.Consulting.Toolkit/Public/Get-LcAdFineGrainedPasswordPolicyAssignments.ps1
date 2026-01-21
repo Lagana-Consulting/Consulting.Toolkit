@@ -2,7 +2,8 @@ function Get-LcAdFineGrainedPasswordPolicyAssignments {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [object]$DomainContext,
+    [ValidateNotNull()]
+    $DomainContext,
 
     [string]$LogPath
   )

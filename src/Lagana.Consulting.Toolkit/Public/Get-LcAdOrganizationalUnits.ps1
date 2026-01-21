@@ -3,7 +3,7 @@ function Get-LcAdOrganizationalUnits {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext
+    $DomainContext
   )
 
   if (-not (Get-Command Get-ADOrganizationalUnit -ErrorAction SilentlyContinue)) {
@@ -16,7 +16,7 @@ function Get-LcAdOrganizationalUnits {
 
   $ous = @()
   try {
-    $ous = @(Get-ADOrganizationalUnit -Filter * -SearchBase $baseDn -SearchScope Subtree -Server $server -Properties whenCreated,whenChanged,description -ErrorAction Stop |
+    $ous = @(Get-ADOrganizationalUnit -Filter * -SearchBase $baseDn -SearchScope Subtree -Server $server -Properties whenCreated, whenChanged, description -ErrorAction Stop |
       Sort-Object DistinguishedName)
   } catch {
     throw "Failed to enumerate OUs for $domain via $server. $($_.Exception.Message)"
@@ -31,7 +31,7 @@ function Get-LcAdOrganizationalUnits {
 
     [pscustomobject]@{
       DomainFqdn        = $domain
-      Name             = [string]$ou.Name
+      Name              = [string]$ou.Name
       DistinguishedName = $dn
       Description       = [string]$ou.Description
       WhenCreated       = $ou.whenCreated

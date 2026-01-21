@@ -3,7 +3,7 @@ function Get-LcAdGroups {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext
+    $DomainContext
   )
 
   if (-not (Get-Command Get-ADGroup -ErrorAction SilentlyContinue)) {
@@ -15,7 +15,7 @@ function Get-LcAdGroups {
 
   $groups = @()
   try {
-    $groups = @(Get-ADGroup -Filter * -Server $server -Properties mail,groupCategory,groupScope,whenCreated,whenChanged,description -ErrorAction Stop |
+    $groups = @(Get-ADGroup -Filter * -Server $server -Properties mail, groupCategory, groupScope, whenCreated, whenChanged, description -ErrorAction Stop |
       Sort-Object Name)
   } catch {
     throw "Failed to enumerate groups for $domain via $server. $($_.Exception.Message)"
@@ -24,12 +24,12 @@ function Get-LcAdGroups {
   foreach ($g in $groups) {
     [pscustomobject]@{
       DomainFqdn        = $domain
-      Name             = [string]$g.Name
+      Name              = [string]$g.Name
       SamAccountName    = [string]$g.SamAccountName
       DistinguishedName = [string]$g.DistinguishedName
       GroupCategory     = [string]$g.GroupCategory
       GroupScope        = [string]$g.GroupScope
-      Mail             = [string]$g.mail
+      Mail              = [string]$g.mail
       WhenCreated       = $g.whenCreated
       WhenChanged       = $g.whenChanged
       Description       = [string]$g.description

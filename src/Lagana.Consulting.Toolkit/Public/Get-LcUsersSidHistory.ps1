@@ -3,7 +3,7 @@ function Get-LcUsersSidHistory {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext
+    $DomainContext
   )
 
   if (-not (Get-Command Get-ADUser -ErrorAction SilentlyContinue)) {

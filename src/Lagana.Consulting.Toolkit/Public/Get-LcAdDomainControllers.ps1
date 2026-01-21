@@ -3,7 +3,7 @@ function Get-LcAdDomainControllers {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext
+    $DomainContext
   )
 
   if (-not (Get-Command Get-ADDomainController -ErrorAction SilentlyContinue)) {
@@ -23,16 +23,16 @@ function Get-LcAdDomainControllers {
 
   foreach ($dc in $dcs) {
     [pscustomobject]@{
-      DomainFqdn        = $domain
-      HostName          = [string]$dc.HostName
-      Name              = [string]$dc.Name
-      Site              = [string]$dc.Site
-      IPv4Address       = [string]$dc.IPv4Address
-      OperatingSystem   = [string]$dc.OperatingSystem
-      IsGlobalCatalog   = [bool]$dc.IsGlobalCatalog
-      IsReadOnly        = [bool]$dc.IsReadOnly
-      IsPdc             = [bool]$dc.IsPdc
-      IsEnabled         = [bool]$dc.IsEnabled
+      DomainFqdn      = $domain
+      HostName        = [string]$dc.HostName
+      Name            = [string]$dc.Name
+      Site            = [string]$dc.Site
+      IPv4Address     = [string]$dc.IPv4Address
+      OperatingSystem = [string]$dc.OperatingSystem
+      IsGlobalCatalog = [bool]$dc.IsGlobalCatalog
+      IsReadOnly      = [bool]$dc.IsReadOnly
+      IsPdc           = [bool]$dc.IsPdc
+      IsEnabled       = [bool]$dc.IsEnabled
     }
   }
 }

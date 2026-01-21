@@ -3,7 +3,7 @@ function Get-LcAdComputers {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext,
+    $DomainContext,
 
     [datetime]$Now = (Get-Date)
   )
@@ -17,9 +17,9 @@ function Get-LcAdComputers {
   $nowUtc = $Now.ToUniversalTime()
 
   $props = @(
-    'Enabled','DNSHostName','OperatingSystem','OperatingSystemVersion',
-    'whenCreated','whenChanged','LastLogonTimestamp',
-    'ServicePrincipalName','msDS-SupportedEncryptionTypes','Description'
+    'Enabled', 'DNSHostName', 'OperatingSystem', 'OperatingSystemVersion',
+    'whenCreated', 'whenChanged', 'LastLogonTimestamp',
+    'ServicePrincipalName', 'msDS-SupportedEncryptionTypes', 'Description'
   )
 
   $computers = @()
@@ -37,36 +37,36 @@ function Get-LcAdComputers {
     $spnCount = @($c.ServicePrincipalName).Count
 
     $encTypes = Convert-LcEncryptionTypes -EncryptionTypeValue $c.'msDS-SupportedEncryptionTypes'
-    $encRisk  = Get-LcEncryptionRisk    -EncryptionTypeValue $c.'msDS-SupportedEncryptionTypes'
+    $encRisk = Get-LcEncryptionRisk    -EncryptionTypeValue $c.'msDS-SupportedEncryptionTypes'
 
     $os = [string]$c.OperatingSystem
     $isServer = Get-LcComputerIsServer -OperatingSystem $os
 
     [pscustomobject]@{
-      DomainFqdn                 = $domain
-      Name                       = [string]$c.Name
-      SamAccountName             = [string]$c.SamAccountName
-      DistinguishedName          = [string]$c.DistinguishedName
-      Enabled                    = [bool]$c.Enabled
-      DnsHostName                = [string]$c.DNSHostName
+      DomainFqdn                   = $domain
+      Name                         = [string]$c.Name
+      SamAccountName               = [string]$c.SamAccountName
+      DistinguishedName            = [string]$c.DistinguishedName
+      Enabled                      = [bool]$c.Enabled
+      DnsHostName                  = [string]$c.DNSHostName
 
-      OperatingSystem            = $os
-      OperatingSystemVersion     = [string]$c.OperatingSystemVersion
-      IsServer                   = [bool]$isServer
+      OperatingSystem              = $os
+      OperatingSystemVersion       = [string]$c.OperatingSystemVersion
+      IsServer                     = [bool]$isServer
 
-      WhenCreated                = $c.whenCreated
-      WhenChanged                = $c.whenChanged
+      WhenCreated                  = $c.whenCreated
+      WhenChanged                  = $c.whenChanged
 
-      LastLogonTimestampUtc      = $lltUtc
-      LastLogonDays              = $lastLogonDays
+      LastLogonTimestampUtc        = $lltUtc
+      LastLogonDays                = $lastLogonDays
 
-      SPNCount                   = [int]$spnCount
+      SPNCount                     = [int]$spnCount
 
       MsDsSupportedEncryptionTypes = $c.'msDS-SupportedEncryptionTypes'
-      EncryptionTypes            = ($encTypes -join ';')
-      EncryptionRisk             = $encRisk
+      EncryptionTypes              = ($encTypes -join ';')
+      EncryptionRisk               = $encRisk
 
-      Description                = [string]$c.Description
+      Description                  = [string]$c.Description
     }
   }
 }

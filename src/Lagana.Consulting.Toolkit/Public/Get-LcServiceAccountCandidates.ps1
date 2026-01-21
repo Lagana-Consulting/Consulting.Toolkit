@@ -3,7 +3,7 @@ function Get-LcServiceAccountCandidates {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext,
+    $DomainContext,
 
     [datetime]$Now = (Get-Date)
   )

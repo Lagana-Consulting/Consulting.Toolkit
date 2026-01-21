@@ -3,7 +3,7 @@ function Get-LcRiskSummary {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object[]]$RiskRows
+    $RiskRows
   )
 
   $RiskRows |

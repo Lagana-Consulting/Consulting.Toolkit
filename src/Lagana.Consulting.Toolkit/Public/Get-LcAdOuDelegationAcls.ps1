@@ -3,9 +3,9 @@ function Get-LcAdOuDelegationAcls {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext,
+    $DomainContext,
 
-    [ValidateSet('OneLevel','Subtree')]
+    [ValidateSet('OneLevel', 'Subtree')]
     [string]$Scope = 'OneLevel'
   )
 
@@ -38,15 +38,15 @@ function Get-LcAdOuDelegationAcls {
       if ($ace.IsInherited) { continue }
 
       [pscustomobject]@{
-        DomainFqdn        = $domain
-        OuName            = [string]$ou.Name
-        OuDistinguishedName = $dn
-        IdentityReference = [string]$ace.IdentityReference
+        DomainFqdn            = $domain
+        OuName                = [string]$ou.Name
+        OuDistinguishedName   = $dn
+        IdentityReference     = [string]$ace.IdentityReference
         ActiveDirectoryRights = [string]$ace.ActiveDirectoryRights
-        AccessControlType = [string]$ace.AccessControlType
-        InheritanceType   = [string]$ace.InheritanceType
-        ObjectType        = [string]$ace.ObjectType
-        InheritedObjectType = [string]$ace.InheritedObjectType
+        AccessControlType     = [string]$ace.AccessControlType
+        InheritanceType       = [string]$ace.InheritanceType
+        ObjectType            = [string]$ace.ObjectType
+        InheritedObjectType   = [string]$ace.InheritedObjectType
       }
     }
   }

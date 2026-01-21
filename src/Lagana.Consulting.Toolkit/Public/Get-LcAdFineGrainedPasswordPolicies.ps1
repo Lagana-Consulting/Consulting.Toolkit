@@ -3,7 +3,7 @@ function Get-LcAdFineGrainedPasswordPolicies {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext,
+    $DomainContext,
 
     [string]$LogPath
   )
@@ -26,20 +26,20 @@ function Get-LcAdFineGrainedPasswordPolicies {
 
   foreach ($p in $pols) {
     [pscustomobject]@{
-      DomainFqdn                 = $domain
-      Name                       = [string]$p.Name
-      DistinguishedName          = [string]$p.DistinguishedName
-      Precedence                 = $p.Precedence
-      ComplexityEnabled          = [bool]$p.ComplexityEnabled
-      MinPasswordLength          = $p.MinPasswordLength
-      PasswordHistoryCount       = $p.PasswordHistoryCount
-      MinPasswordAgeDays         = [math]::Round($p.MinPasswordAge.TotalDays, 2)
-      MaxPasswordAgeDays         = [math]::Round($p.MaxPasswordAge.TotalDays, 2)
-      LockoutThreshold           = $p.LockoutThreshold
-      LockoutDurationMinutes     = [math]::Round($p.LockoutDuration.TotalMinutes, 2)
+      DomainFqdn                      = $domain
+      Name                            = [string]$p.Name
+      DistinguishedName               = [string]$p.DistinguishedName
+      Precedence                      = $p.Precedence
+      ComplexityEnabled               = [bool]$p.ComplexityEnabled
+      MinPasswordLength               = $p.MinPasswordLength
+      PasswordHistoryCount            = $p.PasswordHistoryCount
+      MinPasswordAgeDays              = [math]::Round($p.MinPasswordAge.TotalDays, 2)
+      MaxPasswordAgeDays              = [math]::Round($p.MaxPasswordAge.TotalDays, 2)
+      LockoutThreshold                = $p.LockoutThreshold
+      LockoutDurationMinutes          = [math]::Round($p.LockoutDuration.TotalMinutes, 2)
       LockoutObservationWindowMinutes = [math]::Round($p.LockoutObservationWindow.TotalMinutes, 2)
-      ReversibleEncryptionEnabled= [bool]$p.ReversibleEncryptionEnabled
-      AppliesToCount             = (@($p.AppliesTo) | Measure-Object).Count
+      ReversibleEncryptionEnabled     = [bool]$p.ReversibleEncryptionEnabled
+      AppliesToCount                  = (@($p.AppliesTo) | Measure-Object).Count
     }
   }
 }
