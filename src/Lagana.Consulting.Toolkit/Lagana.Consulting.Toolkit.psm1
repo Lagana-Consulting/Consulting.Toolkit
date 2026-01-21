@@ -1,6 +1,6 @@
 Set-StrictMode -Version Latest
 
-$PublicPath  = Join-Path $PSScriptRoot 'Public'
+$PublicPath = Join-Path $PSScriptRoot 'Public'
 $PrivatePath = Join-Path $PSScriptRoot 'Private'
 
 # Dot-source Private first
@@ -29,6 +29,7 @@ Export-ModuleMember -Function @(
   'New-LcRunLayout',
   'Write-LcSchemaCsv',
   'Get-LcSchemaDefinitions',
+  'Export-LcSchemas',
 
   # Forest + domains
   'Get-LcAdForest',
