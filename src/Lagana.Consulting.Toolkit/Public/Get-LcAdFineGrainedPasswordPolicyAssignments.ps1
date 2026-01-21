@@ -24,7 +24,7 @@ function Get-LcAdFineGrainedPasswordPolicyAssignments {
     return @()
   }
 
-  $rows = New-Object System.Collections.Generic.List[object]
+  $rows = @()
 
   foreach ($p in $pols) {
     $appliesTo = @($p.AppliesTo)
@@ -33,13 +33,13 @@ function Get-LcAdFineGrainedPasswordPolicyAssignments {
     foreach ($dn in $appliesTo) {
       if ([string]::IsNullOrWhiteSpace([string]$dn)) { continue }
 
-      $rows.Add([pscustomobject]@{
-          DomainFqdn  = $domain
-          PolicyName  = [string]$p.Name
-          PolicyDN    = [string]$p.DistinguishedName
-          Precedence  = $p.Precedence
-          AppliesToDN = [string]$dn
-        })
+      $rows += [pscustomobject]@{
+        DomainFqdn  = $domain
+        PolicyName  = [string]$p.Name
+        PolicyDN    = [string]$p.DistinguishedName
+        Precedence  = $p.Precedence
+        AppliesToDN = [string]$dn
+      }
     }
   }
 
