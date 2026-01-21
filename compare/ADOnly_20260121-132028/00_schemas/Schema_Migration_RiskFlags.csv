@@ -1,0 +1,7 @@
+﻿"Column","Type","Description","Example","Notes"
+"ObjectClass","string","Object type","user","user or computer"
+"DomainFqdn","string","Domain DNS root","contoso.com",""
+"DistinguishedName","string","AD distinguished name","CN=jdoe,OU=Users,DC=contoso,DC=com",""
+"SamAccountName","string","SAM account name","jdoe",""
+"UserPrincipalName","string","UPN (users only)","jdoe@contoso.com",""
+"Flags","string","Semicolon-separated risk flags","UPN_NonRoutableSuffix;PasswordNeverExpires","Migration blockers/warnings"

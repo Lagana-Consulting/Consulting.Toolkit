@@ -1,0 +1,3 @@
+﻿"DomainFqdn","Name","DnsHostName","IsServer","EncryptionTypes","EncryptionRisk","SPNCount"
+"sourcelab.com","SOURCEDC01","SOURCEDC01.SOURCELAB.COM","True","RC4_HMAC;AES128_HMAC_SHA1;AES256_HMAC_SHA1","Low","22"
+"sourcelab.com","SOURCEMEMBER01","SOURCEMEMBER01.SOURCELAB.COM","True","RC4_HMAC;AES128_HMAC_SHA1;AES256_HMAC_SHA1","Low","8"

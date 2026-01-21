@@ -48,18 +48,51 @@ function New-LcAssessmentReport {
         $riskSummary = @(Import-Csv $riskSummaryFile.FullName)
     }
 
-    # Read per-domain summaries
-    $domainDirs = Get-ChildItem -Path $DiscoveryOutputPath -Directory | Where-Object { $_.Name -match "^Domain-" }
+    # Read per-domain summaries (support nested structure like 20_domains/Domain-*)
+    $domainDirs = @()
+    $domainRoots = @(
+        $DiscoveryOutputPath,
+        (Join-Path $DiscoveryOutputPath '20_domains')
+    ) | Where-Object { Test-Path $_ -PathType Container }
+
+    foreach ($root in $domainRoots) {
+        $domainDirs += (Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^Domain-' })
+    }
+    # de-dup
+    $domainDirs = $domainDirs | Sort-Object -Property FullName -Unique
     $domainSummaries = @()
     foreach ($ddir in $domainDirs) {
-        $dsFile = Get-ChildItem -Path $ddir.FullName -Filter "LC__AD__Domain__Summary*" -File | Select-Object -First 1
-        if ($dsFile) {
-            $ds = Import-Csv $dsFile.FullName
-            if ($ds -is [array]) { $ds = $ds[0] }
-            $domainSummaries += [pscustomobject]@{
-                Domain  = ($ddir.Name -replace "^Domain-", "")
-                Summary = $ds
-            }
+        $domainName = ($ddir.Name -replace '^Domain-', '')
+        $usersFile = Get-ChildItem -Path $ddir.FullName -Filter "*Identity__Users__*.csv" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        $groupsFile = Get-ChildItem -Path $ddir.FullName -Filter "*Identity__Groups__*.csv" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        $computersFile = Get-ChildItem -Path $ddir.FullName -Filter "*Identity__ComputersAll__*.csv" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+
+        $users = @(); $groups = @(); $computers = @()
+        if ($usersFile) { $users = @(Import-Csv $usersFile.FullName) }
+        if ($groupsFile) { $groups = @(Import-Csv $groupsFile.FullName) }
+        if ($computersFile) { $computers = @(Import-Csv $computersFile.FullName) }
+
+        $usersTotal = @($users).Count
+        $groupsTotal = @($groups).Count
+        $computersTotal = @($computers).Count
+
+        $usersStale = @($users | Where-Object { ($_.'LastLogonDays' -as [double]) -gt 180 }).Count
+        $computersStale = @($computers | Where-Object { ($_.'LastLogonDays' -as [double]) -gt 90 }).Count
+
+        $usersStalePct = if ($usersTotal -gt 0) { [math]::Round(($usersStale / $usersTotal) * 100, 1) } else { 0 }
+        $computersStalePct = if ($computersTotal -gt 0) { [math]::Round(($computersStale / $computersTotal) * 100, 1) } else { 0 }
+
+        $summaryObj = [pscustomobject]@{
+            UsersTotal        = $usersTotal
+            GroupsTotal       = $groupsTotal
+            ComputersTotal    = $computersTotal
+            UsersStalePct     = $usersStalePct
+            ComputersStalePct = $computersStalePct
+        }
+
+        $domainSummaries += [pscustomobject]@{
+            Domain  = $domainName
+            Summary = $summaryObj
         }
     }
 

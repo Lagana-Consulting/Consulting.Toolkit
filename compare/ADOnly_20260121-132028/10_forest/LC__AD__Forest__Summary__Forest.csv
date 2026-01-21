@@ -1,0 +1,2 @@
+﻿"ForestName","RootDomain","ForestMode","Domains","DomainCount","UPNSuffixes","UPNSuffixCount","SchemaMaster","DomainNamingMaster"
+"SOURCELAB.COM","SOURCELAB.COM","Windows2016Forest","child1.sourcelab.com;sourcelab.com","2","","0","SOURCEDC01.SOURCELAB.COM","SOURCEDC01.SOURCELAB.COM"

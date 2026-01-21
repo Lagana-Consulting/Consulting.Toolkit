@@ -1,0 +1,4 @@
+﻿"DomainFqdn","Name","DistinguishedName","Depth","DepthWarning","IsTopLevel"
+"child1.sourcelab.com","Domain Controllers","OU=Domain Controllers,DC=CHILD1,DC=SOURCELAB,DC=COM","1","Normal","True"
+"child1.sourcelab.com","Service Accounts","OU=Service Accounts,DC=CHILD1,DC=SOURCELAB,DC=COM","1","Normal","True"
+"child1.sourcelab.com","Staging","OU=Staging,DC=CHILD1,DC=SOURCELAB,DC=COM","1","Normal","True"

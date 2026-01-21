@@ -1,0 +1,4 @@
+﻿"Column","Type","Description","Example","Notes"
+"Flag","string","Risk flag name","PasswordNeverExpires",""
+"ObjectClass","string","Object type","user","user or computer"
+"Count","int","Count of objects with this flag","15",""

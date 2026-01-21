@@ -1,0 +1,3 @@
+﻿"DomainFqdn","GroupName","GroupDn","CrossDomainMemberCount","CrossDomainMembers"
+"child1.sourcelab.com","Denied RODC Password Replication Group","CN=Denied RODC Password Replication Group,CN=Users,DC=CHILD1,DC=SOURCELAB,DC=COM","2","CN=Enterprise Admins,CN=Users,DC=SOURCELAB,DC=COM|SOURCELAB.COM;CN=Schema Admins,CN=Users,DC=SOURCELAB,DC=COM|SOURCELAB.COM"
+"child1.sourcelab.com","Administrators","CN=Administrators,CN=Builtin,DC=CHILD1,DC=SOURCELAB,DC=COM","1","CN=Enterprise Admins,CN=Users,DC=SOURCELAB,DC=COM|SOURCELAB.COM"
