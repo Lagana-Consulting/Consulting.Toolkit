@@ -10,7 +10,7 @@ function Get-LcGroupMembersRecursive {
   }
 
   $seenGroups = @{}
-  $results = New-Object System.Collections.Generic.List[object]
+  $results = @()
 
   $stack = New-Object System.Collections.Generic.Stack[string]
   $stack.Push($GroupDn)
@@ -31,7 +31,7 @@ function Get-LcGroupMembersRecursive {
       if ($m.objectClass -eq 'group') {
         $stack.Push([string]$m.DistinguishedName)
       } elseif ($m.objectClass -eq 'user') {
-        $results.Add($m)
+        $results += $m
       }
     }
   }
