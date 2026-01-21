@@ -2,14 +2,14 @@ function Get-LcDaysSince {
   [CmdletBinding()]
   param(
     [AllowNull()]
-    [datetime]$DateUtc,
+    $DateUtc,
 
-    [datetime]$Now = (Get-Date).ToUniversalTime()
+    $Now = (Get-Date).ToUniversalTime()
   )
 
   if ($null -eq $DateUtc) { return $null }
 
-  $n = $Now.ToUniversalTime()
+  $n = if ($Now) { $Now.ToUniversalTime() } else { (Get-Date).ToUniversalTime() }
   $d = $DateUtc.ToUniversalTime()
 
   # Avoid negative days due to clock skew
