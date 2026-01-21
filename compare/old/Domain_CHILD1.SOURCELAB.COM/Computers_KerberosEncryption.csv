@@ -1,0 +1,2 @@
+﻿"DomainFqdn","SamAccountName","msDS_SupportedEncryptionTypes","EncryptionTypesExpanded"
+"CHILD1.SOURCELAB.COM","SOURCECHILD-DC0$","28","RC4-HMAC;AES128-CTS-HMAC-SHA1-96;AES256-CTS-HMAC-SHA1-96"

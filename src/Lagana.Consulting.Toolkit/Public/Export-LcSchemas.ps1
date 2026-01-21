@@ -5,9 +5,7 @@ function Export-LcSchemas {
         [ValidateNotNullOrEmpty()]
         [string]$SchemasDir,
 
-        [string[]]$Include,
-
-        [hashtable]$Descriptions
+        [string[]]$Include
     )
 
     if (-not (Get-Command Get-LcSchemaDefinitions -ErrorAction SilentlyContinue)) {
@@ -28,15 +26,10 @@ function Export-LcSchemas {
     foreach ($name in $names) {
         if (-not $defs.ContainsKey($name)) { continue }
 
-        $cols = $defs[$name]
-        if (-not $cols -or $cols.Count -eq 0) { continue }
+        $colDefs = $defs[$name]
+        if (-not $colDefs -or $colDefs.Count -eq 0) { continue }
 
-        $desc = $null
-        if ($Descriptions -and $Descriptions.ContainsKey($name)) {
-            $desc = [string]$Descriptions[$name]
-        }
-
-        $outPath = Write-LcSchemaCsv -SchemaName $name -Columns $cols -SchemasDir $SchemasDir -Description $desc
+        $outPath = Write-LcSchemaCsv -SchemaName $name -ColumnDefinitions $colDefs -SchemasDir $SchemasDir
         $written += $outPath
     }
 

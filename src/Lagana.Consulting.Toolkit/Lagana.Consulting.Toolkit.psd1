@@ -8,7 +8,7 @@
   Description       = 'Reusable PowerShell toolkit for consulting automation.'
   PowerShellVersion = '5.1'
 
-    FunctionsToExport = @(
+  FunctionsToExport = @(
     # Logging / export
     'New-LcLog',
     'Write-LcLog',
@@ -73,11 +73,11 @@
   VariablesToExport = @()
   AliasesToExport   = @()
 
-  PrivateData = @{
+  PrivateData       = @{
     PSData = @{
-      Tags = @('PowerShell','Toolkit','Consulting','ActiveDirectory','MicrosoftGraph')
-      ProjectUri = ''
-      LicenseUri = ''
+      Tags         = @('PowerShell', 'Toolkit', 'Consulting', 'ActiveDirectory', 'MicrosoftGraph')
+      ProjectUri   = ''
+      LicenseUri   = ''
       ReleaseNotes = 'Initial scaffold with helpers, run layout, schema, and forest/domain enumeration.'
     }
   }

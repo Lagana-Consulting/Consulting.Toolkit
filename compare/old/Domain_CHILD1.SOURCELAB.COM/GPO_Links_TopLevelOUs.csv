@@ -1,0 +1,2 @@
+﻿"DomainFqdn","TargetType","TargetDN","GpoDisplayName","GpoId","Order","Enabled","Enforced"
+"CHILD1.SOURCELAB.COM","OU","OU=Domain Controllers,DC=CHILD1,DC=SOURCELAB,DC=COM","Default Domain Controllers Policy","6ac1786c-016f-11d2-945f-00c04fb984f9","1","True","False"

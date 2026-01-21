@@ -1,0 +1,2 @@
+﻿"DomainFqdn","DomainDn","NetBIOSName","DomainMode","PdcEmulator","RidMaster","InfrastructureMaster","ServerUsed"
+"sourcelab.com","DC=SOURCELAB,DC=COM","SOURCELAB","Windows2016Domain","SOURCEDC01.SOURCELAB.COM","SOURCEDC01.SOURCELAB.COM","SOURCEDC01.SOURCELAB.COM","SOURCEDC01.SOURCELAB.COM"

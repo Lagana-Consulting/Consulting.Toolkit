@@ -1,0 +1,8 @@
+﻿"DomainFqdn","Name","DistinguishedName","Description","WhenCreated","WhenChanged","Level","IsTopLevel"
+"sourcelab.com","ADMT","OU=ADMT,DC=SOURCELAB,DC=COM","","1/9/2026 9:03:51 AM","1/9/2026 9:13:16 AM","1","True"
+"sourcelab.com","Domain Controllers","OU=Domain Controllers,DC=SOURCELAB,DC=COM","Default container for domain controllers","11/6/2024 7:02:31 AM","11/6/2024 7:02:31 AM","1","True"
+"sourcelab.com","Groups","OU=Groups,DC=SOURCELAB,DC=COM","","1/7/2026 5:58:52 AM","1/7/2026 5:58:52 AM","1","True"
+"sourcelab.com","Groups","OU=Groups,OU=ADMT,DC=SOURCELAB,DC=COM","","1/9/2026 9:13:16 AM","1/9/2026 9:13:16 AM","2","False"
+"sourcelab.com","Service Accounts","OU=Service Accounts,DC=SOURCELAB,DC=COM","","11/6/2024 10:36:56 AM","11/6/2024 10:36:56 AM","1","True"
+"sourcelab.com","Test","OU=Test,DC=SOURCELAB,DC=COM","","12/2/2025 10:26:09 AM","12/2/2025 10:26:09 AM","1","True"
+"sourcelab.com","Users","OU=Users,OU=ADMT,DC=SOURCELAB,DC=COM","","1/9/2026 9:13:27 AM","1/9/2026 9:13:27 AM","2","False"
