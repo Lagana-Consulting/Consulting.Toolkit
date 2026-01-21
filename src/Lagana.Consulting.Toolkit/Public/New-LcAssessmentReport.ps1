@@ -407,7 +407,7 @@ function New-LcAssessmentReport {
 
     # Add findings from risk summary data (Flag, Count columns)
     if (@($riskSummary).Count -gt 0) {
-        $staleCount = @($riskSummary | Where-Object { $_.Flag -eq 'StaleLastLogonOver180d' } | Select-Object -ExpandProperty Count)[0]
+        $staleCount = ($riskSummary | Where-Object { $_.Flag -eq 'StaleLastLogonOver180d' } | Select-Object -ExpandProperty Count | Measure-Object -Sum | Select-Object -ExpandProperty Sum) -as [int]
         if ($staleCount -gt 0) {
             $findings += @{
                 Level       = 'high'
@@ -417,7 +417,7 @@ function New-LcAssessmentReport {
             }
         }
 
-        $pwAgeCount = @($riskSummary | Where-Object { $_.Flag -eq 'PasswordAgeOver365d' } | Select-Object -ExpandProperty Count)[0]
+        $pwAgeCount = ($riskSummary | Where-Object { $_.Flag -eq 'PasswordAgeOver365d' } | Select-Object -ExpandProperty Count | Measure-Object -Sum | Select-Object -ExpandProperty Sum) -as [int]
         if ($pwAgeCount -gt 0) {
             $findings += @{
                 Level       = 'high'
@@ -427,7 +427,7 @@ function New-LcAssessmentReport {
             }
         }
 
-        $aesCount = @($riskSummary | Where-Object { $_.Flag -eq 'Kerberos_NoAES' } | Select-Object -ExpandProperty Count)[0]
+        $aesCount = ($riskSummary | Where-Object { $_.Flag -eq 'Kerberos_NoAES' } | Select-Object -ExpandProperty Count | Measure-Object -Sum | Select-Object -ExpandProperty Sum) -as [int]
         if ($aesCount -gt 0) {
             $findings += @{
                 Level       = 'high'
@@ -437,7 +437,7 @@ function New-LcAssessmentReport {
             }
         }
 
-        $upnCount = @($riskSummary | Where-Object { $_.Flag -match 'UPN_NonRoutableSuffix|UPN_SuffixNotInForestList' } | Measure-Object -Property Count -Sum | Select-Object -ExpandProperty Sum)
+        $upnCount = ($riskSummary | Where-Object { $_.Flag -match 'UPN_NonRoutableSuffix|UPN_SuffixNotInForestList' } | Measure-Object -Property Count -Sum | Select-Object -ExpandProperty Sum) -as [int]
         if ($upnCount -gt 0) {
             $findings += @{
                 Level       = 'medium'
@@ -447,7 +447,7 @@ function New-LcAssessmentReport {
             }
         }
 
-        $disabledCount = @($riskSummary | Where-Object { $_.Flag -eq 'Disabled' } | Select-Object -ExpandProperty Count)[0]
+        $disabledCount = ($riskSummary | Where-Object { $_.Flag -eq 'Disabled' } | Select-Object -ExpandProperty Count | Measure-Object -Sum | Select-Object -ExpandProperty Sum) -as [int]
         if ($disabledCount -gt 0) {
             $findings += @{
                 Level       = 'low'
