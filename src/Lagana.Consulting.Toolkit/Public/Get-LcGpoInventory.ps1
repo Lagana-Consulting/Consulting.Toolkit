@@ -28,17 +28,17 @@ function Get-LcGpoInventory {
 
   foreach ($g in $gpos) {
     [pscustomobject]@{
-      DomainFqdn     = $domain
-      DisplayName    = [string]$g.DisplayName
-      Id             = [string]$g.Id
-      Owner          = [string]$g.Owner
-      CreationTime   = $g.CreationTime
+      DomainFqdn       = $domain
+      DisplayName      = [string]$g.DisplayName
+      Id               = [string]$g.Id
+      Owner            = [string]$g.Owner
+      CreationTime     = $g.CreationTime
       ModificationTime = $g.ModificationTime
-      GpoStatus      = [string]$g.GpoStatus
-      Description    = [string]$g.Description
-      UserVersion    = [string]$g.UserVersion
-      ComputerVersion= [string]$g.ComputerVersion
-      WmiFilter      = [string]$g.WmiFilter
+      GpoStatus        = [string]$g.GpoStatus
+      Description      = [string]$g.Description
+      UserVersion      = if ($g.PSObject.Properties['UserVersion']) { [string]$g.UserVersion } else { $null }
+      ComputerVersion  = if ($g.PSObject.Properties['ComputerVersion']) { [string]$g.ComputerVersion } else { $null }
+      WmiFilter        = if ($g.PSObject.Properties['WmiFilter']) { [string]$g.WmiFilter } else { $null }
     }
   }
 }
