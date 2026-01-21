@@ -122,5 +122,44 @@ function Get-LcSchemaDefinitions {
     [pscustomobject]@{ Column = 'PrivilegeGroups'; Type = 'string'; Description = 'Semicolon-separated privileged group memberships'; Example = 'Domain Admins;Administrators'; Notes = 'Derived by recursive group membership + adminCount' }
   )
 
+  # Assessment Summary
+  $schemas['Assessment_Summary'] = @(
+    [pscustomobject]@{ Column = 'RunTimestamp'; Type = 'datetime'; Description = 'Timestamp of assessment run'; Example = '1/12/2026 1:01:56 PM'; Notes = '' }
+    [pscustomobject]@{ Column = 'ForestName'; Type = 'string'; Description = 'Forest name'; Example = 'SOURCELAB.COM'; Notes = '' }
+    [pscustomobject]@{ Column = 'ForestRootDomain'; Type = 'string'; Description = 'Forest root domain'; Example = 'SOURCELAB.COM'; Notes = '' }
+    [pscustomobject]@{ Column = 'DomainsCount'; Type = 'int'; Description = 'Number of domains'; Example = '2'; Notes = '' }
+    [pscustomobject]@{ Column = 'UsersTotal'; Type = 'int'; Description = 'Total user count'; Example = '22'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupsTotal'; Type = 'int'; Description = 'Total group count'; Example = '98'; Notes = '' }
+    [pscustomobject]@{ Column = 'ComputersTotal'; Type = 'int'; Description = 'Total computer count'; Example = '3'; Notes = '' }
+    [pscustomobject]@{ Column = 'UsersStaleCount'; Type = 'int'; Description = 'Stale user count (>180d)'; Example = '1'; Notes = 'Cleanup candidate' }
+    [pscustomobject]@{ Column = 'UsersStalePct'; Type = 'decimal'; Description = 'Stale user percentage'; Example = '4.55'; Notes = '' }
+    [pscustomobject]@{ Column = 'ComputersStaleCount'; Type = 'int'; Description = 'Stale computer count (>90d)'; Example = '0'; Notes = 'Cleanup candidate' }
+    [pscustomobject]@{ Column = 'ComputersStalePct'; Type = 'decimal'; Description = 'Stale computer percentage'; Example = '0'; Notes = '' }
+    [pscustomobject]@{ Column = 'UsersSIDHistoryCount'; Type = 'int'; Description = 'Users with SID history'; Example = '0'; Notes = 'Migration complexity' }
+    [pscustomobject]@{ Column = 'UsersSIDHistoryPct'; Type = 'decimal'; Description = 'Users with SID history percentage'; Example = '0'; Notes = '' }
+    [pscustomobject]@{ Column = 'UsersNonRoutableUPNCount'; Type = 'int'; Description = 'Users with non-routable UPN suffix'; Example = '13'; Notes = 'Cloud sync blocker' }
+    [pscustomobject]@{ Column = 'UsersNonRoutableUPNPct'; Type = 'decimal'; Description = 'Non-routable UPN percentage'; Example = '59.09'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectsRC4OnlyCount'; Type = 'int'; Description = 'Objects with RC4-only encryption'; Example = '0'; Notes = 'Security risk' }
+    [pscustomobject]@{ Column = 'ObjectsRC4OnlyPct'; Type = 'decimal'; Description = 'RC4-only percentage'; Example = '0'; Notes = '' }
+    [pscustomobject]@{ Column = 'PrivilegedAccountsCount'; Type = 'int'; Description = 'Privileged account count'; Example = '10'; Notes = 'Security surface area' }
+  )
+
+  # Migration Risk Flags
+  $schemas['Migration_RiskFlags'] = @(
+    [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'Object type'; Example = 'user'; Notes = 'user or computer' }
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'AD distinguished name'; Example = 'CN=jdoe,OU=Users,DC=contoso,DC=com'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'SAM account name'; Example = 'jdoe'; Notes = '' }
+    [pscustomobject]@{ Column = 'UserPrincipalName'; Type = 'string'; Description = 'UPN (users only)'; Example = 'jdoe@contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Flags'; Type = 'string'; Description = 'Semicolon-separated risk flags'; Example = 'UPN_NonRoutableSuffix;PasswordNeverExpires'; Notes = 'Migration blockers/warnings' }
+  )
+
+  # Migration Risk Flags Summary
+  $schemas['Migration_RiskFlags_Summary'] = @(
+    [pscustomobject]@{ Column = 'Flag'; Type = 'string'; Description = 'Risk flag name'; Example = 'PasswordNeverExpires'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'Object type'; Example = 'user'; Notes = 'user or computer' }
+    [pscustomobject]@{ Column = 'Count'; Type = 'int'; Description = 'Count of objects with this flag'; Example = '15'; Notes = '' }
+  )
+
   return $schemas
 }

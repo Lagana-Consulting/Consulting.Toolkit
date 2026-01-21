@@ -59,6 +59,9 @@
     'Get-LcServiceAccountCandidates',
     'Get-LcPrivilegedAccounts',
     'Get-LcRiskSummary',
+    'Get-LcAssessmentSummary',
+    'Get-LcMigrationRiskFlags',
+    'Get-LcMigrationRiskFlagsSummary',
 
     #ADMT Functions
     'Find-LcAdObjectConflicts',
