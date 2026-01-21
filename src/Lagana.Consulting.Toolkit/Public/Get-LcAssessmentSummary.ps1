@@ -83,7 +83,7 @@ function Get-LcAssessmentSummary {
     $duplicateSpnsCount = if ($DuplicateSpnsData) { @($DuplicateSpnsData).Count } else { 0 }
     $weakPasswordPoliciesCount = if ($WeakPasswordPoliciesData) { @($WeakPasswordPoliciesData | Where-Object { $_.WeaknessCount -ge 3 }).Count } else { 0 }
 
-    $highDepthGroupsCount = if ($GroupNestingData) { @($GroupNestingData | Where-Object { $_.Depth -ge 5 }).Count } else { 0 }
+    $highDepthGroupsCount = if ($GroupNestingData) { @($GroupNestingData | Where-Object { $_.NestingDepth -ge 5 }).Count } else { 0 }
     $highDepthOUsCount = if ($OuDepthData) { @($OuDepthData | Where-Object { $_.Depth -ge 5 }).Count } else { 0 }
 
     $crossDomainDependenciesCount = if ($CrossDomainMembershipData) { @($CrossDomainMembershipData).Count } else { 0 }
