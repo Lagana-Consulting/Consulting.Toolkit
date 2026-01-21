@@ -2,7 +2,6 @@ function Get-LcAdUsers {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext,
 
     [datetime]$Now = (Get-Date),
@@ -10,6 +9,10 @@ function Get-LcAdUsers {
     # For routability flags – pass the set from Get-LcKnownUpnSuffixes -AsHashSet
     [hashtable]$KnownUpnSuffixSet
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-ADUser -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available (Get-ADUser missing)."

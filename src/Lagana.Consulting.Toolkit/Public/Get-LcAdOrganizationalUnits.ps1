@@ -2,9 +2,12 @@ function Get-LcAdOrganizationalUnits {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-ADOrganizationalUnit -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available (Get-ADOrganizationalUnit missing)."

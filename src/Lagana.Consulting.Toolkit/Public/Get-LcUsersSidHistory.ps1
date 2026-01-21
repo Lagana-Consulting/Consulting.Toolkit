@@ -2,9 +2,12 @@ function Get-LcUsersSidHistory {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-ADUser -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available (Get-ADUser missing)."

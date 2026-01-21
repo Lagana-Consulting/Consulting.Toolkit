@@ -2,11 +2,14 @@ function Get-LcServiceAccountCandidates {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext,
 
     [datetime]$Now = (Get-Date)
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-ADUser -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available (Get-ADUser missing)."

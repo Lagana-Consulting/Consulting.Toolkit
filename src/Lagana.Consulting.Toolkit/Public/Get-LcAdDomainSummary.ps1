@@ -2,9 +2,12 @@ function Get-LcAdDomainSummary {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   # DomainContext is from Get-LcAdDomainContext
   [pscustomobject]@{

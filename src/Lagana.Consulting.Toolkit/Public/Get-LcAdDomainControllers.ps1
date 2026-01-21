@@ -2,9 +2,12 @@ function Get-LcAdDomainControllers {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-ADDomainController -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available. Install RSAT AD tools / Import-Module ActiveDirectory."

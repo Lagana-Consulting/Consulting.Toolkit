@@ -2,9 +2,12 @@ function Get-LcRiskSummary {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $RiskRows
   )
+
+  if (-not $RiskRows) {
+    throw "RiskRows cannot be null."
+  }
 
   $RiskRows |
     Group-Object -Property RiskCategory, RiskName, RiskLevel |

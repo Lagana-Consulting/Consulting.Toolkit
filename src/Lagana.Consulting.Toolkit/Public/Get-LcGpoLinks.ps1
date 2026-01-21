@@ -2,12 +2,15 @@ function Get-LcGpoLinks {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext,
 
     [ValidateSet('OneLevel','Subtree')]
     [string]$Scope = 'OneLevel'
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-ADOrganizationalUnit -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available (Get-ADOrganizationalUnit missing)."

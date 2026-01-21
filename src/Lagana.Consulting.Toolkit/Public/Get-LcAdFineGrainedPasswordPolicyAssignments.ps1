@@ -2,11 +2,14 @@ function Get-LcAdFineGrainedPasswordPolicyAssignments {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext,
 
     [string]$LogPath
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-ADFineGrainedPasswordPolicy -ErrorAction SilentlyContinue)) {
     if ($LogPath) { Write-LcLog -Path $LogPath -Level WARN -Message "FGPP cmdlets not available; skipping FGPP assignments." }

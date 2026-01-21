@@ -2,11 +2,14 @@ function Get-LcGpoInventory {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext,
 
     [string]$LogPath
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-GPO -ErrorAction SilentlyContinue)) {
     if ($LogPath) { Write-LcLog -Path $LogPath -Level WARN -Message "GroupPolicy module not available; skipping GPO inventory." }

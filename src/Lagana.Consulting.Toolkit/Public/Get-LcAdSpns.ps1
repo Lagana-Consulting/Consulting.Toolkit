@@ -2,9 +2,12 @@ function Get-LcAdSpns {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
-    [object]$DomainContext
+    $DomainContext
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-ADObject -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available (Get-ADObject missing)."

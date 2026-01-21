@@ -2,12 +2,15 @@ function Get-LcAdOuDelegationAcls {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     $DomainContext,
 
-    [ValidateSet('OneLevel', 'Subtree')]
+    [ValidateSet('OneLevel','Subtree')]
     [string]$Scope = 'OneLevel'
   )
+
+  if (-not $DomainContext) {
+    throw "DomainContext cannot be null."
+  }
 
   if (-not (Get-Command Get-Acl -ErrorAction SilentlyContinue)) {
     throw "Get-Acl not available."
