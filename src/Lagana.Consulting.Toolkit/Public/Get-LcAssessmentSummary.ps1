@@ -79,27 +79,27 @@ function Get-LcAssessmentSummary {
     $objectsRC4OnlyPct = if ($allObjects.Count -gt 0) { [math]::Round(($objectsRC4OnlyCount / $allObjects.Count) * 100, 2) } else { 0 }
 
     # Extended assessment metrics
-    $emptyGroupsCount = if ($EmptyGroupsData) { $EmptyGroupsData.Count } else { 0 }
-    $duplicateSpnsCount = if ($DuplicateSpnsData) { $DuplicateSpnsData.Count } else { 0 }
-    $weakPasswordPoliciesCount = if ($WeakPasswordPoliciesData) { ($WeakPasswordPoliciesData | Where-Object { $_.WeaknessCount -ge 3 }).Count } else { 0 }
+    $emptyGroupsCount = if ($EmptyGroupsData) { @($EmptyGroupsData).Count } else { 0 }
+    $duplicateSpnsCount = if ($DuplicateSpnsData) { @($DuplicateSpnsData).Count } else { 0 }
+    $weakPasswordPoliciesCount = if ($WeakPasswordPoliciesData) { @($WeakPasswordPoliciesData | Where-Object { $_.WeaknessCount -ge 3 }).Count } else { 0 }
 
-    $highDepthGroupsCount = if ($GroupNestingData) { ($GroupNestingData | Where-Object { $_.Depth -ge 5 }).Count } else { 0 }
-    $highDepthOUsCount = if ($OuDepthData) { ($OuDepthData | Where-Object { $_.Depth -ge 5 }).Count } else { 0 }
+    $highDepthGroupsCount = if ($GroupNestingData) { @($GroupNestingData | Where-Object { $_.Depth -ge 5 }).Count } else { 0 }
+    $highDepthOUsCount = if ($OuDepthData) { @($OuDepthData | Where-Object { $_.Depth -ge 5 }).Count } else { 0 }
 
-    $crossDomainDependenciesCount = if ($CrossDomainMembershipData) { $CrossDomainMembershipData.Count } else { 0 }
+    $crossDomainDependenciesCount = if ($CrossDomainMembershipData) { @($CrossDomainMembershipData).Count } else { 0 }
 
-    $disabledUsersCount = if ($DisabledAccountsData) { ($DisabledAccountsData | Where-Object { $_.ObjectClass -eq 'User' }).Count } else { 0 }
-    $disabledComputersCount = if ($DisabledAccountsData) { ($DisabledAccountsData | Where-Object { $_.ObjectClass -eq 'Computer' }).Count } else { 0 }
+    $disabledUsersCount = if ($DisabledAccountsData) { @($DisabledAccountsData | Where-Object { $_.ObjectClass -eq 'User' }).Count } else { 0 }
+    $disabledComputersCount = if ($DisabledAccountsData) { @($DisabledAccountsData | Where-Object { $_.ObjectClass -eq 'Computer' }).Count } else { 0 }
 
-    $adminSdHolderImpactCount = if ($AdminSdHolderData) { $AdminSdHolderData.Count } else { 0 }
+    $adminSdHolderImpactCount = if ($AdminSdHolderData) { @($AdminSdHolderData).Count } else { 0 }
 
-    $fsmoUnavailableCount = if ($FsmoAvailabilityData) { ($FsmoAvailabilityData | Where-Object { $_.IsAvailable -eq $false }).Count } else { 0 }
+    $fsmoUnavailableCount = if ($FsmoAvailabilityData) { @($FsmoAvailabilityData | Where-Object { $_.IsAvailable -eq $false }).Count } else { 0 }
 
-    $highCostSiteLinksCount = if ($SiteLinkData) { ($SiteLinkData | Where-Object { $_.Assessment -eq 'High' -or $_.Assessment -eq 'Very High' }).Count } else { 0 }
+    $highCostSiteLinksCount = if ($SiteLinkData) { @($SiteLinkData | Where-Object { $_.Assessment -eq 'High' -or $_.Assessment -eq 'Very High' }).Count } else { 0 }
 
-    $lowTombstoneLifetimeCount = if ($TombstoneData) { ($TombstoneData | Where-Object { $_.Status -eq 'Low (Risk)' }).Count } else { 0 }
+    $lowTombstoneLifetimeCount = if ($TombstoneData) { @($TombstoneData | Where-Object { $_.Status -eq 'Low (Risk)' }).Count } else { 0 }
 
-    $topServiceTypesCount = if ($TopSpnsData) { $TopSpnsData.Count } else { 0 }
+    $topServiceTypesCount = if ($TopSpnsData) { @($TopSpnsData).Count } else { 0 }
 
     [pscustomobject]@{
         RunTimestamp                 = (Get-Date).ToString('M/d/yyyy h:mm:ss tt')
