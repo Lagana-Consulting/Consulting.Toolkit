@@ -19,11 +19,12 @@
     'Confirm-LcTenant',
     'Connect-LcGraph',
 
-    # Run layout + schema
+    # Run layout + schema + reporting
     'New-LcRunLayout',
     'Write-LcSchemaCsv',
     'Get-LcSchemaDefinitions',
     'Export-LcSchemas',
+    'New-LcAssessmentReport',
 
     # Forest + domains
     'Get-LcAdForest',
