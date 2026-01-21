@@ -67,7 +67,7 @@ function Find-LcAdObjectConflicts {
     if ($mail) { $targetMail[$mail.ToLowerInvariant()] = $t }
   }
 
-  $rows = New-Object System.Collections.Generic.List[object]
+  $rows = @()
 
   foreach ($s in $Source) {
     $sam  = _getProp $s $defaults.Sam
@@ -76,42 +76,42 @@ function Find-LcAdObjectConflicts {
     $name = _getProp $s $defaults.Name
     $mail = _getProp $s $defaults.Mail
 
-    $conflicts = New-Object System.Collections.Generic.List[string]
-    $with = New-Object System.Collections.Generic.List[string]
+    $conflicts = @()
+    $with = @()
 
     if ($sam -and $targetSam.ContainsKey($sam.ToLowerInvariant())) {
-      $conflicts.Add('SamAccountName')
-      $with.Add((_getProp $targetSam[$sam.ToLowerInvariant()] $defaults.Sam))
+      $conflicts += 'SamAccountName'
+      $with += (_getProp $targetSam[$sam.ToLowerInvariant()] $defaults.Sam)
     }
 
     if ($ObjectType -eq 'User') {
       if ($upn -and $targetUpn.ContainsKey($upn.ToLowerInvariant())) {
-        $conflicts.Add('UserPrincipalName')
-        $with.Add((_getProp $targetUpn[$upn.ToLowerInvariant()] $defaults.Upn))
+        $conflicts += 'UserPrincipalName'
+        $with += (_getProp $targetUpn[$upn.ToLowerInvariant()] $defaults.Upn)
       }
       if ($mail -and $targetMail.ContainsKey($mail.ToLowerInvariant())) {
-        $conflicts.Add('Mail')
-        $with.Add((_getProp $targetMail[$mail.ToLowerInvariant()] $defaults.Mail))
+        $conflicts += 'Mail'
+        $with += (_getProp $targetMail[$mail.ToLowerInvariant()] $defaults.Mail)
       }
     }
 
     if ($ObjectType -eq 'Computer') {
       if ($dns -and $targetDns.ContainsKey($dns.ToLowerInvariant())) {
-        $conflicts.Add('DnsHostName')
-        $with.Add((_getProp $targetDns[$dns.ToLowerInvariant()] $defaults.Dns))
+        $conflicts += 'DnsHostName'
+        $with += (_getProp $targetDns[$dns.ToLowerInvariant()] $defaults.Dns)
       }
       # Optional additional collision on Name
       if ($name -and $targetName.ContainsKey($name.ToLowerInvariant())) {
-        $conflicts.Add('Name')
-        $with.Add((_getProp $targetName[$name.ToLowerInvariant()] $defaults.Name))
+        $conflicts += 'Name'
+        $with += (_getProp $targetName[$name.ToLowerInvariant()] $defaults.Name)
       }
     }
 
     if ($ObjectType -eq 'Group') {
       # Groups sometimes collide on Name even if sam differs
       if ($name -and $targetName.ContainsKey($name.ToLowerInvariant())) {
-        $conflicts.Add('Name')
-        $with.Add((_getProp $targetName[$name.ToLowerInvariant()] $defaults.Name))
+        $conflicts += 'Name'
+        $with += (_getProp $targetName[$name.ToLowerInvariant()] $defaults.Name)
       }
     }
 
@@ -140,7 +140,7 @@ function Find-LcAdObjectConflicts {
       }
     }
 
-    $rows.Add([pscustomobject]@{
+    $rows += [pscustomobject]@{
       ObjectType          = $ObjectType
       SourceSamAccountName= $sam
       SourceName          = $name
@@ -153,7 +153,7 @@ function Find-LcAdObjectConflicts {
 
       Recommendation      = $recommendation
       SuggestedTargetSAM  = $suggestedTargetSam
-    })
+    }
   }
 
   return @($rows)

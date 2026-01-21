@@ -3,7 +3,7 @@ function Get-LcAdUsers {
   param(
     [Parameter(Mandatory)]
     [ValidateNotNull()]
-    [object]$DomainContext,
+    $DomainContext,
 
     [datetime]$Now = (Get-Date),
 
@@ -20,9 +20,9 @@ function Get-LcAdUsers {
   $nowUtc = $Now.ToUniversalTime()
 
   $props = @(
-    'Enabled','UserPrincipalName','Mail','whenCreated','whenChanged',
-    'LastLogonTimestamp','PasswordLastSet','adminCount','SIDHistory',
-    'ServicePrincipalName','msDS-SupportedEncryptionTypes','Description'
+    'Enabled', 'UserPrincipalName', 'Mail', 'whenCreated', 'whenChanged',
+    'LastLogonTimestamp', 'PasswordLastSet', 'adminCount', 'SIDHistory',
+    'ServicePrincipalName', 'msDS-SupportedEncryptionTypes', 'Description'
   )
 
   $users = @()
@@ -52,37 +52,37 @@ function Get-LcAdUsers {
     $spnCount = @($u.ServicePrincipalName).Count
 
     $encTypes = Convert-LcEncryptionTypes -EncryptionTypeValue $u.'msDS-SupportedEncryptionTypes'
-    $encRisk  = Get-LcEncryptionRisk    -EncryptionTypeValue $u.'msDS-SupportedEncryptionTypes'
+    $encRisk = Get-LcEncryptionRisk    -EncryptionTypeValue $u.'msDS-SupportedEncryptionTypes'
 
     [pscustomobject]@{
-      DomainFqdn                 = $domain
-      SamAccountName             = [string]$u.SamAccountName
-      Name                       = [string]$u.Name
-      DistinguishedName          = [string]$u.DistinguishedName
-      Enabled                    = [bool]$u.Enabled
-      UserPrincipalName          = [string]$u.UserPrincipalName
-      Mail                       = [string]$u.Mail
-      UPNSuffix                  = $upnSuffix
-      IsKnownUpnSuffix           = $isKnownSuffix
-      IsNonRoutableUpnSuffix     = [bool]$isNonRoutable
-      WhenCreated                = $u.whenCreated
-      WhenChanged                = $u.whenChanged
+      DomainFqdn                   = $domain
+      SamAccountName               = [string]$u.SamAccountName
+      Name                         = [string]$u.Name
+      DistinguishedName            = [string]$u.DistinguishedName
+      Enabled                      = [bool]$u.Enabled
+      UserPrincipalName            = [string]$u.UserPrincipalName
+      Mail                         = [string]$u.Mail
+      UPNSuffix                    = $upnSuffix
+      IsKnownUpnSuffix             = $isKnownSuffix
+      IsNonRoutableUpnSuffix       = [bool]$isNonRoutable
+      WhenCreated                  = $u.whenCreated
+      WhenChanged                  = $u.whenChanged
 
-      LastLogonTimestampUtc      = $lltUtc
-      LastLogonDays              = $lastLogonDays
+      LastLogonTimestampUtc        = $lltUtc
+      LastLogonDays                = $lastLogonDays
 
-      PasswordLastSetUtc         = $pwdUtc
-      PasswordAgeDays            = $passwordAgeDays
+      PasswordLastSetUtc           = $pwdUtc
+      PasswordAgeDays              = $passwordAgeDays
 
-      AdminCount                 = [int]($u.adminCount -as [int])
-      SidHistoryCount            = [int]$sidHistoryCount
-      SPNCount                   = [int]$spnCount
+      AdminCount                   = [int]($u.adminCount -as [int])
+      SidHistoryCount              = [int]$sidHistoryCount
+      SPNCount                     = [int]$spnCount
 
       MsDsSupportedEncryptionTypes = $u.'msDS-SupportedEncryptionTypes'
-      EncryptionTypes            = ($encTypes -join ';')
-      EncryptionRisk             = $encRisk
+      EncryptionTypes              = ($encTypes -join ';')
+      EncryptionRisk               = $encRisk
 
-      Description                = [string]$u.Description
+      Description                  = [string]$u.Description
     }
   }
 }

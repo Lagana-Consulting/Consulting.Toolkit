@@ -16,11 +16,11 @@ function Get-LcPrivilegedAccounts {
   $privGroupNames = Get-LcPrivilegedGroupNames
 
   # Resolve group DNs that exist in this domain
-  $groups = New-Object System.Collections.Generic.List[object]
+  $groups = @()
   foreach ($gn in $privGroupNames) {
     try {
       $g = Get-ADGroup -Identity $gn -Server $server -ErrorAction Stop
-      $groups.Add($g)
+      $groups += $g
     } catch {
       # group not found in domain, skip
     }
@@ -39,11 +39,11 @@ function Get-LcPrivilegedAccounts {
           SamAccountName    = $sam
           DistinguishedName = [string]$m.DistinguishedName
           InPrivGroups      = $true
-          PrivGroups        = New-Object System.Collections.Generic.List[string]
+          PrivGroups        = @()
           AdminCount        = $false
         }
       }
-      $bySam[$sam].PrivGroups.Add([string]$g.Name)
+      $bySam[$sam].PrivGroups += [string]$g.Name
     }
   }
 
@@ -63,7 +63,7 @@ function Get-LcPrivilegedAccounts {
         SamAccountName    = $sam
         DistinguishedName = [string]$u.DistinguishedName
         InPrivGroups      = $false
-        PrivGroups        = New-Object System.Collections.Generic.List[string]
+        PrivGroups        = @()
         AdminCount        = $true
       }
     } else {
