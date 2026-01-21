@@ -18,7 +18,7 @@ function Get-LcTopSpnsByType {
 
     # Extract service type (first part before /)
     $spnTypes = $allSpns | ForEach-Object {
-        $spnValue = $_.ServicePrincipalName
+        $spnValue = $_.SPN
         $serviceType = if ($spnValue -match '^([^/]+)/') { $Matches[1] } else { 'Unknown' }
 
         [pscustomobject]@{
