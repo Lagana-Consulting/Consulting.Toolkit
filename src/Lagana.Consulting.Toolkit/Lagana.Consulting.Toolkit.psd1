@@ -63,6 +63,20 @@
     'Get-LcMigrationRiskFlags',
     'Get-LcMigrationRiskFlagsSummary',
 
+    # Extended assessment / analysis
+    'Get-LcGroupNestingDepth',
+    'Get-LcCrossDomainGroupMembership',
+    'Get-LcWeakPasswordPolicies',
+    'Get-LcEmptyGroups',
+    'Get-LcDuplicateSpns',
+    'Get-LcTopSpnsByType',
+    'Get-LcOuDepthAnalysis',
+    'Get-LcDisabledAccounts',
+    'Get-LcAdminSdHolderImpact',
+    'Get-LcTombstoneLifetime',
+    'Get-LcSiteLinkCostAnalysis',
+    'Get-LcFsmoRoleAvailability',
+
     #ADMT Functions
     'Find-LcAdObjectConflicts',
     'Export-LcAdmtIncludeFileUsers',
