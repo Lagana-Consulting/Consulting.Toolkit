@@ -65,12 +65,29 @@ function New-LcAssessmentReport {
         }
     }
 
-    # Parse risk categories
+    # Parse risk categories based on flag count (flags indicate risk severity)
+    # High-risk flags: PasswordAgeOver365d, StaleLastLogonOver180d, Kerberos_NoAES, UPN_NonRoutableSuffix, HasSPN
     $riskCounts = @{
-        Critical = ($risks | Where-Object { $_.RiskLevel -eq 'Critical' }).Count
-        High     = ($risks | Where-Object { $_.RiskLevel -eq 'High' }).Count
-        Medium   = ($risks | Where-Object { $_.RiskLevel -eq 'Medium' }).Count
-        Low      = ($risks | Where-Object { $_.RiskLevel -eq 'Low' }).Count
+        Critical = 0
+        High     = 0
+        Medium   = 0
+        Low      = 0
+    }
+
+    foreach ($risk in $risks) {
+        $flagCount = ($risk.Flags -split ';').Count
+        if ($flagCount -ge 3) {
+            $riskCounts.Critical++
+        } elseif ($flagCount -eq 2) {
+            $riskCounts.High++
+        } elseif ($flagCount -eq 1) {
+            # Determine medium vs low by flag type
+            if ($risk.Flags -match 'PasswordAgeOver365d|Kerberos_NoAES') {
+                $riskCounts.Medium++
+            } else {
+                $riskCounts.Low++
+            }
+        }
     }
 
     # Calculate overall health score
@@ -388,6 +405,59 @@ function New-LcAssessmentReport {
             Title       = "AdminSDHolder Protected Accounts"
             Description = "$([int]$summary.AdminSdHolderImpactCount) accounts have adminCount=1 and are protected by AdminSDHolder"
             Action      = "Regularly audit privileged account permissions; remove unnecessary protections"
+        }
+    }
+
+    # Add findings from risk flags data
+    if (@($risks).Count -gt 0) {
+        $staleCount = @($risks | Where-Object { $_.Flags -match 'StaleLastLogonOver180d' }).Count
+        if ($staleCount -gt 0) {
+            $findings += @{
+                Level       = 'high'
+                Title       = "Accounts with Stale Logon Activity"
+                Description = "$staleCount accounts have not logged on in 180+ days"
+                Action      = "Audit and potentially disable inactive accounts"
+            }
+        }
+
+        $pwAgeCount = @($risks | Where-Object { $_.Flags -match 'PasswordAgeOver365d' }).Count
+        if ($pwAgeCount -gt 0) {
+            $findings += @{
+                Level       = 'high'
+                Title       = "Accounts with Expired Password Age"
+                Description = "$pwAgeCount accounts have not changed password in 365+ days"
+                Action      = "Force password reset for affected accounts"
+            }
+        }
+
+        $aesCount = @($risks | Where-Object { $_.Flags -match 'Kerberos_NoAES' }).Count
+        if ($aesCount -gt 0) {
+            $findings += @{
+                Level       = 'high'
+                Title       = "Weak Kerberos Encryption"
+                Description = "$aesCount accounts do not support AES encryption"
+                Action      = "Update encryption types to AES128-CTS-HMAC-SHA1-96 minimum"
+            }
+        }
+
+        $upnCount = @($risks | Where-Object { $_.Flags -match 'UPN_NonRoutableSuffix' }).Count
+        if ($upnCount -gt 0) {
+            $findings += @{
+                Level       = 'medium'
+                Title       = "Non-Routable UPN Suffixes"
+                Description = "$upnCount accounts use non-routable UPN suffixes"
+                Action      = "Review and update UPN suffixes to match organizational domain names"
+            }
+        }
+
+        $disabledCount = @($risks | Where-Object { $_.Flags -match 'Disabled' }).Count
+        if ($disabledCount -gt 0) {
+            $findings += @{
+                Level       = 'low'
+                Title       = "Disabled Account Migration Flags"
+                Description = "$disabledCount disabled accounts have other risk indicators"
+                Action      = "Review for cleanup if objects are no longer needed"
+            }
         }
     }
 
