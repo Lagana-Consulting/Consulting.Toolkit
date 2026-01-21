@@ -2,7 +2,6 @@ function Get-LcAdFineGrainedPasswordPolicyAssignments {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    [ValidateNotNull()]
     [object]$DomainContext,
 
     [string]$LogPath
@@ -34,12 +33,12 @@ function Get-LcAdFineGrainedPasswordPolicyAssignments {
       if ([string]::IsNullOrWhiteSpace([string]$dn)) { continue }
 
       $rows.Add([pscustomobject]@{
-        DomainFqdn        = $domain
-        PolicyName        = [string]$p.Name
-        PolicyDN          = [string]$p.DistinguishedName
-        Precedence        = $p.Precedence
-        AppliesToDN       = [string]$dn
-      })
+          DomainFqdn  = $domain
+          PolicyName  = [string]$p.Name
+          PolicyDN    = [string]$p.DistinguishedName
+          Precedence  = $p.Precedence
+          AppliesToDN = [string]$dn
+        })
     }
   }
 
