@@ -71,7 +71,7 @@ function Get-LcAssessmentSummary {
     $usersNonRoutableUpnPct = if ($usersTotal -gt 0) { [math]::Round(($usersNonRoutableUpnCount / $usersTotal) * 100, 2) } else { 0 }
 
     # RC4-only objects (EncryptionRisk = High and no AES)
-    $allObjects = @($AllUsers) + @($AllComputers)
+    $allObjects = @(@($AllUsers) + @($AllComputers))
     $objectsRC4Only = @($allObjects | Where-Object {
             $_.EncryptionRisk -eq 'High' -and $_.EncryptionTypes -notmatch 'AES'
         })
