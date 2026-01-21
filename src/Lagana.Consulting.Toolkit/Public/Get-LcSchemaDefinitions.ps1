@@ -142,6 +142,19 @@ function Get-LcSchemaDefinitions {
     [pscustomobject]@{ Column = 'ObjectsRC4OnlyCount'; Type = 'int'; Description = 'Objects with RC4-only encryption'; Example = '0'; Notes = 'Security risk' }
     [pscustomobject]@{ Column = 'ObjectsRC4OnlyPct'; Type = 'decimal'; Description = 'RC4-only percentage'; Example = '0'; Notes = '' }
     [pscustomobject]@{ Column = 'PrivilegedAccountsCount'; Type = 'int'; Description = 'Privileged account count'; Example = '10'; Notes = 'Security surface area' }
+    [pscustomobject]@{ Column = 'EmptyGroupsCount'; Type = 'int'; Description = 'Groups with zero members'; Example = '5'; Notes = 'Cleanup candidate' }
+    [pscustomobject]@{ Column = 'DuplicateSpnsCount'; Type = 'int'; Description = 'Duplicate SPN conflicts'; Example = '0'; Notes = 'Kerberos failure risk' }
+    [pscustomobject]@{ Column = 'WeakPasswordPoliciesCount'; Type = 'int'; Description = 'Policies with 3+ weaknesses'; Example = '1'; Notes = 'Security risk' }
+    [pscustomobject]@{ Column = 'HighDepthGroupsCount'; Type = 'int'; Description = 'Groups nested >=5 levels'; Example = '3'; Notes = 'Token bloat risk' }
+    [pscustomobject]@{ Column = 'HighDepthOUsCount'; Type = 'int'; Description = 'OUs at depth >=5'; Example = '2'; Notes = 'Complexity indicator' }
+    [pscustomobject]@{ Column = 'CrossDomainDependenciesCount'; Type = 'int'; Description = 'Groups with cross-domain members'; Example = '7'; Notes = 'Migration dependency' }
+    [pscustomobject]@{ Column = 'DisabledUsersCount'; Type = 'int'; Description = 'Disabled user accounts'; Example = '12'; Notes = 'Cleanup candidate' }
+    [pscustomobject]@{ Column = 'DisabledComputersCount'; Type = 'int'; Description = 'Disabled computer accounts'; Example = '8'; Notes = 'Cleanup candidate' }
+    [pscustomobject]@{ Column = 'AdminSdHolderImpactCount'; Type = 'int'; Description = 'Objects with adminCount=1'; Example = '15'; Notes = 'ACL inheritance disabled' }
+    [pscustomobject]@{ Column = 'FsmoUnavailableCount'; Type = 'int'; Description = 'Unavailable FSMO role holders'; Example = '0'; Notes = 'Critical infrastructure issue' }
+    [pscustomobject]@{ Column = 'HighCostSiteLinksCount'; Type = 'int'; Description = 'Site links with cost >500'; Example = '1'; Notes = 'Replication efficiency' }
+    [pscustomobject]@{ Column = 'LowTombstoneLifetimeCount'; Type = 'int'; Description = 'Tombstone lifetime <180d'; Example = '0'; Notes = 'Replication health risk' }
+    [pscustomobject]@{ Column = 'TopServiceTypesCount'; Type = 'int'; Description = 'Count of top service types analyzed'; Example = '10'; Notes = 'Service dependency insight' }
   )
 
   # Migration Risk Flags
