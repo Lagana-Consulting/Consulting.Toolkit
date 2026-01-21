@@ -38,9 +38,9 @@ function Get-LcAssessmentSummary {
     $forest = Get-LcAdForest -ForestName $ForestName
     $domains = @(Get-LcAdDomains -Forest $forest)
 
-    $usersTotal = $AllUsers.Count
-    $groupsTotal = $AllGroups.Count
-    $computersTotal = $AllComputers.Count
+    $usersTotal = @($AllUsers).Count
+    $groupsTotal = @($AllGroups).Count
+    $computersTotal = @($AllComputers).Count
 
     # Stale users (LastLogonDays > threshold)
     $usersStale = @($AllUsers | Where-Object {
@@ -119,7 +119,7 @@ function Get-LcAssessmentSummary {
         UsersNonRoutableUPNPct       = $usersNonRoutableUpnPct
         ObjectsRC4OnlyCount          = $objectsRC4OnlyCount
         ObjectsRC4OnlyPct            = $objectsRC4OnlyPct
-        PrivilegedAccountsCount      = $PrivilegedAccounts.Count
+        PrivilegedAccountsCount      = @($PrivilegedAccounts).Count
         EmptyGroupsCount             = $emptyGroupsCount
         DuplicateSpnsCount           = $duplicateSpnsCount
         WeakPasswordPoliciesCount    = $weakPasswordPoliciesCount
