@@ -174,5 +174,104 @@ function Get-LcSchemaDefinitions {
     [pscustomobject]@{ Column = 'Count'; Type = 'int'; Description = 'Count of objects with this flag'; Example = '15'; Notes = '' }
   )
 
+  # Certificate Services Inventory
+  $schemas['CertificateServices_Inventory'] = @(
+    [pscustomobject]@{ Column = 'ItemType'; Type = 'string'; Description = 'PKI component type'; Example = 'EnterpriseCA'; Notes = 'CertificateTemplate, EnterpriseCA, or NTAuthStore' }
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Object name'; Example = 'ContosoRootCA'; Notes = '' }
+    [pscustomobject]@{ Column = 'DisplayName'; Type = 'string'; Description = 'Display name'; Example = 'Contoso Root CA'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectDN'; Type = 'string'; Description = 'Distinguished name'; Example = 'CN=ContosoRootCA,CN=Enrollment Services,...'; Notes = '' }
+    [pscustomobject]@{ Column = 'Details'; Type = 'string'; Description = 'Additional details'; Example = 'Host: dc01.contoso.com'; Notes = 'OID, hostname, or certificate count' }
+    [pscustomobject]@{ Column = 'ForestName'; Type = 'string'; Description = 'Forest name'; Example = 'contoso.com'; Notes = '' }
+  )
+
+  # DNS Zone Inventory
+  $schemas['DnsZone_Inventory'] = @(
+    [pscustomobject]@{ Column = 'ZoneName'; Type = 'string'; Description = 'DNS zone name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Scope'; Type = 'string'; Description = 'Replication scope'; Example = 'Domain'; Notes = 'Forest or Domain' }
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'DN'; Type = 'string'; Description = 'Distinguished name'; Example = 'DC=contoso.com,CN=MicrosoftDNS,...'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Creation timestamp'; Example = '1/1/2020 12:00:00 AM'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Last modified timestamp'; Example = '1/15/2026 3:45:00 PM'; Notes = '' }
+    [pscustomobject]@{ Column = 'IntegrationType'; Type = 'string'; Description = 'Integration type'; Example = 'AD-Integrated'; Notes = '' }
+  )
+
+  # DHCP Scope Analysis
+  $schemas['Dhcp_ScopeAnalysis'] = @(
+    [pscustomobject]@{ Column = 'DhcpServerName'; Type = 'string'; Description = 'DHCP server hostname'; Example = 'dhcp01.contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'DN'; Type = 'string'; Description = 'Distinguished name'; Example = 'CN=dhcp01.contoso.com,...'; Notes = '' }
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Status'; Type = 'string'; Description = 'Authorization status'; Example = 'Authorized'; Notes = 'Authorized or No Authorized Servers' }
+    [pscustomobject]@{ Column = 'Notes'; Type = 'string'; Description = 'Additional notes'; Example = 'Scope details require DHCP module'; Notes = '' }
+  )
+
+  # SYSVOL Size Analysis
+  $schemas['Sysvol_SizeAnalysis'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'SysvolPath'; Type = 'string'; Description = 'SYSVOL UNC path'; Example = '\\contoso.com\SYSVOL\contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'SizeGB'; Type = 'decimal'; Description = 'Total size in GB'; Example = '2.35'; Notes = '' }
+    [pscustomobject]@{ Column = 'GpoFolderCount'; Type = 'int'; Description = 'Count of GPO folders'; Example = '45'; Notes = '' }
+    [pscustomobject]@{ Column = 'Status'; Type = 'string'; Description = 'Health status'; Example = 'Warning'; Notes = 'OK, Warning, Critical, or Inaccessible' }
+    [pscustomobject]@{ Column = 'Recommendation'; Type = 'string'; Description = 'Action recommendation'; Example = 'Monitor size growth'; Notes = '' }
+  )
+
+  # Duplicate Objects for ADMT
+  $schemas['DuplicateObjects_ADMT'] = @(
+    [pscustomobject]@{ Column = 'ConflictType'; Type = 'string'; Description = 'Type of conflict'; Example = 'SamAccountName'; Notes = 'SamAccountName, UserPrincipalName, or Mail' }
+    [pscustomobject]@{ Column = 'ConflictValue'; Type = 'string'; Description = 'Conflicting value'; Example = 'jdoe'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectClasses'; Type = 'string'; Description = 'Object types involved'; Example = 'user; computer'; Notes = 'Semicolon-separated' }
+    [pscustomobject]@{ Column = 'ConflictCount'; Type = 'int'; Description = 'Number of conflicts'; Example = '2'; Notes = '' }
+    [pscustomobject]@{ Column = 'ConflictingDomains'; Type = 'string'; Description = 'Domains with conflicts'; Example = 'contoso.com; fabrikam.com'; Notes = 'Semicolon-separated' }
+    [pscustomobject]@{ Column = 'ConflictingDNs'; Type = 'string'; Description = 'All conflicting DNs'; Example = 'CN=jdoe,OU=Users,DC=contoso,DC=com | CN=jdoe,...'; Notes = 'Pipe-separated' }
+    [pscustomobject]@{ Column = 'Severity'; Type = 'string'; Description = 'Impact severity'; Example = 'High'; Notes = 'High or Medium' }
+    [pscustomobject]@{ Column = 'Recommendation'; Type = 'string'; Description = 'Remediation action'; Example = 'Rename before ADMT migration'; Notes = '' }
+  )
+
+  # Group Token Bloat
+  $schemas['GroupToken_Bloat'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'SAM account name'; Example = 'jdoe'; Notes = '' }
+    [pscustomobject]@{ Column = 'UserPrincipalName'; Type = 'string'; Description = 'UPN'; Example = 'jdoe@contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Distinguished name'; Example = 'CN=jdoe,OU=Users,DC=contoso,DC=com'; Notes = '' }
+    [pscustomobject]@{ Column = 'EstimatedSidCount'; Type = 'int'; Description = 'Estimated SIDs in token'; Example = '950'; Notes = 'Conservative estimate (direct groups + SID history)' }
+    [pscustomobject]@{ Column = 'DirectGroupCount'; Type = 'int'; Description = 'Direct group memberships'; Example = '120'; Notes = '' }
+    [pscustomobject]@{ Column = 'SidHistoryCount'; Type = 'int'; Description = 'SID history entries'; Example = '5'; Notes = '' }
+    [pscustomobject]@{ Column = 'Status'; Type = 'string'; Description = 'Token size status'; Example = 'Warning'; Notes = 'Warning or Critical' }
+    [pscustomobject]@{ Column = 'Severity'; Type = 'string'; Description = 'Impact severity'; Example = 'Medium'; Notes = 'Low, Medium, or High' }
+    [pscustomobject]@{ Column = 'Recommendation'; Type = 'string'; Description = 'Remediation action'; Example = 'Review group memberships for optimization'; Notes = '' }
+  )
+
+  # Trust Relationship Map
+  $schemas['Trust_RelationshipMap'] = @(
+    [pscustomobject]@{ Column = 'SourceDomain'; Type = 'string'; Description = 'Trusting domain'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'TargetDomain'; Type = 'string'; Description = 'Trusted domain'; Example = 'fabrikam.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Direction'; Type = 'string'; Description = 'Trust direction'; Example = 'Bidirectional'; Notes = 'Disabled, Inbound, Outbound, or Bidirectional' }
+    [pscustomobject]@{ Column = 'TrustType'; Type = 'string'; Description = 'Type of trust'; Example = 'Uplevel (AD)'; Notes = 'Downlevel (NT4), Uplevel (AD), MIT Kerberos, or DCE' }
+    [pscustomobject]@{ Column = 'IsTransitive'; Type = 'bool'; Description = 'Trust transitivity'; Example = 'True'; Notes = '' }
+    [pscustomobject]@{ Column = 'SIDFilteringEnabled'; Type = 'bool'; Description = 'SID filtering status'; Example = 'True'; Notes = 'Security feature' }
+    [pscustomobject]@{ Column = 'SelectiveAuth'; Type = 'bool'; Description = 'Selective authentication'; Example = 'False'; Notes = 'Restricts access' }
+    [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Trust creation timestamp'; Example = '1/1/2020 12:00:00 AM'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Last modified timestamp'; Example = '1/15/2026 3:45:00 PM'; Notes = '' }
+    [pscustomobject]@{ Column = 'SecurityNotes'; Type = 'string'; Description = 'Security observations'; Example = 'SID filtering enabled; Selective authentication'; Notes = 'Semicolon-separated' }
+    [pscustomobject]@{ Column = 'Recommendation'; Type = 'string'; Description = 'Action recommendation'; Example = 'Upgrade or remove legacy trust'; Notes = '' }
+  )
+
+  # GPO Performance Analysis
+  $schemas['Gpo_PerformanceAnalysis'] = @(
+    [pscustomobject]@{ Column = 'GpoName'; Type = 'string'; Description = 'GPO display name'; Example = 'Default Domain Policy'; Notes = '' }
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'GpoId'; Type = 'string'; Description = 'GPO GUID'; Example = '{31B2F340-016D-11D2-945F-00C04FB984F9}'; Notes = '' }
+    [pscustomobject]@{ Column = 'UserVersion'; Type = 'int'; Description = 'User policy version'; Example = '150'; Notes = '' }
+    [pscustomobject]@{ Column = 'ComputerVersion'; Type = 'int'; Description = 'Computer policy version'; Example = '200'; Notes = '' }
+    [pscustomobject]@{ Column = 'TotalVersions'; Type = 'int'; Description = 'Total version changes'; Example = '350'; Notes = 'User + Computer versions' }
+    [pscustomobject]@{ Column = 'LinkCount'; Type = 'int'; Description = 'Number of GPO links'; Example = '8'; Notes = '' }
+    [pscustomobject]@{ Column = 'HasWmiFilter'; Type = 'bool'; Description = 'WMI filter applied'; Example = 'True'; Notes = 'Can slow processing' }
+    [pscustomobject]@{ Column = 'ComplexityScore'; Type = 'int'; Description = 'Complexity score'; Example = '7'; Notes = 'Higher = more complex' }
+    [pscustomobject]@{ Column = 'Status'; Type = 'string'; Description = 'Complexity status'; Example = 'High Complexity'; Notes = 'OK, Medium Complexity, or High Complexity' }
+    [pscustomobject]@{ Column = 'Severity'; Type = 'string'; Description = 'Impact severity'; Example = 'High'; Notes = 'Low, Medium, or High' }
+    [pscustomobject]@{ Column = 'PerformanceNotes'; Type = 'string'; Description = 'Performance observations'; Example = 'High version count (350); WMI filter applied'; Notes = 'Semicolon-separated' }
+    [pscustomobject]@{ Column = 'Recommendation'; Type = 'string'; Description = 'Optimization recommendation'; Example = 'Review for consolidation or simplification'; Notes = '' }
+  )
+
   return $schemas
 }
+

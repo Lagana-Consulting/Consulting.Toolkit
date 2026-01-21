@@ -76,6 +76,14 @@
     'Get-LcTombstoneLifetime',
     'Get-LcSiteLinkCostAnalysis',
     'Get-LcFsmoRoleAvailability',
+    'Get-LcCertificateServicesInventory',
+    'Get-LcDnsZoneInventory',
+    'Get-LcDhcpScopeAnalysis',
+    'Get-LcSysvolSizeAnalysis',
+    'Get-LcDuplicateObjectsForAdmt',
+    'Get-LcGroupTokenBloat',
+    'Get-LcTrustRelationshipMap',
+    'Get-LcGpoPerformanceAnalysis',
 
     #ADMT Functions
     'Find-LcAdObjectConflicts',
