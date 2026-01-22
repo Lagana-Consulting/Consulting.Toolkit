@@ -84,17 +84,17 @@ function New-LcMigrationReadinessChecklist {
         @{
           Item   = "All source users migrated to target";
           Status = if ([int]$sourceAssess.TotalUsers -le [int]$targetAssess.TotalUsers) { "Pass" } else { "Fail" };
-          Note   = "Source: $($sourceAssess.TotalUsers) → Target: $($targetAssess.TotalUsers)"
+          Note   = "Source: $($sourceAssess.TotalUsers) to Target: $($targetAssess.TotalUsers)"
         },
         @{
           Item   = "All source groups migrated to target";
           Status = if ([int]$sourceAssess.TotalGroups -le [int]$targetAssess.TotalGroups) { "Pass" } else { "Fail" };
-          Note   = "Source: $($sourceAssess.TotalGroups) → Target: $($targetAssess.TotalGroups)"
+          Note   = "Source: $($sourceAssess.TotalGroups) to Target: $($targetAssess.TotalGroups)"
         },
         @{
           Item   = "All source computers migrated to target";
           Status = if ([int]$sourceAssess.TotalComputers -le [int]$targetAssess.TotalComputers) { "Pass" } else { "Fail" };
-          Note   = "Source: $($sourceAssess.TotalComputers) → Target: $($targetAssess.TotalComputers)"
+          Note   = "Source: $($sourceAssess.TotalComputers) to Target: $($targetAssess.TotalComputers)"
         }
       )
     },
@@ -144,7 +144,7 @@ function New-LcMigrationReadinessChecklist {
         @{
           Item   = "Critical risk flags resolved in target";
           Status = if ($targetCritical -eq 0) { "Pass" } else { "Fail" };
-          Note   = "Source critical: $sourceCritical → Target critical: $targetCritical"
+          Note   = "Source critical: $sourceCritical to Target critical: $targetCritical"
         },
         @{
           Item   = "High risk items addressed";

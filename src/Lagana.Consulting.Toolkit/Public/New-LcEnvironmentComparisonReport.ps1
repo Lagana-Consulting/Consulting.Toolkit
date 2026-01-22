@@ -179,10 +179,10 @@ function New-LcEnvironmentComparisonReport {
   $htmlContent = ($htmlHeader -join "`n")
 
   if ($newDomains.Count -gt 0) {
-    $htmlContent += "<div class='warning'><strong>⚠ New Domains in Target:</strong> $($newDomains -join ', ')</div>"
+    $htmlContent += "<div class='warning'><strong>WARNING - New Domains in Target:</strong> $($newDomains -join ', ')</div>"
   }
   if ($missingDomains.Count -gt 0) {
-    $htmlContent += "<div class='warning'><strong>⚠ Domains Missing from Target:</strong> $($missingDomains -join ', ')</div>"
+    $htmlContent += "<div class='warning'><strong>WARNING - Domains Missing from Target:</strong> $($missingDomains -join ', ')</div>"
   }
 
   $htmlContent += "

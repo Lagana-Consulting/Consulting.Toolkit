@@ -1,5 +1,5 @@
 function New-LcMigrationPlanningReport {
-    <#
+  <#
     .SYNOPSIS
     Generate a migration planning report with complexity drivers, LOE estimates, and SOW outline.
 
@@ -12,122 +12,122 @@ function New-LcMigrationPlanningReport {
     .NOTES
     Reads forest-level and domain-level CSVs. Handles missing data gracefully.
     #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [ValidateScript({ Test-Path $_ -PathType Container })]
-        [string]$DiscoveryOutputPath,
-        [string]$OutputPath
-    )
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory)]
+    [ValidateScript({ Test-Path $_ -PathType Container })]
+    [string]$DiscoveryOutputPath,
+    [string]$OutputPath
+  )
 
-    if (-not $OutputPath) {
-        $ts = (Get-Date).ToString('yyyyMMdd-HHmmss')
-        $OutputPath = Join-Path $DiscoveryOutputPath "LC__Migration__Planning__Report__$ts.html"
+  if (-not $OutputPath) {
+    $ts = (Get-Date).ToString('yyyyMMdd-HHmmss')
+    $OutputPath = Join-Path $DiscoveryOutputPath "LC__Migration__Planning__Report__$ts.html"
+  }
+
+  # Helper: safe import
+  function _imp($p) { if (Test-Path $p) { try { @(Import-Csv $p) } catch { @() } } else { @() } }
+
+  # Root + nested paths
+  $forestPath = $DiscoveryOutputPath
+  $forest10 = Join-Path $DiscoveryOutputPath '10_forest'
+  $domains20 = Join-Path $DiscoveryOutputPath '20_domains'
+
+  # Forest summary
+  $forestSummaryFile = Get-ChildItem -Path $forestPath -Filter '*Assessment__Summary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+  if (-not $forestSummaryFile) {
+    $forestSummaryFile = Get-ChildItem -Path $forest10 -Filter '*Forest__Summary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+  }
+  $forestSummary = @()
+  if ($forestSummaryFile) { $forestSummary = @(Import-Csv $forestSummaryFile.FullName) }
+  $summaryRow = if ($forestSummary.Count -gt 0) { $forestSummary[0] } else { $null }
+
+  # Migration risk summary
+  $riskSummary = _imp((Get-ChildItem -Path $forestPath -Filter '*Migration__RiskFlagsSummary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+
+  # Forest analyses
+  $siteLinkCost = _imp((Get-ChildItem -Path $forest10 -Filter '*SiteLinkCostAnalysis*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+  $fsmoAvail = _imp((Get-ChildItem -Path $forest10 -Filter '*FsmoRoleAvailability*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+  $trustMap = _imp((Get-ChildItem -Path $forest10 -Filter '*TrustRelationshipMap*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+  $certSvc = _imp((Get-ChildItem -Path $forest10 -Filter '*CertificateServicesInventory*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+  $admtDup = _imp((Get-ChildItem -Path $forest10 -Filter '*DuplicateObjectsForAdmt*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+
+  # Domain folders
+  $domainDirs = @()
+  foreach ($root in @($DiscoveryOutputPath, $domains20)) {
+    if (Test-Path $root) {
+      $domainDirs += (Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^Domain-' })
     }
+  }
+  $domainDirs = $domainDirs | Sort-Object -Property FullName -Unique
 
-    # Helper: safe import
-    function _imp($p) { if (Test-Path $p) { try { @(Import-Csv $p) } catch { @() } } else { @() } }
+  # Aggregate identity
+  $usersTotal = 0; $groupsTotal = 0; $computersTotal = 0
+  $usersStale = 0; $computersStale = 0
+  foreach ($ddir in $domainDirs) {
+    $usersFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__Users__*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $groupsFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__Groups__*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $computersFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__ComputersAll__*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $users = if ($usersFile) { @(Import-Csv $usersFile.FullName) } else { @() }
+    $groups = if ($groupsFile) { @(Import-Csv $groupsFile.FullName) } else { @() }
+    $computers = if ($computersFile) { @(Import-Csv $computersFile.FullName) } else { @() }
+    $usersTotal += @($users).Count
+    $groupsTotal += @($groups).Count
+    $computersTotal += @($computers).Count
+    $usersStale += @($users | Where-Object { ($_.'LastLogonDays' -as [double]) -gt 180 }).Count
+    $computersStale += @($computers | Where-Object { ($_.'LastLogonDays' -as [double]) -gt 90 }).Count
+  }
 
-    # Root + nested paths
-    $forestPath = $DiscoveryOutputPath
-    $forest10 = Join-Path $DiscoveryOutputPath '10_forest'
-    $domains20 = Join-Path $DiscoveryOutputPath '20_domains'
+  # Other domain-level analyses to drive complexity
+  $groupNesting = @()
+  $ouDepth = @()
+  $crossDomain = @()
+  $emptyGroups = @()
+  $dupSpns = @()
+  $disabled = @()
+  $adminSd = @()
+  $tokenBloat = @()
+  $gpoInventory = @()
 
-    # Forest summary
-    $forestSummaryFile = Get-ChildItem -Path $forestPath -Filter '*Assessment__Summary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-    if (-not $forestSummaryFile) {
-        $forestSummaryFile = Get-ChildItem -Path $forest10 -Filter '*Forest__Summary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-    }
-    $forestSummary = @()
-    if ($forestSummaryFile) { $forestSummary = @(Import-Csv $forestSummaryFile.FullName) }
-    $summaryRow = if ($forestSummary.Count -gt 0) { $forestSummary[0] } else { $null }
+  foreach ($ddir in $domainDirs) {
+    $groupNesting += _imp((Get-ChildItem $ddir.FullName -Filter '*GroupNestingDepth*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+    $ouDepth += _imp((Get-ChildItem $ddir.FullName -Filter '*OuDepthAnalysis*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+    $crossDomain += _imp((Get-ChildItem $ddir.FullName -Filter '*CrossDomainGroupMembership*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+    $emptyGroups += _imp((Get-ChildItem $ddir.FullName -Filter '*EmptyGroups*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+    $dupSpns += _imp((Get-ChildItem $ddir.FullName -Filter '*DuplicateSpns*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+    $disabled += _imp((Get-ChildItem $ddir.FullName -Filter '*DisabledAccounts*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+    $adminSd += _imp((Get-ChildItem $ddir.FullName -Filter '*AdminSdHolderImpact*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+    $tokenBloat += _imp((Get-ChildItem $ddir.FullName -Filter '*GroupTokenBloat*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+    $gpoInventory += _imp((Get-ChildItem $ddir.FullName -Filter '*GPO__Inventory*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+  }
 
-    # Migration risk summary
-    $riskSummary = _imp((Get-ChildItem -Path $forestPath -Filter '*Migration__RiskFlagsSummary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+  # Complexity score (0-100): weighted drivers
+  $score = 0
+  $score += [math]::Min(30, [math]::Round(@($usersTotal / 1000.0) * 5))       # identity volume
+  $score += [math]::Min(15, (@($groupNesting | Where-Object { ($_.'NestingDepth' -as [int]) -ge 3 }).Count))
+  $score += [math]::Min(10, (@($ouDepth | Where-Object { ($_.'MaxDepth' -as [int]) -ge 6 }).Count))
+  $score += [math]::Min(10, (@($crossDomain).Count))                      # cross-domain dependencies
+  $score += [math]::Min(10, (@($dupSpns).Count))
+  $score += [math]::Min(10, (@($emptyGroups).Count))
+  $score += [math]::Min(10, (@($adminSd).Count))
+  $score += [math]::Min(10, (@($tokenBloat).Count))
+  $score += [math]::Min(10, (@($disabled).Count))
+  $score += [math]::Min(10, (@($trustMap).Count))
+  $score = [math]::Min(100, $score)
 
-    # Forest analyses
-    $siteLinkCost = _imp((Get-ChildItem -Path $forest10 -Filter '*SiteLinkCostAnalysis*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $fsmoAvail = _imp((Get-ChildItem -Path $forest10 -Filter '*FsmoRoleAvailability*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $trustMap = _imp((Get-ChildItem -Path $forest10 -Filter '*TrustRelationshipMap*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $certSvc = _imp((Get-ChildItem -Path $forest10 -Filter '*CertificateServicesInventory*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $admtDup = _imp((Get-ChildItem -Path $forest10 -Filter '*DuplicateObjectsForAdmt*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+  # LOE estimation (days) by phase
+  $usersWaves = [math]::Ceiling(($usersTotal) / 500.0)
+  $computersWaves = [math]::Ceiling(($computersTotal) / 250.0)
+  $depFactor = [math]::Min(5, @($crossDomain).Count / 5.0)
 
-    # Domain folders
-    $domainDirs = @()
-    foreach ($root in @($DiscoveryOutputPath, $domains20)) {
-        if (Test-Path $root) {
-            $domainDirs += (Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^Domain-' })
-        }
-    }
-    $domainDirs = $domainDirs | Sort-Object -Property FullName -Unique
+  $loeAssessment = [math]::Max(2, [math]::Ceiling(@($domainDirs).Count * 0.5))
+  $loeRemediation = [math]::Ceiling((@($dupSpns).Count + @($emptyGroups).Count + @($adminSd).Count + @($tokenBloat).Count + @($disabled).Count) / 50.0) + [math]::Ceiling(($usersStale + $computersStale) / 200.0)
+  $loeExecution = [math]::Ceiling(($usersWaves * 2) + ($computersWaves * 2) + $depFactor)
+  $loePost = 2
+  $loeTotal = $loeAssessment + $loeRemediation + $loeExecution + $loePost
 
-    # Aggregate identity
-    $usersTotal = 0; $groupsTotal = 0; $computersTotal = 0
-    $usersStale = 0; $computersStale = 0
-    foreach ($ddir in $domainDirs) {
-        $usersFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__Users__*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        $groupsFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__Groups__*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        $computersFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__ComputersAll__*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        $users = if ($usersFile) { @(Import-Csv $usersFile.FullName) } else { @() }
-        $groups = if ($groupsFile) { @(Import-Csv $groupsFile.FullName) } else { @() }
-        $computers = if ($computersFile) { @(Import-Csv $computersFile.FullName) } else { @() }
-        $usersTotal += @($users).Count
-        $groupsTotal += @($groups).Count
-        $computersTotal += @($computers).Count
-        $usersStale += @($users | Where-Object { ($_.'LastLogonDays' -as [double]) -gt 180 }).Count
-        $computersStale += @($computers | Where-Object { ($_.'LastLogonDays' -as [double]) -gt 90 }).Count
-    }
-
-    # Other domain-level analyses to drive complexity
-    $groupNesting = @()
-    $ouDepth = @()
-    $crossDomain = @()
-    $emptyGroups = @()
-    $dupSpns = @()
-    $disabled = @()
-    $adminSd = @()
-    $tokenBloat = @()
-    $gpoInventory = @()
-
-    foreach ($ddir in $domainDirs) {
-        $groupNesting += _imp((Get-ChildItem $ddir.FullName -Filter '*GroupNestingDepth*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $ouDepth += _imp((Get-ChildItem $ddir.FullName -Filter '*OuDepthAnalysis*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $crossDomain += _imp((Get-ChildItem $ddir.FullName -Filter '*CrossDomainGroupMembership*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $emptyGroups += _imp((Get-ChildItem $ddir.FullName -Filter '*EmptyGroups*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $dupSpns += _imp((Get-ChildItem $ddir.FullName -Filter '*DuplicateSpns*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $disabled += _imp((Get-ChildItem $ddir.FullName -Filter '*DisabledAccounts*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $adminSd += _imp((Get-ChildItem $ddir.FullName -Filter '*AdminSdHolderImpact*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $tokenBloat += _imp((Get-ChildItem $ddir.FullName -Filter '*GroupTokenBloat*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $gpoInventory += _imp((Get-ChildItem $ddir.FullName -Filter '*GPO__Inventory*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    }
-
-    # Complexity score (0-100): weighted drivers
-    $score = 0
-    $score += [math]::Min(30, [math]::Round(@($usersTotal / 1000.0) * 5))       # identity volume
-    $score += [math]::Min(15, (@($groupNesting | Where-Object { ($_.'NestingDepth' -as [int]) -ge 3 }).Count))
-    $score += [math]::Min(10, (@($ouDepth | Where-Object { ($_.'MaxDepth' -as [int]) -ge 6 }).Count))
-    $score += [math]::Min(10, (@($crossDomain).Count))                      # cross-domain dependencies
-    $score += [math]::Min(10, (@($dupSpns).Count))
-    $score += [math]::Min(10, (@($emptyGroups).Count))
-    $score += [math]::Min(10, (@($adminSd).Count))
-    $score += [math]::Min(10, (@($tokenBloat).Count))
-    $score += [math]::Min(10, (@($disabled).Count))
-    $score += [math]::Min(10, (@($trustMap).Count))
-    $score = [math]::Min(100, $score)
-
-    # LOE estimation (days) by phase
-    $usersWaves = [math]::Ceiling(($usersTotal) / 500.0)
-    $computersWaves = [math]::Ceiling(($computersTotal) / 250.0)
-    $depFactor = [math]::Min(5, @($crossDomain).Count / 5.0)
-
-    $loeAssessment = [math]::Max(2, [math]::Ceiling(@($domainDirs).Count * 0.5))
-    $loeRemediation = [math]::Ceiling((@($dupSpns).Count + @($emptyGroups).Count + @($adminSd).Count + @($tokenBloat).Count + @($disabled).Count) / 50.0) + [math]::Ceiling(($usersStale + $computersStale) / 200.0)
-    $loeExecution = [math]::Ceiling(($usersWaves * 2) + ($computersWaves * 2) + $depFactor)
-    $loePost = 2
-    $loeTotal = $loeAssessment + $loeRemediation + $loeExecution + $loePost
-
-    # Build HTML
-    $html = @"
+  # Build HTML
+  $html = @"
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -154,7 +154,7 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f5f5f5;color:#33
 </head>
 <body>
 <div class="container">
-<div class="hdr"><h1>Active Directory Migration Planning</h1><div>Forest: $($summaryRow.ForestName) • Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm')</div></div>
+<div class="hdr"><h1>Active Directory Migration Planning</h1><div>Forest: $($summaryRow.ForestName) | Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm')</div></div>
 
 <div class="grid">
   <div class="kpi"><div class="label">Users</div><div class="val">$usersTotal</div></div>
@@ -185,7 +185,7 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f5f5f5;color:#33
     <tr><th>Phase</th><th>Estimate (days)</th><th>Notes</th></tr>
     <tr><td>Assessment & Planning</td><td>$loeAssessment</td><td>Discovery review, wave design</td></tr>
     <tr><td>Remediation</td><td>$loeRemediation</td><td>SPN cleanup, empty groups, AdminSDHolder, disabled accounts</td></tr>
-    <tr><td>Migration Execution</td><td>$loeExecution</td><td>$usersWaves user waves • $computersWaves computer waves</td></tr>
+    <tr><td>Migration Execution</td><td>$loeExecution</td><td>$usersWaves user waves | $computersWaves computer waves</td></tr>
     <tr><td>Post-Migration</td><td>$loePost</td><td>Validation, decommission, final reporting</td></tr>
     <tr><td><strong>Total</strong></td><td><strong>$loeTotal</strong></td><td></td></tr>
   </table>
@@ -208,18 +208,18 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f5f5f5;color:#33
 </html>
 "@
 
-    $html | Out-File -FilePath $OutputPath -Encoding UTF8 -Force
+  $html | Out-File -FilePath $OutputPath -Encoding UTF8 -Force
 
-    [pscustomobject]@{
-        ReportPath      = $OutputPath
-        UsersTotal      = $usersTotal
-        GroupsTotal     = $groupsTotal
-        ComputersTotal  = $computersTotal
-        ComplexityScore = $score
-        LOE_Assessment  = $loeAssessment
-        LOE_Remediation = $loeRemediation
-        LOE_Execution   = $loeExecution
-        LOE_Post        = $loePost
-        LOE_Total       = $loeTotal
-    }
+  [pscustomobject]@{
+    ReportPath      = $OutputPath
+    UsersTotal      = $usersTotal
+    GroupsTotal     = $groupsTotal
+    ComputersTotal  = $computersTotal
+    ComplexityScore = $score
+    LOE_Assessment  = $loeAssessment
+    LOE_Remediation = $loeRemediation
+    LOE_Execution   = $loeExecution
+    LOE_Post        = $loePost
+    LOE_Total       = $loeTotal
+  }
 }

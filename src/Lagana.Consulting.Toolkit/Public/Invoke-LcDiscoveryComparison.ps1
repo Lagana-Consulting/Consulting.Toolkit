@@ -80,7 +80,7 @@ function Invoke-LcDiscoveryComparison {
   if (-not $sourceRunRoot) {
     throw "Source discovery failed: no output folder created"
   }
-  Write-Host "  ✓ Source discovery complete: $sourceRunRoot" -ForegroundColor Green
+  Write-Host "  [OK] Source discovery complete: $sourceRunRoot" -ForegroundColor Green
   Write-Host ""
 
   # ========================================
@@ -104,7 +104,7 @@ function Invoke-LcDiscoveryComparison {
   if (-not $targetRunRoot) {
     throw "Target discovery failed: no output folder created"
   }
-  Write-Host "  ✓ Target discovery complete: $targetRunRoot" -ForegroundColor Green
+  Write-Host "  [OK] Target discovery complete: $targetRunRoot" -ForegroundColor Green
   Write-Host ""
 
   # ========================================
@@ -112,7 +112,7 @@ function Invoke-LcDiscoveryComparison {
   # ========================================
   Write-Host "[3/5] Generating environment comparison report..." -ForegroundColor Yellow
   $comparisonReport = New-LcEnvironmentComparisonReport -SourceRunRoot $sourceRunRoot -TargetRunRoot $targetRunRoot -CustomerName $CustomerName
-  Write-Host "  ✓ Comparison report: $($comparisonReport.ReportPath)" -ForegroundColor Green
+  Write-Host "  [OK] Comparison report: $($comparisonReport.ReportPath)" -ForegroundColor Green
   Write-Host ""
 
   # ========================================
@@ -120,7 +120,7 @@ function Invoke-LcDiscoveryComparison {
   # ========================================
   Write-Host "[4/5] Generating migration readiness checklist..." -ForegroundColor Yellow
   $readinessChecklist = New-LcMigrationReadinessChecklist -SourceRunRoot $sourceRunRoot -TargetRunRoot $targetRunRoot -CustomerName $CustomerName
-  Write-Host "  ✓ Readiness checklist: $($readinessChecklist.ChecklistPath)" -ForegroundColor Green
+  Write-Host "  [OK] Readiness checklist: $($readinessChecklist.ChecklistPath)" -ForegroundColor Green
   Write-Host "    - $($readinessChecklist.PassItems) items passed automatically" -ForegroundColor Green
   Write-Host "    - $($readinessChecklist.FailItems) items require attention" -ForegroundColor Red
   Write-Host "    - $($readinessChecklist.ManualItems) items require manual verification" -ForegroundColor Yellow
@@ -132,20 +132,20 @@ function Invoke-LcDiscoveryComparison {
   Write-Host "[5/5] Generating detailed assessment and planning reports..." -ForegroundColor Yellow
 
   $assessmentSource = New-LcAssessmentReport -RunRoot $sourceRunRoot -OutputPath (Join-Path $sourceRunRoot 'LC__Assessment__Report__Source.html') -CustomerName $CustomerName
-  Write-Host "  ✓ Source assessment report: $($assessmentSource.ReportPath)" -ForegroundColor Green
+  Write-Host "  [OK] Source assessment report: $($assessmentSource.ReportPath)" -ForegroundColor Green
 
   $assessmentTarget = New-LcAssessmentReport -RunRoot $targetRunRoot -OutputPath (Join-Path $targetRunRoot 'LC__Assessment__Report__Target.html') -CustomerName $CustomerName
-  Write-Host "  ✓ Target assessment report: $($assessmentTarget.ReportPath)" -ForegroundColor Green
+  Write-Host "  [OK] Target assessment report: $($assessmentTarget.ReportPath)" -ForegroundColor Green
 
   $planningReport = New-LcMigrationPlanningReport -RunRoot $sourceRunRoot -OutputPath (Join-Path $sourceRunRoot 'LC__Migration__Planning__Report.html') -CustomerName $CustomerName
-  Write-Host "  ✓ Migration planning report: $($planningReport.ReportPath)" -ForegroundColor Green
+  Write-Host "  [OK] Migration planning report: $($planningReport.ReportPath)" -ForegroundColor Green
 
   $loeExcel = New-LcMigrationLoeExcel -RunRoot $sourceRunRoot -OutputPath (Join-Path $sourceRunRoot "LC__Migration__LOE__$($CustomerName)__Source.xlsx") -CustomerName $CustomerName
-  Write-Host "  ✓ LOE estimation workbook: $($loeExcel)" -ForegroundColor Green
+  Write-Host "  [OK] LOE estimation workbook: $($loeExcel)" -ForegroundColor Green
 
   Write-Host ""
   Write-Host "========================================" -ForegroundColor Cyan
-  Write-Host "✓ Discovery Comparison Complete" -ForegroundColor Green
+  Write-Host "[COMPLETE] Discovery Comparison Complete" -ForegroundColor Green
   Write-Host "========================================" -ForegroundColor Cyan
   Write-Host ""
 
@@ -161,14 +161,14 @@ function Invoke-LcDiscoveryComparison {
   Write-Host ""
 
   Write-Host "Comparison Reports:" -ForegroundColor Yellow
-  Write-Host "  • Environment Comparison: $($comparisonReport.ReportPath)" -ForegroundColor White
-  Write-Host "  • Readiness Checklist: $($readinessChecklist.ChecklistPath)" -ForegroundColor White
+  Write-Host "  - Environment Comparison: $($comparisonReport.ReportPath)" -ForegroundColor White
+  Write-Host "  - Readiness Checklist: $($readinessChecklist.ChecklistPath)" -ForegroundColor White
   Write-Host ""
 
   Write-Host "Assessment and Planning (Source):" -ForegroundColor Yellow
-  Write-Host "  • Assessment Report: $($assessmentSource.ReportPath)" -ForegroundColor White
-  Write-Host "  • Planning Report: $($planningReport.ReportPath)" -ForegroundColor White
-  Write-Host "  • LOE Estimation: $($loeExcel)" -ForegroundColor White
+  Write-Host "  - Assessment Report: $($assessmentSource.ReportPath)" -ForegroundColor White
+  Write-Host "  - Planning Report: $($planningReport.ReportPath)" -ForegroundColor White
+  Write-Host "  - LOE Estimation: $($loeExcel)" -ForegroundColor White
   Write-Host ""
 
   # Open reports if requested
