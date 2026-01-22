@@ -75,6 +75,10 @@ Export-ModuleMember -Function @(
   'Get-LcMigrationRiskFlags',
   'Get-LcMigrationRiskFlagsSummary',
 
+  # Discovery orchestration
+  'Invoke-LcDiscoveryComparison',
+  'Invoke-LcDiscoveryAnalysis',
+
   # Extended assessment / analysis
   'Get-LcGroupNestingDepth',
   'Get-LcCrossDomainGroupMembership',

@@ -1,20 +1,20 @@
 function Invoke-LcDiscoveryComparison {
   <#
   .SYNOPSIS
-  Orchestrate discovery runs in source and target environments and generate comparison reports.
+  Orchestrate discovery runs in source and target environments (data collection only).
 
   .DESCRIPTION
-  Runs AD discovery in both source and target environments, organizes outputs, and generates:
-  - Side-by-side metrics comparison HTML
-  - Migration readiness validation checklist
-  - Consolidated summary with key findings
+  Runs AD discovery in both source and target environments and saves raw CSV data.
+  Creates a JSON configuration file for subsequent analysis using Invoke-LcDiscoveryAnalysis.
+
+  This function ONLY collects data—no reports are generated.
+  After collection, run Invoke-LcDiscoveryAnalysis with the generated config file.
 
   Outputs are organized as:
     OutputRoot/
       ADOnly_<source_timestamp>/         # Source discovery run
       ADOnly__target_<target_timestamp>/ # Target discovery run
-      LC__Comparison__Report__*.html
-      LC__Migration__Readiness__Checklist__*.html
+      LC__Discovery__Config__*.json      # Analysis configuration
 
   .PARAMETER SourceServer
   Domain controller or GC in source forest to query (optional)
@@ -26,16 +26,18 @@ function Invoke-LcDiscoveryComparison {
   Root folder for all discovery outputs. Default: c:\scripts\Reports
 
   .PARAMETER CustomerName
-  Customer name for report headers (optional)
+  Customer name for analysis configuration (optional)
 
-  .PARAMETER GenerateReports
-  If $true, also generates assessment, planning, LOE, and comparison reports (default: $true)
+  .PARAMETER SkipConfigFile
+  Skip generation of analysis config JSON (useful for ad-hoc collection)
 
   .EXAMPLE
   Invoke-LcDiscoveryComparison -CustomerName "Contoso Corp"
+  # Collects data and creates config.json for later analysis
 
   .EXAMPLE
   Invoke-LcDiscoveryComparison -SourceServer "dc1.source.com" -TargetServer "dc1.target.com" -OutputRoot "E:\Reports"
+  # Collects data from specific DCs
   #>
 
   [CmdletBinding()]
@@ -44,8 +46,7 @@ function Invoke-LcDiscoveryComparison {
     [string]$TargetServer,
     [string]$OutputRoot = "c:\scripts\Reports",
     [string]$CustomerName = "Organization",
-    [switch]$GenerateReports,
-    [switch]$OpenReports
+    [switch]$SkipConfigFile
   )
 
   $discoveryScript = "c:\scripts\AD_Discovery_ADOnly_LC.ps1"
@@ -55,14 +56,14 @@ function Invoke-LcDiscoveryComparison {
   }
 
   Write-Host "========================================" -ForegroundColor Cyan
-  Write-Host "AD Discovery Comparison Orchestrator" -ForegroundColor Cyan
+  Write-Host "AD Discovery Data Collection" -ForegroundColor Cyan
   Write-Host "========================================" -ForegroundColor Cyan
   Write-Host ""
 
   # ========================================
   # Run source discovery
   # ========================================
-  Write-Host "[1/5] Starting SOURCE environment discovery..." -ForegroundColor Yellow
+  Write-Host "[1/2] Starting SOURCE environment discovery..." -ForegroundColor Yellow
   $sourceArgs = @{
     Environment  = "Source"
     OutputRoot   = $OutputRoot
@@ -86,7 +87,7 @@ function Invoke-LcDiscoveryComparison {
   # ========================================
   # Run target discovery
   # ========================================
-  Write-Host "[2/5] Starting TARGET environment discovery..." -ForegroundColor Yellow
+  Write-Host "[2/2] Starting TARGET environment discovery..." -ForegroundColor Yellow
   $targetArgs = @{
     Environment  = "Target"
     OutputRoot   = $OutputRoot
@@ -108,40 +109,29 @@ function Invoke-LcDiscoveryComparison {
   Write-Host ""
 
   # ========================================
-  # Generate comparison reports
+  # Generate analysis config file
   # ========================================
-  Write-Host "[3/5] Generating environment comparison report..." -ForegroundColor Yellow
-  $comparisonReport = New-LcEnvironmentComparisonReport -SourceRunRoot $sourceRunRoot -TargetRunRoot $targetRunRoot -CustomerName $CustomerName
-  Write-Host "  [OK] Comparison report: $($comparisonReport.ReportPath)" -ForegroundColor Green
-  Write-Host ""
+  $configPath = $null
+  if (-not $SkipConfigFile) {
+    $timestamp = Get-LcTimestamp -Format File
+    $configPath = Join-Path $OutputRoot "LC__Discovery__Config__$timestamp.json"
 
-  # ========================================
-  # Generate readiness checklist
-  # ========================================
-  Write-Host "[4/5] Generating migration readiness checklist..." -ForegroundColor Yellow
-  $readinessChecklist = New-LcMigrationReadinessChecklist -SourceRunRoot $sourceRunRoot -TargetRunRoot $targetRunRoot -CustomerName $CustomerName
-  Write-Host "  [OK] Readiness checklist: $($readinessChecklist.ChecklistPath)" -ForegroundColor Green
-  Write-Host "    - $($readinessChecklist.PassItems) items passed automatically" -ForegroundColor Green
-  Write-Host "    - $($readinessChecklist.FailItems) items require attention" -ForegroundColor Red
-  Write-Host "    - $($readinessChecklist.ManualItems) items require manual verification" -ForegroundColor Yellow
-  Write-Host ""
+    $config = [ordered]@{
+      SourceRunRoot         = $sourceRunRoot
+      TargetRunRoot         = $targetRunRoot
+      CustomerName          = $CustomerName
+      OutputRoot            = $OutputRoot
+      GenerateLoeForBoth    = $false
+      IncludeTargetPlanning = $false
+      CollectedDate         = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+      SourceServer          = if ($SourceServer) { $SourceServer } else { "Default" }
+      TargetServer          = if ($TargetServer) { $TargetServer } else { "Default" }
+    }
 
-  # ========================================
-  # Generate detailed reports (optional)
-  # ========================================
-  Write-Host "[5/5] Generating detailed assessment and planning reports..." -ForegroundColor Yellow
-
-  $assessmentSource = New-LcAssessmentReport -RunRoot $sourceRunRoot -OutputPath (Join-Path $sourceRunRoot 'LC__Assessment__Report__Source.html') -CustomerName $CustomerName
-  Write-Host "  [OK] Source assessment report: $($assessmentSource.ReportPath)" -ForegroundColor Green
-
-  $assessmentTarget = New-LcAssessmentReport -RunRoot $targetRunRoot -OutputPath (Join-Path $targetRunRoot 'LC__Assessment__Report__Target.html') -CustomerName $CustomerName
-  Write-Host "  [OK] Target assessment report: $($assessmentTarget.ReportPath)" -ForegroundColor Green
-
-  $planningReport = New-LcMigrationPlanningReport -RunRoot $sourceRunRoot -OutputPath (Join-Path $sourceRunRoot 'LC__Migration__Planning__Report.html') -CustomerName $CustomerName
-  Write-Host "  [OK] Migration planning report: $($planningReport.ReportPath)" -ForegroundColor Green
-
-  $loeExcel = New-LcMigrationLoeExcel -RunRoot $sourceRunRoot -OutputPath (Join-Path $sourceRunRoot "LC__Migration__LOE__$($CustomerName)__Source.xlsx") -CustomerName $CustomerName
-  Write-Host "  [OK] LOE estimation workbook: $($loeExcel)" -ForegroundColor Green
+    $config | ConvertTo-Json -Depth 5 | Out-File -FilePath $configPath -Encoding UTF8 -Force
+    Write-Host "  [OK] Analysis config saved: $configPath" -ForegroundColor Green
+    Write-Host ""
+  }
 
   Write-Host ""
   Write-Host "========================================" -ForegroundColor Cyan
@@ -156,41 +146,36 @@ function Invoke-LcDiscoveryComparison {
   Write-Host "  Path: $sourceRunRoot" -ForegroundColor White
   Write-Host ""
 
-  Write-Host "Target Discovery Output:" -ForegroundColor Yellow
-  Write-Host "  Path: $targetRunRoot" -ForegroundColor White
+  Write-Host "Target Discoata Collection Complete" -ForegroundColor Green
+  Write-Host "========================================" -ForegroundColor Cyan
   Write-Host ""
 
-  Write-Host "Comparison Reports:" -ForegroundColor Yellow
-  Write-Host "  - Environment Comparison: $($comparisonReport.ReportPath)" -ForegroundColor White
-  Write-Host "  - Readiness Checklist: $($readinessChecklist.ChecklistPath)" -ForegroundColor White
+  # Print summary
+  Write-Host "DISCOVERY DATA COLLECTED:" -ForegroundColor Cyan
+  Write-Host ""
+  Write-Host "Source Environment:" -ForegroundColor Yellow
+  Write-Host "  $sourceRunRoot" -ForegroundColor White
+  Write-Host ""
+  Write-Host "Target Environment:" -ForegroundColor Yellow
+  Write-Host "  $targetRunRoot" -ForegroundColor White
   Write-Host ""
 
-  Write-Host "Assessment and Planning (Source):" -ForegroundColor Yellow
-  Write-Host "  - Assessment Report: $($assessmentSource.ReportPath)" -ForegroundColor White
-  Write-Host "  - Planning Report: $($planningReport.ReportPath)" -ForegroundColor White
-  Write-Host "  - LOE Estimation: $($loeExcel)" -ForegroundColor White
-  Write-Host ""
-
-  # Open reports if requested
-  if ($OpenReports) {
-    Write-Host "Opening reports..." -ForegroundColor Yellow
-    if (Test-Path -LiteralPath $comparisonReport.ReportPath) {
-      Invoke-Item -LiteralPath $comparisonReport.ReportPath
-    }
-    if (Test-Path -LiteralPath $readinessChecklist.ChecklistPath) {
-      Start-Sleep -Seconds 2
-      Invoke-Item -LiteralPath $readinessChecklist.ChecklistPath
-    }
+  if ($configPath) {
+    Write-Host "Analysis Configuration:" -ForegroundColor Yellow
+    Write-Host "  $configPath" -ForegroundColor White
+    Write-Host ""
+    Write-Host "NEXT STEPS:" -ForegroundColor Cyan
+    Write-Host "  Run analysis using:" -ForegroundColor White
+    Write-Host "    Invoke-LcDiscoveryAnalysis -ConfigFile '$configPath'" -ForegroundColor Green
+    Write-Host ""
+  } else {
+    Write-Host "NEXT STEPS:" -ForegroundColor Cyan
+    Write-Host "  Run analysis using:" -ForegroundColor White
+    Write-Host "    Invoke-LcDiscoveryAnalysis -SourceRunRoot '$sourceRunRoot' -TargetRunRoot '$targetRunRoot'" -ForegroundColor Green
+    Write-Host ""
   }
 
   return [pscustomobject]@{
-    SourceRunRoot      = $sourceRunRoot
-    TargetRunRoot      = $targetRunRoot
-    ComparisonReport   = $comparisonReport.ReportPath
-    ReadinessChecklist = $readinessChecklist.ChecklistPath
-    SourceAssessment   = $assessmentSource.ReportPath
-    TargetAssessment   = $assessmentTarget.ReportPath
-    PlanningReport     = $planningReport.ReportPath
-    LoeExcel           = $loeExcel
-  }
-}
+    SourceRunRoot = $sourceRunRoot
+    TargetRunRoot = $targetRunRoot
+    ConfigFile    = $configPath
