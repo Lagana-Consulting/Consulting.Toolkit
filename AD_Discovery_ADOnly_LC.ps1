@@ -334,7 +334,7 @@ $assessmentSummary = Get-LcAssessmentSummary `
   -OuDepthData @($allOuDepth) `
   -TopSpnsData @($allTopSpns) `
   -SiteLinkData @($siteLinkData) `
-  -TombstoneData @($tombstoneData)
+  -TombstoneData @($allTombstone)
 
 $assessmentSummary |
 Export-LcCsvSafe -Path (Join-Path $layout.RunRoot 'LC__AD__Assessment__Summary__Forest.csv') -Force
