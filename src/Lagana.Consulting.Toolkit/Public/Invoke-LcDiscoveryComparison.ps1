@@ -64,18 +64,18 @@ function Invoke-LcDiscoveryComparison {
   # ========================================
   Write-Host "[1/5] Starting SOURCE environment discovery..." -ForegroundColor Yellow
   $sourceArgs = @{
-    Environment   = "Source"
-    OutputRoot    = $OutputRoot
-    Prefix        = "ADOnly"
-    CustomerName  = $CustomerName
+    Environment  = "Source"
+    OutputRoot   = $OutputRoot
+    Prefix       = "ADOnly"
+    CustomerName = $CustomerName
   }
   if ($SourceServer) { $sourceArgs['Server'] = $SourceServer }
 
   $sourceRunResult = & $discoveryScript @sourceArgs
   $sourceRunRoot = Get-ChildItem -Path $OutputRoot -Directory |
-    Where-Object { $_.Name -match '^ADOnly_' } |
-    Sort-Object -Property CreationTime -Descending |
-    Select-Object -First 1 -ExpandProperty FullName
+  Where-Object { $_.Name -match '^ADOnly_' } |
+  Sort-Object -Property CreationTime -Descending |
+  Select-Object -First 1 -ExpandProperty FullName
 
   if (-not $sourceRunRoot) {
     throw "Source discovery failed: no output folder created"
@@ -88,18 +88,18 @@ function Invoke-LcDiscoveryComparison {
   # ========================================
   Write-Host "[2/5] Starting TARGET environment discovery..." -ForegroundColor Yellow
   $targetArgs = @{
-    Environment   = "Target"
-    OutputRoot    = $OutputRoot
-    Prefix        = "ADOnly"
-    CustomerName  = $CustomerName
+    Environment  = "Target"
+    OutputRoot   = $OutputRoot
+    Prefix       = "ADOnly"
+    CustomerName = $CustomerName
   }
   if ($TargetServer) { $targetArgs['Server'] = $TargetServer }
 
   $targetRunResult = & $discoveryScript @targetArgs
   $targetRunRoot = Get-ChildItem -Path $OutputRoot -Directory |
-    Where-Object { $_.Name -match '^ADOnly__target_' } |
-    Sort-Object -Property CreationTime -Descending |
-    Select-Object -First 1 -ExpandProperty FullName
+  Where-Object { $_.Name -match '^ADOnly__target_' } |
+  Sort-Object -Property CreationTime -Descending |
+  Select-Object -First 1 -ExpandProperty FullName
 
   if (-not $targetRunRoot) {
     throw "Target discovery failed: no output folder created"
@@ -165,7 +165,7 @@ function Invoke-LcDiscoveryComparison {
   Write-Host "  • Readiness Checklist: $($readinessChecklist.ChecklistPath)" -ForegroundColor White
   Write-Host ""
 
-  Write-Host "Assessment & Planning (Source):" -ForegroundColor Yellow
+  Write-Host "Assessment and Planning (Source):" -ForegroundColor Yellow
   Write-Host "  • Assessment Report: $($assessmentSource.ReportPath)" -ForegroundColor White
   Write-Host "  • Planning Report: $($planningReport.ReportPath)" -ForegroundColor White
   Write-Host "  • LOE Estimation: $($loeExcel)" -ForegroundColor White
@@ -184,13 +184,13 @@ function Invoke-LcDiscoveryComparison {
   }
 
   return [pscustomobject]@{
-    SourceRunRoot          = $sourceRunRoot
-    TargetRunRoot          = $targetRunRoot
-    ComparisonReport       = $comparisonReport.ReportPath
-    ReadinessChecklist     = $readinessChecklist.ChecklistPath
-    SourceAssessment       = $assessmentSource.ReportPath
-    TargetAssessment       = $assessmentTarget.ReportPath
-    PlanningReport         = $planningReport.ReportPath
-    LoeExcel               = $loeExcel
+    SourceRunRoot      = $sourceRunRoot
+    TargetRunRoot      = $targetRunRoot
+    ComparisonReport   = $comparisonReport.ReportPath
+    ReadinessChecklist = $readinessChecklist.ChecklistPath
+    SourceAssessment   = $assessmentSource.ReportPath
+    TargetAssessment   = $assessmentTarget.ReportPath
+    PlanningReport     = $planningReport.ReportPath
+    LoeExcel           = $loeExcel
   }
 }
