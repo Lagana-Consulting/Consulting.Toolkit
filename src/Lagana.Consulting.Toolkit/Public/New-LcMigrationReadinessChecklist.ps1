@@ -80,141 +80,141 @@ function New-LcMigrationReadinessChecklist {
   $checklistItems = @(
     @{
       Category = "Object Reconciliation"
-      Items = @(
+      Items    = @(
         @{
-          Item = "All source users migrated to target";
+          Item   = "All source users migrated to target";
           Status = if ([int]$sourceAssess.TotalUsers -le [int]$targetAssess.TotalUsers) { "Pass" } else { "Fail" };
-          Note = "Source: $($sourceAssess.TotalUsers) → Target: $($targetAssess.TotalUsers)"
+          Note   = "Source: $($sourceAssess.TotalUsers) → Target: $($targetAssess.TotalUsers)"
         },
         @{
-          Item = "All source groups migrated to target";
+          Item   = "All source groups migrated to target";
           Status = if ([int]$sourceAssess.TotalGroups -le [int]$targetAssess.TotalGroups) { "Pass" } else { "Fail" };
-          Note = "Source: $($sourceAssess.TotalGroups) → Target: $($targetAssess.TotalGroups)"
+          Note   = "Source: $($sourceAssess.TotalGroups) → Target: $($targetAssess.TotalGroups)"
         },
         @{
-          Item = "All source computers migrated to target";
+          Item   = "All source computers migrated to target";
           Status = if ([int]$sourceAssess.TotalComputers -le [int]$targetAssess.TotalComputers) { "Pass" } else { "Fail" };
-          Note = "Source: $($sourceAssess.TotalComputers) → Target: $($targetAssess.TotalComputers)"
+          Note   = "Source: $($sourceAssess.TotalComputers) → Target: $($targetAssess.TotalComputers)"
         }
       )
     },
     @{
       Category = "Domain Configuration"
-      Items = @(
+      Items    = @(
         @{
-          Item = "Target domain functional level set correctly";
+          Item   = "Target domain functional level set correctly";
           Status = "Manual"
-          Note = "Verify DFL matches source or target migration requirement"
+          Note   = "Verify DFL matches source or target migration requirement"
         },
         @{
-          Item = "All domain trusts configured";
+          Item   = "All domain trusts configured";
           Status = "Manual"
-          Note = "Review trust relationships between source and target domains"
+          Note   = "Review trust relationships between source and target domains"
         },
         @{
-          Item = "UPN suffixes synchronized";
+          Item   = "UPN suffixes synchronized";
           Status = "Manual"
-          Note = "Verify all source UPN suffixes present in target forest"
+          Note   = "Verify all source UPN suffixes present in target forest"
         }
       )
     },
     @{
       Category = "Special Objects & Privileges"
-      Items = @(
+      Items    = @(
         @{
-          Item = "Service accounts migrated";
+          Item   = "Service accounts migrated";
           Status = "Manual"
-          Note = "Verify all source service accounts present with correct permissions"
+          Note   = "Verify all source service accounts present with correct permissions"
         },
         @{
-          Item = "Privileged groups reconciled";
+          Item   = "Privileged groups reconciled";
           Status = "Manual"
-          Note = "Cross-check Enterprise Admins, Domain Admins, Schema Admins"
+          Note   = "Cross-check Enterprise Admins, Domain Admins, Schema Admins"
         },
         @{
-          Item = "Exchange-specific groups migrated (if applicable)";
+          Item   = "Exchange-specific groups migrated (if applicable)";
           Status = "Manual"
-          Note = "Organization_Management, Exchange Trusted Subsystem, etc."
+          Note   = "Organization_Management, Exchange Trusted Subsystem, etc."
         }
       )
     },
     @{
       Category = "Risk Mitigation"
-      Items = @(
+      Items    = @(
         @{
-          Item = "Critical risk flags resolved in target";
+          Item   = "Critical risk flags resolved in target";
           Status = if ($targetCritical -eq 0) { "Pass" } else { "Fail" };
-          Note = "Source critical: $sourceCritical → Target critical: $targetCritical"
+          Note   = "Source critical: $sourceCritical → Target critical: $targetCritical"
         },
         @{
-          Item = "High risk items addressed";
+          Item   = "High risk items addressed";
           Status = "Manual"
-          Note = "Target has $targetHigh high-risk items; verify remediation plan"
+          Note   = "Target has $targetHigh high-risk items; verify remediation plan"
         },
         @{
-          Item = "Stale accounts archived/disabled";
+          Item   = "Stale accounts archived/disabled";
           Status = "Manual"
-          Note = "Verify inactive accounts (90+ days) are disabled in target"
+          Note   = "Verify inactive accounts (90+ days) are disabled in target"
         }
       )
     },
     @{
       Category = "Network & Replication"
-      Items = @(
+      Items    = @(
         @{
-          Item = "All source domain controllers replicating";
+          Item   = "All source domain controllers replicating";
           Status = "Manual"
-          Note = "Verify replication health in source forest"
+          Note   = "Verify replication health in source forest"
         },
         @{
-          Item = "All target domain controllers replicating";
+          Item   = "All target domain controllers replicating";
           Status = "Manual"
-          Note = "Verify replication health in target forest"
+          Note   = "Verify replication health in target forest"
         },
         @{
-          Item = "Network connectivity validated";
+          Item   = "Network connectivity validated";
           Status = "Manual"
-          Note = "Test network paths between all sites"
+          Note   = "Test network paths between all sites"
         }
       )
     },
     @{
       Category = "Application Readiness"
-      Items = @(
+      Items    = @(
         @{
-          Item = "Applications tested in target environment";
+          Item   = "Applications tested in target environment";
           Status = "Manual"
-          Note = "Execute application compatibility validation"
+          Note   = "Execute application compatibility validation"
         },
         @{
-          Item = "Group Policy Objects applied correctly";
+          Item   = "Group Policy Objects applied correctly";
           Status = "Manual"
-          Note = "Verify GPO links and inheritance in target"
+          Note   = "Verify GPO links and inheritance in target"
         },
         @{
-          Item = "Permissions verified on resources";
+          Item   = "Permissions verified on resources";
           Status = "Manual"
-          Note = "Spot-check file shares, SQL, Exchange resources"
+          Note   = "Spot-check file shares, SQL, Exchange resources"
         }
       )
     },
     @{
       Category = "Cutover Preparation"
-      Items = @(
+      Items    = @(
         @{
-          Item = "Rollback plan documented";
+          Item   = "Rollback plan documented";
           Status = "Manual"
-          Note = "Document rollback procedures and communication plan"
+          Note   = "Document rollback procedures and communication plan"
         },
         @{
-          Item = "Monitoring configured in target";
+          Item   = "Monitoring configured in target";
           Status = "Manual"
-          Note = "Enable AD replication monitoring and alerts"
+          Note   = "Enable AD replication monitoring and alerts"
         },
         @{
-          Item = "Stakeholder sign-off obtained";
+          Item   = "Stakeholder sign-off obtained";
           Status = "Manual"
-          Note = "Document approval from business/technical stakeholders"
+          Note   = "Document approval from business/technical stakeholders"
         }
       )
     }

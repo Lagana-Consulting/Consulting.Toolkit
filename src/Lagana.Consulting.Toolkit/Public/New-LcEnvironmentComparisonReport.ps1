@@ -101,16 +101,16 @@ function New-LcEnvironmentComparisonReport {
     $targetComputers = Import-CsvSafe (Join-Path $targetFolder 'LC__AD__Computers__*.csv') | Measure-Object | Select-Object -ExpandProperty Count
 
     $domainComparisons += [pscustomobject]@{
-      Domain           = $domain
-      SourceUsers      = $sourceUsers
-      TargetUsers      = $targetUsers
-      UserDelta        = $targetUsers - $sourceUsers
-      SourceGroups     = $sourceGroups
-      TargetGroups     = $targetGroups
-      GroupDelta       = $targetGroups - $sourceGroups
-      SourceComputers  = $sourceComputers
-      TargetComputers  = $targetComputers
-      ComputerDelta    = $targetComputers - $sourceComputers
+      Domain          = $domain
+      SourceUsers     = $sourceUsers
+      TargetUsers     = $targetUsers
+      UserDelta       = $targetUsers - $sourceUsers
+      SourceGroups    = $sourceGroups
+      TargetGroups    = $targetGroups
+      GroupDelta      = $targetGroups - $sourceGroups
+      SourceComputers = $sourceComputers
+      TargetComputers = $targetComputers
+      ComputerDelta   = $targetComputers - $sourceComputers
     }
   }
 
