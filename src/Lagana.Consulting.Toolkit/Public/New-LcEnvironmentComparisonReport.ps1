@@ -126,55 +126,57 @@ function New-LcEnvironmentComparisonReport {
     $_ | Add-Member -NotePropertyName Delta -NotePropertyValue $delta -PassThru
   }
 
-  # Build HTML
-  $htmlContent = @"
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AD Migration Comparison Report</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    header { border-bottom: 4px solid #0078d4; padding-bottom: 20px; margin-bottom: 30px; }
-    h1 { color: #0078d4; font-size: 28px; margin-bottom: 5px; }
-    .subtitle { color: #666; font-size: 14px; }
-    .section { margin-bottom: 40px; }
-    .section h2 { color: #0078d4; font-size: 20px; margin: 20px 0 15px 0; border-left: 4px solid #0078d4; padding-left: 10px; }
-    table { width: 100%; border-collapse: collapse; margin: 15px 0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-    th { background: #f0f0f0; font-weight: 600; color: #333; }
-    tr:hover { background: #f9f9f9; }
-    .positive { color: #107c10; font-weight: 600; }
-    .negative { color: #d83b01; font-weight: 600; }
-    .neutral { color: #666; }
-    .warning { background: #fff4ce; color: #9d5d00; padding: 10px; margin: 10px 0; border-left: 4px solid #ffc107; border-radius: 3px; }
-    .info-box { background: #eff6fc; color: #003366; padding: 15px; margin: 15px 0; border-left: 4px solid #0078d4; border-radius: 3px; }
-    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0; }
-    .metric-card { background: #f0f0f0; padding: 15px; border-radius: 5px; border-left: 4px solid #0078d4; }
-    .metric-card .label { font-size: 12px; color: #666; text-transform: uppercase; }
-    .metric-card .value { font-size: 24px; font-weight: 700; color: #333; margin-top: 5px; }
-    .metric-card .delta { font-size: 12px; margin-top: 5px; }
-    footer { border-top: 1px solid #ddd; padding-top: 15px; margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>AD Environment Comparison Report</h1>
-      <p class="subtitle">$CustomerName | Generated $(Get-Date -Format 'MMMM d, yyyy HH:mm:ss')</p>
-    </header>
+  # Build HTML without here-strings (to avoid parser errors)
+  $htmlHeader = @(
+    "<!DOCTYPE html>",
+    "<html lang=`"en`">",
+    "<head>",
+    "  <meta charset=`"UTF-8`">",
+    "  <meta name=`"viewport`" content=`"width=device-width, initial-scale=1.0`">",
+    "  <title>AD Migration Comparison Report</title>",
+    "  <style>",
+    "    * { margin: 0; padding: 0; box-sizing: border-box; }",
+    "    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }",
+    "    .container { max-width: 1200px; margin: 0 auto; padding: 20px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }",
+    "    header { border-bottom: 4px solid #0078d4; padding-bottom: 20px; margin-bottom: 30px; }",
+    "    h1 { color: #0078d4; font-size: 28px; margin-bottom: 5px; }",
+    "    .subtitle { color: #666; font-size: 14px; }",
+    "    .section { margin-bottom: 40px; }",
+    "    .section h2 { color: #0078d4; font-size: 20px; margin: 20px 0 15px 0; border-left: 4px solid #0078d4; padding-left: 10px; }",
+    "    table { width: 100%; border-collapse: collapse; margin: 15px 0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }",
+    "    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }",
+    "    th { background: #f0f0f0; font-weight: 600; color: #333; }",
+    "    tr:hover { background: #f9f9f9; }",
+    "    .positive { color: #107c10; font-weight: 600; }",
+    "    .negative { color: #d83b01; font-weight: 600; }",
+    "    .neutral { color: #666; }",
+    "    .warning { background: #fff4ce; color: #9d5d00; padding: 10px; margin: 10px 0; border-left: 4px solid #ffc107; border-radius: 3px; }",
+    "    .info-box { background: #eff6fc; color: #003366; padding: 15px; margin: 15px 0; border-left: 4px solid #0078d4; border-radius: 3px; }",
+    "    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0; }",
+    "    .metric-card { background: #f0f0f0; padding: 15px; border-radius: 5px; border-left: 4px solid #0078d4; }",
+    "    .metric-card .label { font-size: 12px; color: #666; text-transform: uppercase; }",
+    "    .metric-card .value { font-size: 24px; font-weight: 700; color: #333; margin-top: 5px; }",
+    "    .metric-card .delta { font-size: 12px; margin-top: 5px; }",
+    "    footer { border-top: 1px solid #ddd; padding-top: 15px; margin-top: 30px; text-align: center; color: #999; font-size: 12px; }",
+    "  </style>",
+    "</head>",
+    "<body>",
+    "  <div class=`"container`">",
+    "    <header>",
+    "      <h1>AD Environment Comparison Report</h1>",
+    "      <p class=`"subtitle`">$CustomerName | Generated $(Get-Date -Format 'MMMM d, yyyy HH:mm:ss')</p>",
+    "    </header>",
+    "",
+    "    <div class=`"section`">",
+    "      <h2>Executive Summary</h2>",
+    "      <div class=`"info-box`">",
+    "        <strong>Comparison Summary:</strong><br/>",
+    "        Source Environment: $SourceRunRoot<br/>",
+    "        Target Environment: $TargetRunRoot",
+    "      </div>"
+  )
 
-    <div class="section">
-      <h2>Executive Summary</h2>
-      <div class="info-box">
-        <strong>Comparison Summary:</strong><br/>
-        Source Environment: $SourceRunRoot<br/>
-        Target Environment: $TargetRunRoot
-      </div>
-"@
+  $htmlContent = ($htmlHeader -join "`n")
 
   if ($newDomains.Count -gt 0) {
     $htmlContent += "<div class='warning'><strong>⚠ New Domains in Target:</strong> $($newDomains -join ', ')</div>"
@@ -193,7 +195,7 @@ function New-LcEnvironmentComparisonReport {
 
   foreach ($metric in $metrics) {
     $deltaClass = if ($metric.Delta -gt 0) { 'positive' } elseif ($metric.Delta -lt 0) { 'negative' } else { 'neutral' }
-    $deltaSymbol = if ($metric.Delta -gt 0) { '↑' } elseif ($metric.Delta -lt 0) { '↓' } else { '=' }
+    $deltaSymbol = if ($metric.Delta -gt 0) { '&uarr;' } elseif ($metric.Delta -lt 0) { '&darr;' } else { '=' }
     $htmlContent += "
       <div class='metric-card'>
         <div class='label'>$($metric.Name)</div>
@@ -254,28 +256,30 @@ function New-LcEnvironmentComparisonReport {
 "
   }
 
-  $htmlContent += "
-        </tbody>
-      </table>
-    </div>
+  $footer = @(
+    "        </tbody>",
+    "      </table>",
+    "    </div>",
+    "",
+    "    <div class='section'>",
+    "      <h2>Next Steps</h2>",
+    "      <ol style='margin-left: 20px;'>",
+    "        <li>Review domain-level deltas to identify migration gaps</li>",
+    "        <li>Investigate new domains in target and verify they are expected</li>",
+    "        <li>Run readiness checklist to validate migration prerequisites</li>",
+    "        <li>Execute detailed comparison via Excel workbook for full object-level analysis</li>",
+    "      </ol>",
+    "    </div>",
+    "",
+    "    <footer>",
+    "      <p>Lagana Consulting Toolkit | Migration Readiness Assessment</p>",
+    "    </footer>",
+    "  </div>",
+    "</body>",
+    "</html>"
+  )
 
-    <div class='section'>
-      <h2>Next Steps</h2>
-      <ol style='margin-left: 20px;'>
-        <li>Review domain-level deltas to identify migration gaps</li>
-        <li>Investigate new domains in target and verify they are expected</li>
-        <li>Run readiness checklist to validate migration prerequisites</li>
-        <li>Execute detailed comparison via Excel workbook for full object-level analysis</li>
-      </ol>
-    </div>
-
-    <footer>
-      <p>Lagana Consulting Toolkit | Migration Readiness Assessment</p>
-    </footer>
-  </div>
-</body>
-</html>
-"@
+  $htmlContent += ("`n" + ($footer -join "`n"))
 
   # Save HTML
   $htmlContent | Out-File -FilePath $OutputPath -Encoding UTF8 -Force
