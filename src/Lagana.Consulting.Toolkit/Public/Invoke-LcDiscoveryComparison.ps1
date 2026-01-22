@@ -46,13 +46,18 @@ function Invoke-LcDiscoveryComparison {
     [string]$TargetServer,
     [string]$OutputRoot = "c:\scripts\Reports",
     [string]$CustomerName = "Organization",
+    [string]$DiscoveryScriptPath,
     [switch]$SkipConfigFile
   )
 
-  $discoveryScript = "c:\scripts\AD_Discovery_ADOnly_LC.ps1"
+  # Default to workspace location if not specified
+  if (-not $DiscoveryScriptPath) {
+    $workspaceRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
+    $DiscoveryScriptPath = Join-Path $workspaceRoot "AD_Discovery_ADOnly_LC.ps1"
+  }
 
-  if (-not (Test-Path -LiteralPath $discoveryScript)) {
-    throw "Discovery script not found: $discoveryScript. Update path or copy script to c:\scripts\."
+  if (-not (Test-Path -LiteralPath $DiscoveryScriptPath)) {
+    throw "Discovery script not found: $DiscoveryScriptPath. Specify -DiscoveryScriptPath parameter or ensure AD_Discovery_ADOnly_LC.ps1 exists in workspace root."
   }
 
   Write-Host "========================================" -ForegroundColor Cyan
@@ -72,7 +77,7 @@ function Invoke-LcDiscoveryComparison {
   }
   if ($SourceServer) { $sourceArgs['Server'] = $SourceServer }
 
-  $sourceRunResult = & $discoveryScript @sourceArgs
+  $sourceRunResult = & $DiscoveryScriptPath @sourceArgs
   $sourceRunRoot = Get-ChildItem -Path $OutputRoot -Directory |
   Where-Object { $_.Name -match '^ADOnly_' } |
   Sort-Object -Property CreationTime -Descending |
@@ -96,7 +101,7 @@ function Invoke-LcDiscoveryComparison {
   }
   if ($TargetServer) { $targetArgs['Server'] = $TargetServer }
 
-  $targetRunResult = & $discoveryScript @targetArgs
+  $targetRunResult = & $DiscoveryScriptPath @targetArgs
   $targetRunRoot = Get-ChildItem -Path $OutputRoot -Directory |
   Where-Object { $_.Name -match '^ADOnly__target_' } |
   Sort-Object -Property CreationTime -Descending |
@@ -179,3 +184,5 @@ function Invoke-LcDiscoveryComparison {
     SourceRunRoot = $sourceRunRoot
     TargetRunRoot = $targetRunRoot
     ConfigFile    = $configPath
+  }
+}
