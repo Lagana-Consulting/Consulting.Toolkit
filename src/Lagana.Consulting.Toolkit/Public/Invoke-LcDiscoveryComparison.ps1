@@ -140,18 +140,7 @@ function Invoke-LcDiscoveryComparison {
 
   Write-Host ""
   Write-Host "========================================" -ForegroundColor Cyan
-  Write-Host "[COMPLETE] Discovery Comparison Complete" -ForegroundColor Green
-  Write-Host "========================================" -ForegroundColor Cyan
-  Write-Host ""
-
-  # Print summary
-  Write-Host "SUMMARY:" -ForegroundColor Cyan
-  Write-Host ""
-  Write-Host "Source Discovery Output:" -ForegroundColor Yellow
-  Write-Host "  Path: $sourceRunRoot" -ForegroundColor White
-  Write-Host ""
-
-  Write-Host "Target Discoata Collection Complete" -ForegroundColor Green
+  Write-Host "[COMPLETE] Data Collection Complete" -ForegroundColor Green
   Write-Host "========================================" -ForegroundColor Cyan
   Write-Host ""
 
