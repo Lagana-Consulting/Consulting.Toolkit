@@ -1,15 +1,17 @@
-BeforeAll {
-  $modulePath = Join-Path $PSScriptRoot "..\src\Lagana.Consulting.Toolkit"
-  Import-Module $modulePath -Force
-}
-
 Describe "Lagana.Consulting.Toolkit" {
+  BeforeAll {
+    $modulePath = Join-Path $PSScriptRoot "..\src\Lagana.Consulting.Toolkit"
+    Import-Module $modulePath -Force
+  }
+
   It "Exports expected public commands" {
     $cmds = Get-Command -Module Lagana.Consulting.Toolkit | Select-Object -ExpandProperty Name
-    $cmds | Should -Contain "New-LcLog"
-    $cmds | Should -Contain "Write-LcLog"
-    $cmds | Should -Contain "Export-LcCsv"
-    $cmds | Should -Contain "Confirm-LcTenant"
-    $cmds | Should -Contain "Connect-LcGraph"
+    ($cmds -contains "New-LcLog") | Should Be $true
+    ($cmds -contains "Write-LcLog") | Should Be $true
+    ($cmds -contains "Export-LcCsv") | Should Be $true
+    ($cmds -contains "Confirm-LcTenant") | Should Be $true
+    ($cmds -contains "Connect-LcGraph") | Should Be $true
+    ($cmds -contains "New-LcAdmtRunLayout") | Should Be $true
+    ($cmds -contains "Test-LcAdmtPrereqs") | Should Be $true
   }
 }

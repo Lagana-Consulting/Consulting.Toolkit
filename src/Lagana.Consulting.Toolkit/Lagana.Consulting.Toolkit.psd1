@@ -93,6 +93,8 @@
     'Get-LcGpoPerformanceAnalysis',
 
     #ADMT Functions
+    'New-LcAdmtRunLayout',
+    'Test-LcAdmtPrereqs',
     'Find-LcAdObjectConflicts',
     'Export-LcAdmtIncludeFileUsers',
     'Export-LcAdmtIncludeFileGroups',
