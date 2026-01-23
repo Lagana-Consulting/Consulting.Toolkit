@@ -19,24 +19,13 @@ Export-ModuleMember -Function @(
   'New-LcLog',
   'Write-LcLog',
   'Export-LcCsv',
-  'Export-LcCsvSafe',
 
   # Tenant safety / auth
   'Confirm-LcTenant',
   'Connect-LcGraph',
 
-  # Run layout + schema + reporting
+  # Run layout
   'New-LcRunLayout',
-  'Write-LcSchemaCsv',
-  'Get-LcSchemaDefinitions',
-  'Export-LcSchemas',
-  'New-LcAssessmentReport',
-  'New-LcComprehensiveAssessmentReport',
-  'New-LcMigrationPlanningReport',
-  'New-LcMigrationLoeExcel',
-  'New-LcEnvironmentComparisonReport',
-  'New-LcMigrationReadinessChecklist',
-  'Invoke-LcDiscoveryComparison',
 
   # Forest + domains
   'Get-LcAdForest',
@@ -75,10 +64,6 @@ Export-ModuleMember -Function @(
   'Get-LcAssessmentSummary',
   'Get-LcMigrationRiskFlags',
   'Get-LcMigrationRiskFlagsSummary',
-
-  # Discovery orchestration
-  'Invoke-LcDiscoveryComparison',
-  'Invoke-LcDiscoveryAnalysis',
 
   # Extended assessment / analysis
   'Get-LcGroupNestingDepth',

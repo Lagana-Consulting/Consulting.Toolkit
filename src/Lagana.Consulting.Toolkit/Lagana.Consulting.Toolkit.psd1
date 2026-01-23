@@ -5,7 +5,7 @@
   Author            = 'Lagana Consulting'
   CompanyName       = 'Lagana Consulting'
   Copyright         = '(c) Lagana Consulting. All rights reserved.'
-  Description       = 'Reusable PowerShell toolkit for consulting automation.'
+  Description       = 'Server-side PowerShell toolkit for AD discovery and ADMT operations (PowerShell 5.1+).'
   PowerShellVersion = '5.1'
 
   FunctionsToExport = @(
@@ -13,24 +13,13 @@
     'New-LcLog',
     'Write-LcLog',
     'Export-LcCsv',
-    'Export-LcCsvSafe',
 
     # Tenant safety / auth
     'Confirm-LcTenant',
     'Connect-LcGraph',
 
-    # Run layout + schema + reporting
+    # Run layout
     'New-LcRunLayout',
-    'Write-LcSchemaCsv',
-    'Get-LcSchemaDefinitions',
-    'Export-LcSchemas',
-    'New-LcAssessmentReport',
-    'New-LcMigrationPlanningReport',
-    'New-LcMigrationLoeExcel',
-    'New-LcEnvironmentComparisonReport',
-    'New-LcMigrationReadinessChecklist',
-    'Invoke-LcDiscoveryComparison',
-    'Invoke-LcDiscoveryAnalysis',
 
     # Forest + domains
     'Get-LcAdForest',
