@@ -1,24 +1,42 @@
 function Get-LcDuplicateObjectsForAdmt {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
-        [array]$AllUsers,
-
-        [Parameter(Mandatory)]
-        [array]$AllComputers,
-
-        [Parameter(Mandatory)]
-        [array]$AllGroups
+        [array]$AllUsers = @(),
+        [array]$AllComputers = @(),
+        [array]$AllGroups = @()
     )
 
     $results = @()
 
+    # Early exit if all empty
+    if (@($AllUsers).Count -eq 0 -and @($AllComputers).Count -eq 0 -and @($AllGroups).Count -eq 0) {
+        return @()
+    }
+
+    # Define built-in accounts to exclude (exist in all AD environments)
+    $builtInAccounts = @(
+        'Administrator', 'Guest', 'krbtgt', 'DefaultAccount', 'WDAGUtilityAccount',
+        'Domain Admins', 'Domain Users', 'Domain Guests', 'Domain Computers', 'Domain Controllers',
+        'Schema Admins', 'Enterprise Admins', 'Cert Publishers', 'Group Policy Creator Owners',
+        'RAS and IAS Servers', 'Server Operators', 'Account Operators', 'Pre-Windows 2000 Compatible Access',
+        'Incoming Forest Trust Builders', 'Windows Authorization Access Group', 'Terminal Server License Servers',
+        'Allowed RODC Password Replication Group', 'Denied RODC Password Replication Group',
+        'Read-only Domain Controllers', 'Enterprise Read-only Domain Controllers', 'Cloneable Domain Controllers',
+        'Protected Users', 'Key Admins', 'Enterprise Key Admins', 'DnsAdmins', 'DnsUpdateProxy',
+        'DHCP Administrators', 'DHCP Users', 'Print Operators', 'Backup Operators', 'Replicator',
+        'Network Configuration Operators', 'Performance Monitor Users', 'Performance Log Users',
+        'Distributed COM Users', 'IIS_IUSRS', 'Cryptographic Operators', 'Event Log Readers',
+        'Certificate Service DCOM Access', 'RDS Remote Access Servers', 'RDS Endpoint Servers',
+        'RDS Management Servers', 'Hyper-V Administrators', 'Access Control Assistance Operators',
+        'Remote Management Users', 'Storage Replica Administrators'
+    )
+
     # Check for duplicate sAMAccountNames across domains
     # Add ObjectClass property to each object based on which array it came from
+    # Filter out built-in accounts
     $allObjects = @()
-    $allObjects += $AllUsers | ForEach-Object { $_ | Add-Member -MemberType NoteProperty -Name ObjectClass -Value 'user' -Force; $_ }
+    $allObjects += $AllUsers | Where-Object { $_.SamAccountName -notin $builtInAccounts } | ForEach-Object { $_ | Add-Member -MemberType NoteProperty -Name ObjectClass -Value 'user' -Force; $_ }
     $allObjects += $AllComputers | ForEach-Object { $_ | Add-Member -MemberType NoteProperty -Name ObjectClass -Value 'computer' -Force; $_ }
-    $allObjects += $AllGroups | ForEach-Object { $_ | Add-Member -MemberType NoteProperty -Name ObjectClass -Value 'group' -Force; $_ }
+    $allObjects += $AllGroups | Where-Object { $_.SamAccountName -notin $builtInAccounts } | ForEach-Object { $_ | Add-Member -MemberType NoteProperty -Name ObjectClass -Value 'group' -Force; $_ }
 
     $samDuplicates = $allObjects | Group-Object -Property SamAccountName | Where-Object { $_.Count -gt 1 }
 

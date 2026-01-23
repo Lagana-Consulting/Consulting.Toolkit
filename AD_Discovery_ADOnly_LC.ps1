@@ -299,10 +299,6 @@ $trustMapData = @(Get-LcTrustRelationshipMap -Forest $forest)
 $trustMapData |
 Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__TrustRelationshipMap__Forest.csv') -Force -AllowEmpty
 
-$duplicateObjectsData = @(Get-LcDuplicateObjectsForAdmt -AllUsers $allUsers -AllComputers $allComputers -AllGroups $allGroups)
-$duplicateObjectsData |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__DuplicateObjectsForAdmt__Forest.csv') -Force -AllowEmpty
-
 # -------------------------
 # Aggregate analysis from all domains
 # -------------------------

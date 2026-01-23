@@ -43,14 +43,20 @@ function New-LcMigrationPlanningReport {
   $summaryRow = if ($forestSummary.Count -gt 0) { $forestSummary[0] } else { $null }
 
   # Migration risk summary
-  $riskSummary = _imp((Get-ChildItem -Path $forestPath -Filter '*Migration__RiskFlagsSummary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+  $riskFile = Get-ChildItem -Path $forestPath -Filter '*Migration__RiskFlagsSummary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+  $riskSummary = if ($riskFile) { _imp($riskFile.FullName) } else { @() }
 
   # Forest analyses
-  $siteLinkCost = _imp((Get-ChildItem -Path $forest10 -Filter '*SiteLinkCostAnalysis*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-  $fsmoAvail = _imp((Get-ChildItem -Path $forest10 -Filter '*FsmoRoleAvailability*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-  $trustMap = _imp((Get-ChildItem -Path $forest10 -Filter '*TrustRelationshipMap*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-  $certSvc = _imp((Get-ChildItem -Path $forest10 -Filter '*CertificateServicesInventory*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-  $admtDup = _imp((Get-ChildItem -Path $forest10 -Filter '*DuplicateObjectsForAdmt*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+  $siteLinkFile = Get-ChildItem -Path $forest10 -Filter '*SiteLinkCostAnalysis*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+  $siteLinkCost = if ($siteLinkFile) { _imp($siteLinkFile.FullName) } else { @() }
+  $fsmoFile = Get-ChildItem -Path $forest10 -Filter '*FsmoRoleAvailability*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+  $fsmoAvail = if ($fsmoFile) { _imp($fsmoFile.FullName) } else { @() }
+  $trustFile = Get-ChildItem -Path $forest10 -Filter '*TrustRelationshipMap*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+  $trustMap = if ($trustFile) { _imp($trustFile.FullName) } else { @() }
+  $certFile = Get-ChildItem -Path $forest10 -Filter '*CertificateServicesInventory*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+  $certSvc = if ($certFile) { _imp($certFile.FullName) } else { @() }
+  $admtFile = Get-ChildItem -Path $forest10 -Filter '*DuplicateObjectsForAdmt*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+  $admtDup = if ($admtFile) { _imp($admtFile.FullName) } else { @() }
 
   # Domain folders
   $domainDirs = @()
@@ -90,29 +96,47 @@ function New-LcMigrationPlanningReport {
   $gpoInventory = @()
 
   foreach ($ddir in $domainDirs) {
-    $groupNesting += _imp((Get-ChildItem $ddir.FullName -Filter '*GroupNestingDepth*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $ouDepth += _imp((Get-ChildItem $ddir.FullName -Filter '*OuDepthAnalysis*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $crossDomain += _imp((Get-ChildItem $ddir.FullName -Filter '*CrossDomainGroupMembership*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $emptyGroups += _imp((Get-ChildItem $ddir.FullName -Filter '*EmptyGroups*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $dupSpns += _imp((Get-ChildItem $ddir.FullName -Filter '*DuplicateSpns*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $disabled += _imp((Get-ChildItem $ddir.FullName -Filter '*DisabledAccounts*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $adminSd += _imp((Get-ChildItem $ddir.FullName -Filter '*AdminSdHolderImpact*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $tokenBloat += _imp((Get-ChildItem $ddir.FullName -Filter '*GroupTokenBloat*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+    $f1 = Get-ChildItem $ddir.FullName -Filter '*GroupNestingDepth*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $groupNesting += if ($f1) { _imp($f1.FullName) } else { @() }
+    $f2 = Get-ChildItem $ddir.FullName -Filter '*OuDepthAnalysis*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $ouDepth += if ($f2) { _imp($f2.FullName) } else { @() }
+    $f3 = Get-ChildItem $ddir.FullName -Filter '*CrossDomainGroupMembership*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $crossDomain += if ($f3) { _imp($f3.FullName) } else { @() }
+    $f4 = Get-ChildItem $ddir.FullName -Filter '*EmptyGroups*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $emptyGroups += if ($f4) { _imp($f4.FullName) } else { @() }
+    $f5 = Get-ChildItem $ddir.FullName -Filter '*DuplicateSpns*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $dupSpns += if ($f5) { _imp($f5.FullName) } else { @() }
+    $f6 = Get-ChildItem $ddir.FullName -Filter '*DisabledAccounts*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $disabled += if ($f6) { _imp($f6.FullName) } else { @() }
+    $f7 = Get-ChildItem $ddir.FullName -Filter '*AdminSdHolderImpact*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $adminSd += if ($f7) { _imp($f7.FullName) } else { @() }
+    $f8 = Get-ChildItem $ddir.FullName -Filter '*GroupTokenBloat*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $tokenBloat += if ($f8) { _imp($f8.FullName) } else { @() }
     $gpoInventory += _imp((Get-ChildItem $ddir.FullName -Filter '*GPO__Inventory*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
   }
 
   # Complexity score (0-100): weighted drivers
   $score = 0
-  $score += [math]::Min(30, [math]::Round(@($usersTotal / 1000.0) * 5))       # identity volume
-  $score += [math]::Min(15, (@($groupNesting | Where-Object { ($_.'NestingDepth' -as [int]) -ge 3 }).Count))
-  $score += [math]::Min(10, (@($ouDepth | Where-Object { ($_.'MaxDepth' -as [int]) -ge 6 }).Count))
-  $score += [math]::Min(10, (@($crossDomain).Count))                      # cross-domain dependencies
-  $score += [math]::Min(10, (@($dupSpns).Count))
-  $score += [math]::Min(10, (@($emptyGroups).Count))
-  $score += [math]::Min(10, (@($adminSd).Count))
-  $score += [math]::Min(10, (@($tokenBloat).Count))
-  $score += [math]::Min(10, (@($disabled).Count))
-  $score += [math]::Min(10, (@($trustMap).Count))
+  $groupNestingDeep = @($groupNesting | Where-Object { $_.PSObject.Properties['NestingDepth'] -and ($_.'NestingDepth' -as [int]) -ge 3 })
+  $ouDepthMax = @($ouDepth | ForEach-Object { if ($_.PSObject.Properties['MaxDepth']) { $_.'MaxDepth' -as [int] } } | Where-Object { $_ -ge 6 })
+  $crossDomainCount = @($crossDomain).Count
+  $dupSpnsCount = @($dupSpns).Count
+  $emptyGroupsCount = @($emptyGroups).Count
+  $adminSdCount = @($adminSd).Count
+  $tokenBloatCount = @($tokenBloat).Count
+  $disabledCount = @($disabled).Count
+  $trustMapCount = @($trustMap).Count
+
+  $score += [math]::Min(30, [math]::Round(($usersTotal / 1000.0) * 5))       # identity volume
+  $score += [math]::Min(15, $groupNestingDeep.Count)
+  $score += [math]::Min(10, $ouDepthMax.Count)
+  $score += [math]::Min(10, $crossDomainCount)                      # cross-domain dependencies
+  $score += [math]::Min(10, $dupSpnsCount)
+  $score += [math]::Min(10, $emptyGroupsCount)
+  $score += [math]::Min(10, $adminSdCount)
+  $score += [math]::Min(10, $tokenBloatCount)
+  $score += [math]::Min(10, $disabledCount)
+  $score += [math]::Min(10, $trustMapCount)
   $score = [math]::Min(100, $score)
 
   # LOE estimation (days) by phase
@@ -167,15 +191,15 @@ body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f5f5f5;color:#33
   <h3>Complexity Drivers</h3>
   <table class="table">
     <tr><th>Driver</th><th>Indicator</th><th>Notes</th></tr>
-    <tr><td>Group Nesting</td><td>@(@($groupNesting | Where-Object { ($_.'NestingDepth' -as [int]) -ge 3 }).Count)</td><td>Groups with nesting depth ≥ 3</td></tr>
-    <tr><td>OU Depth</td><td>@(@($ouDepth | Where-Object { ($_.'MaxDepth' -as [int]) -ge 6 }).Count)</td><td>Domains with OU depth ≥ 6</td></tr>
-    <tr><td>Cross-Domain Membership</td><td>@(@($crossDomain).Count)</td><td>Groups with cross-domain members</td></tr>
-    <tr><td>Duplicate SPNs</td><td>@(@($dupSpns).Count)</td><td>Duplicate SPN entries detected</td></tr>
-    <tr><td>Empty Groups</td><td>@(@($emptyGroups).Count)</td><td>Groups with zero members</td></tr>
-    <tr><td>AdminSDHolder Impact</td><td>@(@($adminSd).Count)</td><td>Protected accounts/groups</td></tr>
-    <tr><td>Token Bloat</td><td>@(@($tokenBloat).Count)</td><td>High token size candidates</td></tr>
-    <tr><td>Disabled Accounts</td><td>@(@($disabled).Count)</td><td>Disabled users/computers</td></tr>
-    <tr><td>Trusts</td><td>@(@($trustMap).Count)</td><td>Forest/domain trusts present</td></tr>
+    <tr><td>Group Nesting</td><td>$($groupNestingDeep.Count)</td><td>Groups with nesting depth ≥ 3</td></tr>
+    <tr><td>OU Depth</td><td>$($ouDepthMax.Count)</td><td>Domains with OU depth ≥ 6</td></tr>
+    <tr><td>Cross-Domain Membership</td><td>$crossDomainCount</td><td>Groups with cross-domain members</td></tr>
+    <tr><td>Duplicate SPNs</td><td>$dupSpnsCount</td><td>Duplicate SPN entries detected</td></tr>
+    <tr><td>Empty Groups</td><td>$emptyGroupsCount</td><td>Groups with zero members</td></tr>
+    <tr><td>AdminSDHolder Impact</td><td>$adminSdCount</td><td>Protected accounts/groups</td></tr>
+    <tr><td>Token Bloat</td><td>$tokenBloatCount</td><td>High token size candidates</td></tr>
+    <tr><td>Disabled Accounts</td><td>$disabledCount</td><td>Disabled users/computers</td></tr>
+    <tr><td>Trusts</td><td>$trustMapCount</td><td>Forest/domain trusts present</td></tr>
   </table>
 </div>
 

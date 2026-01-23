@@ -66,6 +66,18 @@ function New-LcEnvironmentComparisonReport {
   $sourceAssessment = Import-CsvSafe (Join-Path $SourceRunRoot 'LC__AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
   $targetAssessment = Import-CsvSafe (Join-Path $TargetRunRoot 'LC__AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
 
+  # Provide fallback if either is null
+  if (-not $sourceAssessment) {
+    $sourceAssessment = [pscustomobject]@{
+      DomainsCount = 0; UsersTotal = 0; GroupsTotal = 0; ComputersTotal = 0; ForestName = 'Unknown'
+    }
+  }
+  if (-not $targetAssessment) {
+    $targetAssessment = [pscustomobject]@{
+      DomainsCount = 0; UsersTotal = 0; GroupsTotal = 0; ComputersTotal = 0; ForestName = 'Unknown'
+    }
+  }
+
   # Load risk flags summary
   $sourceRiskFlags = Import-CsvSafe (Join-Path $SourceRunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv')
   $targetRiskFlags = Import-CsvSafe (Join-Path $TargetRunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv')
@@ -81,24 +93,45 @@ function New-LcEnvironmentComparisonReport {
   $sourceDomains = @($sourceDomainFolders | ForEach-Object { $_.Name -replace '^Domain-', '' } | Sort-Object)
   $targetDomains = @($targetDomainFolders | ForEach-Object { $_.Name -replace '^Domain-', '' } | Sort-Object)
 
+  # Suppress warnings when source and target are the same path (single-environment mode)
+  $isSameEnvironment = $SourceRunRoot -eq $TargetRunRoot
+
   $newDomains = @($targetDomains | Where-Object { $_ -notin $sourceDomains })
   $missingDomains = @($sourceDomains | Where-Object { $_ -notin $targetDomains })
   $commonDomains = @($sourceDomains | Where-Object { $_ -in $targetDomains })
 
-  # Build domain comparison table
+  # Build domain comparison table (all domains from both environments)
+  $allDomains = @(($sourceDomains + $targetDomains) | Sort-Object -Unique)
   $domainComparisons = @()
-  foreach ($domain in $targetDomains | Sort-Object) {
+  foreach ($domain in $allDomains) {
     $sourceFolder = Join-Path $sourceDomainDir "Domain-$domain"
     $targetFolder = Join-Path $targetDomainDir "Domain-$domain"
 
-    $sourceUsers = Import-CsvSafe (Join-Path $sourceFolder 'LC__AD__Users__*.csv') | Measure-Object | Select-Object -ExpandProperty Count
-    $targetUsers = Import-CsvSafe (Join-Path $targetFolder 'LC__AD__Users__*.csv') | Measure-Object | Select-Object -ExpandProperty Count
+    # Use Get-ChildItem to find files, then import
+    $sourceUsersFile = Get-ChildItem -Path $sourceFolder -Filter '*Identity__Users*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $targetUsersFile = Get-ChildItem -Path $targetFolder -Filter '*Identity__Users*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $sourceUsers = if ($sourceUsersFile) { (Import-CsvSafe $sourceUsersFile.FullName | Measure-Object).Count } else { 0 }
+    $targetUsers = if ($targetUsersFile) { (Import-CsvSafe $targetUsersFile.FullName | Measure-Object).Count } else { 0 }
 
-    $sourceGroups = Import-CsvSafe (Join-Path $sourceFolder 'LC__AD__Groups__*.csv') | Measure-Object | Select-Object -ExpandProperty Count
-    $targetGroups = Import-CsvSafe (Join-Path $targetFolder 'LC__AD__Groups__*.csv') | Measure-Object | Select-Object -ExpandProperty Count
+    $sourceGroupsFile = Get-ChildItem -Path $sourceFolder -Filter '*Identity__Groups*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $targetGroupsFile = Get-ChildItem -Path $targetFolder -Filter '*Identity__Groups*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $sourceGroups = if ($sourceGroupsFile) { (Import-CsvSafe $sourceGroupsFile.FullName | Measure-Object).Count } else { 0 }
+    $targetGroups = if ($targetGroupsFile) { (Import-CsvSafe $targetGroupsFile.FullName | Measure-Object).Count } else { 0 }
 
-    $sourceComputers = Import-CsvSafe (Join-Path $sourceFolder 'LC__AD__Computers__*.csv') | Measure-Object | Select-Object -ExpandProperty Count
-    $targetComputers = Import-CsvSafe (Join-Path $targetFolder 'LC__AD__Computers__*.csv') | Measure-Object | Select-Object -ExpandProperty Count
+    $sourceComputersFile = Get-ChildItem -Path $sourceFolder -Filter '*Identity__ComputersAll*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $targetComputersFile = Get-ChildItem -Path $targetFolder -Filter '*Identity__ComputersAll*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $sourceComputers = if ($sourceComputersFile) { (Import-CsvSafe $sourceComputersFile.FullName | Measure-Object).Count } else { 0 }
+    $targetComputers = if ($targetComputersFile) { (Import-CsvSafe $targetComputersFile.FullName | Measure-Object).Count } else { 0 }
+
+    $sourceSpnsFile = Get-ChildItem -Path $sourceFolder -Filter '*Identity__SPNs*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $targetSpnsFile = Get-ChildItem -Path $targetFolder -Filter '*Identity__SPNs*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $sourceSpns = if ($sourceSpnsFile) { (Import-CsvSafe $sourceSpnsFile.FullName | Measure-Object).Count } else { 0 }
+    $targetSpns = if ($targetSpnsFile) { (Import-CsvSafe $targetSpnsFile.FullName | Measure-Object).Count } else { 0 }
+
+    $sourceOusFile = Get-ChildItem -Path $sourceFolder -Filter '*Identity__OrganizationalUnits*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $targetOusFile = Get-ChildItem -Path $targetFolder -Filter '*Identity__OrganizationalUnits*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    $sourceOus = if ($sourceOusFile) { (Import-CsvSafe $sourceOusFile.FullName | Measure-Object).Count } else { 0 }
+    $targetOus = if ($targetOusFile) { (Import-CsvSafe $targetOusFile.FullName | Measure-Object).Count } else { 0 }
 
     $domainComparisons += [pscustomobject]@{
       Domain          = $domain
@@ -111,16 +144,22 @@ function New-LcEnvironmentComparisonReport {
       SourceComputers = $sourceComputers
       TargetComputers = $targetComputers
       ComputerDelta   = $targetComputers - $sourceComputers
+      SourceSpns      = $sourceSpns
+      TargetSpns      = $targetSpns
+      SpnDelta        = $targetSpns - $sourceSpns
+      SourceOus       = $sourceOus
+      TargetOus       = $targetOus
+      OuDelta         = $targetOus - $sourceOus
     }
   }
 
   # Build metrics comparison
   $metrics = @(
-    @{ Name = "Forest Domains"; Source = $sourceAssessment.ForestDomainCount; Target = $targetAssessment.ForestDomainCount }
-    @{ Name = "Total Users"; Source = $sourceAssessment.TotalUsers; Target = $targetAssessment.TotalUsers }
-    @{ Name = "Total Groups"; Source = $sourceAssessment.TotalGroups; Target = $targetAssessment.TotalGroups }
-    @{ Name = "Total Computers"; Source = $sourceAssessment.TotalComputers; Target = $targetAssessment.TotalComputers }
-    @{ Name = "Domain Trusts"; Source = $sourceAssessment.ForestTrustCount; Target = $targetAssessment.ForestTrustCount }
+    @{ Name = "Forest Domains"; Source = $sourceAssessment.DomainsCount; Target = $targetAssessment.DomainsCount }
+    @{ Name = "Total Users"; Source = $sourceAssessment.UsersTotal; Target = $targetAssessment.UsersTotal }
+    @{ Name = "Total Groups"; Source = $sourceAssessment.GroupsTotal; Target = $targetAssessment.GroupsTotal }
+    @{ Name = "Total Computers"; Source = $sourceAssessment.ComputersTotal; Target = $targetAssessment.ComputersTotal }
+    @{ Name = "Domain Trusts"; Source = $sourceAssessment.DomainsCount; Target = $targetAssessment.DomainsCount }
   ) | ForEach-Object {
     $delta = [int]$_.Target - [int]$_.Source
     $_ | Add-Member -NotePropertyName Delta -NotePropertyValue $delta -PassThru
@@ -178,11 +217,14 @@ function New-LcEnvironmentComparisonReport {
 
   $htmlContent = ($htmlHeader -join "`n")
 
-  if ($newDomains.Count -gt 0) {
-    $htmlContent += "<div class='warning'><strong>WARNING - New Domains in Target:</strong> $($newDomains -join ', ')</div>"
-  }
-  if ($missingDomains.Count -gt 0) {
-    $htmlContent += "<div class='warning'><strong>WARNING - Domains Missing from Target:</strong> $($missingDomains -join ', ')</div>"
+  # Only show domain mismatch warnings if comparing different environments
+  if (-not $isSameEnvironment) {
+    if ($newDomains.Count -gt 0) {
+      $htmlContent += "<div class='warning'><strong>WARNING - New Domains in Target:</strong> $($newDomains -join ', ')</div>"
+    }
+    if ($missingDomains.Count -gt 0) {
+      $htmlContent += "<div class='warning'><strong>WARNING - Domains Missing from Target:</strong> $($missingDomains -join ', ')</div>"
+    }
   }
 
   $htmlContent += "
@@ -214,13 +256,20 @@ function New-LcEnvironmentComparisonReport {
       <table>
         <thead>
           <tr>
-            <th>Domain</th>
+            <th rowspan='2'>Domain</th>
             <th colspan='3'>Users</th>
             <th colspan='3'>Groups</th>
             <th colspan='3'>Computers</th>
+            <th colspan='3'>SPNs</th>
+            <th colspan='3'>OUs</th>
           </tr>
           <tr>
-            <th></th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Delta</th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Delta</th>
             <th>Source</th>
             <th>Target</th>
             <th>Delta</th>
@@ -239,6 +288,8 @@ function New-LcEnvironmentComparisonReport {
     $userDeltaClass = if ($comp.UserDelta -gt 0) { 'positive' } elseif ($comp.UserDelta -lt 0) { 'negative' } else { 'neutral' }
     $groupDeltaClass = if ($comp.GroupDelta -gt 0) { 'positive' } elseif ($comp.GroupDelta -lt 0) { 'negative' } else { 'neutral' }
     $computerDeltaClass = if ($comp.ComputerDelta -gt 0) { 'positive' } elseif ($comp.ComputerDelta -lt 0) { 'negative' } else { 'neutral' }
+    $spnDeltaClass = if ($comp.SpnDelta -gt 0) { 'positive' } elseif ($comp.SpnDelta -lt 0) { 'negative' } else { 'neutral' }
+    $ouDeltaClass = if ($comp.OuDelta -gt 0) { 'positive' } elseif ($comp.OuDelta -lt 0) { 'negative' } else { 'neutral' }
 
     $htmlContent += "
           <tr>
@@ -252,6 +303,12 @@ function New-LcEnvironmentComparisonReport {
             <td>$($comp.SourceComputers)</td>
             <td>$($comp.TargetComputers)</td>
             <td><span class='$computerDeltaClass'>$($comp.ComputerDelta)</span></td>
+            <td>$($comp.SourceSpns)</td>
+            <td>$($comp.TargetSpns)</td>
+            <td><span class='$spnDeltaClass'>$($comp.SpnDelta)</span></td>
+            <td>$($comp.SourceOus)</td>
+            <td>$($comp.TargetOus)</td>
+            <td><span class='$ouDeltaClass'>$($comp.OuDelta)</span></td>
           </tr>
 "
   }

@@ -66,35 +66,40 @@ function New-LcMigrationReadinessChecklist {
   $sourceAssess = Import-CsvSafe (Join-Path $SourceRunRoot 'LC__AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
   $targetAssess = Import-CsvSafe (Join-Path $TargetRunRoot 'LC__AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
 
+  # Provide fallbacks if missing
+  if (-not $sourceAssess) { $sourceAssess = [pscustomobject]@{ UsersTotal = 0; GroupsTotal = 0; ComputersTotal = 0 } }
+  if (-not $targetAssess) { $targetAssess = [pscustomobject]@{ UsersTotal = 0; GroupsTotal = 0; ComputersTotal = 0 } }
+
   # Load risk flags
   $sourceRiskFlags = Import-CsvSafe (Join-Path $SourceRunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv')
   $targetRiskFlags = Import-CsvSafe (Join-Path $TargetRunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv')
 
-  # Parse risk flag counts
-  $sourceCritical = @($sourceRiskFlags | Where-Object { $_.Flag -match 'Critical' } | Measure-Object Count -Sum).Sum
-  $sourceHigh = @($sourceRiskFlags | Where-Object { $_.Flag -match 'High' } | Measure-Object Count -Sum).Sum
-  $targetCritical = @($targetRiskFlags | Where-Object { $_.Flag -match 'Critical' } | Measure-Object Count -Sum).Sum
-  $targetHigh = @($targetRiskFlags | Where-Object { $_.Flag -match 'High' } | Measure-Object Count -Sum).Sum
+  # Parse risk flag counts (safely handle empty arrays)
+  $sourceCritical = ($sourceRiskFlags | Where-Object { $_.Flag -match 'Critical' } | Measure-Object).Count
+  $sourceHigh = ($sourceRiskFlags | Where-Object { $_.Flag -match 'High' } | Measure-Object).Count
+  $targetCritical = ($targetRiskFlags | Where-Object { $_.Flag -match 'Critical' } | Measure-Object).Count
+  $targetHigh = ($targetRiskFlags | Where-Object { $_.Flag -match 'High' } | Measure-Object).Count
+
 
   # Build checklist items
   $checklistItems = @(
     @{
-      Category = "Object Reconciliation"
+      Category = "Object Migration Counts"
       Items    = @(
         @{
           Item   = "All source users migrated to target";
-          Status = if ([int]$sourceAssess.TotalUsers -le [int]$targetAssess.TotalUsers) { "Pass" } else { "Fail" };
-          Note   = "Source: $($sourceAssess.TotalUsers) to Target: $($targetAssess.TotalUsers)"
+          Status = if ([int]$sourceAssess.UsersTotal -le [int]$targetAssess.UsersTotal) { "Pass" } else { "Fail" };
+          Note   = "Source: $($sourceAssess.UsersTotal) to Target: $($targetAssess.UsersTotal)"
         },
         @{
           Item   = "All source groups migrated to target";
-          Status = if ([int]$sourceAssess.TotalGroups -le [int]$targetAssess.TotalGroups) { "Pass" } else { "Fail" };
-          Note   = "Source: $($sourceAssess.TotalGroups) to Target: $($targetAssess.TotalGroups)"
+          Status = if ([int]$sourceAssess.GroupsTotal -le [int]$targetAssess.GroupsTotal) { "Pass" } else { "Fail" };
+          Note   = "Source: $($sourceAssess.GroupsTotal) to Target: $($targetAssess.GroupsTotal)"
         },
         @{
           Item   = "All source computers migrated to target";
-          Status = if ([int]$sourceAssess.TotalComputers -le [int]$targetAssess.TotalComputers) { "Pass" } else { "Fail" };
-          Note   = "Source: $($sourceAssess.TotalComputers) to Target: $($targetAssess.TotalComputers)"
+          Status = if ([int]$sourceAssess.ComputersTotal -le [int]$targetAssess.ComputersTotal) { "Pass" } else { "Fail" };
+          Note   = "Source: $($sourceAssess.ComputersTotal) to Target: $($targetAssess.ComputersTotal)"
         }
       )
     },
@@ -220,6 +225,12 @@ function New-LcMigrationReadinessChecklist {
     }
   )
 
+  # Flatten all checklist items for summary counts
+  $allItems = @()
+  foreach ($section in $checklistItems) {
+    if ($section.Items) { $allItems += $section.Items }
+  }
+
   # Build HTML without here-strings (to avoid parser errors)
   $htmlHeader = @(
     "<!DOCTYPE html>",
@@ -273,15 +284,15 @@ function New-LcMigrationReadinessChecklist {
     "      <h2>Readiness Summary</h2>",
     "      <div class=`"summary`">",
     "        <div class=`"summary-card`">",
-    "          <div class=`"value`">$(($checklistItems.Items | Where-Object { $_.Status -eq 'Pass' } | Measure-Object).Count)</div>",
+    "          <div class=`"value`">$(($allItems | Where-Object { $_.Status -eq 'Pass' } | Measure-Object).Count)</div>",
     "          <div class=`"label`">Automatic Pass</div>",
     "        </div>",
     "        <div class=`"summary-card`">",
-    "          <div class=`"value`">$(($checklistItems.Items | Where-Object { $_.Status -eq 'Fail' } | Measure-Object).Count)</div>",
+    "          <div class=`"value`">$(($allItems | Where-Object { $_.Status -eq 'Fail' } | Measure-Object).Count)</div>",
     "          <div class=`"label`">Failures Detected</div>",
     "        </div>",
     "        <div class=`"summary-card`">",
-    "          <div class=`"value`">$(($checklistItems.Items | Where-Object { $_.Status -eq 'Manual' } | Measure-Object).Count)</div>",
+    "          <div class=`"value`">$(($allItems | Where-Object { $_.Status -eq 'Manual' } | Measure-Object).Count)</div>",
     "          <div class=`"label`">Manual Review</div>",
     "        </div>",
     "      </div>",
@@ -351,8 +362,8 @@ function New-LcMigrationReadinessChecklist {
 
   return [pscustomobject]@{
     ChecklistPath = $OutputPath
-    PassItems     = @($checklistItems.Items | Where-Object { $_.Status -eq 'Pass' }).Count
-    FailItems     = @($checklistItems.Items | Where-Object { $_.Status -eq 'Fail' }).Count
-    ManualItems   = @($checklistItems.Items | Where-Object { $_.Status -eq 'Manual' }).Count
+    PassItems     = @($allItems | Where-Object { $_.Status -eq 'Pass' }).Count
+    FailItems     = @($allItems | Where-Object { $_.Status -eq 'Fail' }).Count
+    ManualItems   = @($allItems | Where-Object { $_.Status -eq 'Manual' }).Count
   }
 }

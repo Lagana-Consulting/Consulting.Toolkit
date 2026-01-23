@@ -1,0 +1,187 @@
+{
+    "waveDefaults": {
+        "usersPerWave": 5000,
+        "computersPerWave": 2000
+    },
+    "phases": [
+        {
+            "name": "Planning & Design",
+            "description": "Assessment, planning, and design phase",
+            "tasks": [
+                {
+                    "name": "Discovery & Assessment",
+                    "baseDays": 5,
+                    "notes": "Already completed",
+                    "multipliers": {
+                        "domainsPerDay": 0.5
+                    }
+                },
+                {
+                    "name": "Design Review & Approval",
+                    "baseDays": 3,
+                    "notes": "Review design with stakeholders",
+                    "multipliers": {
+                        "complexityScore": 0.02
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Preparation",
+            "description": "Environment preparation and remediation",
+            "tasks": [
+                {
+                    "name": "Conflict Resolution",
+                    "baseDays": 2,
+                    "notes": "Rename conflicting objects",
+                    "multipliers": {
+                        "duplicateObjectsCount": 0.1,
+                        "duplicateSpnsCount": 0.05
+                    }
+                },
+                {
+                    "name": "Cleanup & Optimization",
+                    "baseDays": 3,
+                    "notes": "Remove empty groups, disable stale accounts",
+                    "multipliers": {
+                        "emptyGroupsCount": 0.02,
+                        "disabledAccountsCount": 0.01
+                    }
+                },
+                {
+                    "name": "Trust & Delegation Setup",
+                    "baseDays": 2,
+                    "notes": "Configure forest/domain trusts, delegate permissions",
+                    "multipliers": {
+                        "domainsPerDay": 1.0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Pilot",
+            "description": "Pilot migration with subset of users/computers",
+            "tasks": [
+                {
+                    "name": "Pilot Group Selection",
+                    "baseDays": 1,
+                    "notes": "Select pilot users and computers",
+                    "multipliers": {}
+                },
+                {
+                    "name": "Pilot Migration",
+                    "baseDays": 3,
+                    "notes": "Migrate and validate pilot group",
+                    "multipliers": {
+                        "waveCount": 2.0
+                    }
+                },
+                {
+                    "name": "Pilot Validation",
+                    "baseDays": 2,
+                    "notes": "Test functionality, resolve issues",
+                    "multipliers": {
+                        "crossDomainGroupCount": 0.1
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Production Migration",
+            "description": "Full production migration in waves",
+            "tasks": [
+                {
+                    "name": "User Migration Waves",
+                    "baseDays": 5,
+                    "notes": "Migrate users in multiple waves",
+                    "multipliers": {
+                        "usersPerWave": 0.002
+                    }
+                },
+                {
+                    "name": "Computer Migration Waves",
+                    "baseDays": 5,
+                    "notes": "Migrate computers in multiple waves",
+                    "multipliers": {
+                        "computersPerWave": 0.003
+                    }
+                },
+                {
+                    "name": "Group Policy Application",
+                    "baseDays": 2,
+                    "notes": "Apply and verify GPO changes",
+                    "multipliers": {
+                        "domainsPerDay": 1.0
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Stabilization & Decommission",
+            "description": "Post-migration stabilization and source decommissioning",
+            "tasks": [
+                {
+                    "name": "Post-Migration Validation",
+                    "baseDays": 3,
+                    "notes": "Verify all objects migrated successfully",
+                    "multipliers": {
+                        "complexityScore": 0.02
+                    }
+                },
+                {
+                    "name": "Coexistence Support",
+                    "baseDays": 5,
+                    "notes": "Monitor and support during coexistence window",
+                    "multipliers": {
+                        "domainsPerDay": 1.0
+                    }
+                },
+                {
+                    "name": "Source Decommissioning",
+                    "baseDays": 3,
+                    "notes": "Remove source forest/domains",
+                    "multipliers": {
+                        "domainsPerDay": 1.0
+                    }
+                }
+            ]
+        }
+    ],
+    "riskFactors": [
+        {
+            "name": "High Group Nesting Complexity",
+            "indicator": "groupsWithDeepNestingCount",
+            "threshold": 5,
+            "multiplier": 1.15,
+            "description": "Groups nested 3+ levels deep add complexity"
+        },
+        {
+            "name": "Deep OU Structure",
+            "indicator": "ouDepthCount",
+            "threshold": 3,
+            "multiplier": 1.1,
+            "description": "OU structures 6+ levels deep add complexity"
+        },
+        {
+            "name": "Cross-Domain Dependencies",
+            "indicator": "crossDomainGroupCount",
+            "threshold": 10,
+            "multiplier": 1.15,
+            "description": "Cross-domain group memberships add risk"
+        },
+        {
+            "name": "Multiple Forest Trusts",
+            "indicator": "trustCount",
+            "threshold": 2,
+            "multiplier": 1.2,
+            "description": "Multiple trust relationships increase complexity"
+        },
+        {
+            "name": "Stale User/Computer Accounts",
+            "indicator": "stalePct",
+            "threshold": 10,
+            "multiplier": 1.05,
+            "description": "Stale accounts >10% require cleanup planning"
+        }
+    ]
+}

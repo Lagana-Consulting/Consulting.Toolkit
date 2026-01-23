@@ -1,342 +1,557 @@
 function New-LcMigrationLoeExcel {
     <#
     .SYNOPSIS
-    Generate a detailed Excel workbook for migration LOE estimation based on discovery data and JSON config.
+    Generate a detailed Excel workbook for migration LOE estimation.
+    Uses ImportExcel module for robust Excel operations.
+    Supports single or multiple source discovery paths.
 
     .PARAMETER DiscoveryOutputPath
-    Path to the discovery output folder containing CSVs.
+    Path to a single discovery output folder (for backward compatibility).
+    Use SourceDiscoveryPaths for multiple sources.
 
-    .PARAMETER ConfigPath
-    Path to LOE configuration JSON file. Defaults to module config folder.
+    .PARAMETER SourceDiscoveryPaths
+    Array of discovery output folders for multiple source forests/domains.
+    Preferred over DiscoveryOutputPath when aggregating multiple sources.
 
     .PARAMETER OutputPath
-    Optional path for the resulting Excel file. Defaults inside DiscoveryOutputPath.
+    Optional path for the resulting Excel file. Defaults inside first source path.
 
     .PARAMETER CustomerName
-    Customer name for the workbook title. Defaults to forest name.
+    Customer name for the workbook title.
+
+    .PARAMETER TargetDomain
+    Target domain name for migration (defaults to 'TBD').
+
+    .PARAMETER TargetDiscoveryPath
+    Path to target discovery output folder (optional).
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
         [ValidateScript({ Test-Path $_ -PathType Container })]
         [string]$DiscoveryOutputPath,
 
-        [string]$ConfigPath,
+        [ValidateScript({
+                foreach ($p in $_) {
+                    if (-not (Test-Path $p -PathType Container)) {
+                        throw "Path not found: $p"
+                    }
+                }
+                $true
+            })]
+        [string[]]$SourceDiscoveryPaths,
 
         [string]$OutputPath,
 
-        [string]$CustomerName
+        [string]$CustomerName = "TBD",
+
+        [string]$TargetDomain = "TBD",
+
+        [string]$TargetDiscoveryPath
     )
 
-    # Default config path (module or embedded)
-    if (-not $ConfigPath) {
-        $ConfigPath = Join-Path $PSScriptRoot "..\..\config\LOE.config.json"
-        if (-not (Test-Path $ConfigPath)) {
-            throw "LOE config not found at $ConfigPath"
+    # Normalize to array of source paths
+    if ($SourceDiscoveryPaths) {
+        $sourcePaths = $SourceDiscoveryPaths
+    } elseif ($DiscoveryOutputPath) {
+        $sourcePaths = @($DiscoveryOutputPath)
+    } else {
+        throw "Must provide either DiscoveryOutputPath or SourceDiscoveryPaths"
+    }
+
+    # Helper to safely import CSV
+    function _imp($p) {
+        if (-not $p) { return @() }
+        if (Test-Path $p -ErrorAction SilentlyContinue) {
+            try { return @(Import-Csv $p) } catch { return @() }
         }
+        return @()
     }
 
-    # Load config
-    $config = Get-Content -Path $ConfigPath -Raw | ConvertFrom-Json
-
-    # Load discovery data
-    function _imp($p) { if (Test-Path $p) { try { @(Import-Csv $p) } catch { @() } } else { @() } }
-
-    $forestPath = $DiscoveryOutputPath
-    $forest10 = Join-Path $DiscoveryOutputPath '10_forest'
-    $domains20 = Join-Path $DiscoveryOutputPath '20_domains'
-
-    $forestSummaryFile = Get-ChildItem -Path $forestPath -Filter '*Assessment__Summary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-    if (-not $forestSummaryFile) {
-        $forestSummaryFile = Get-ChildItem -Path $forest10 -Filter '*Forest__Summary*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-    }
-    $forestSummary = @()
-    if ($forestSummaryFile) { $forestSummary = @(Import-Csv $forestSummaryFile.FullName) }
-    $summaryRow = if ($forestSummary.Count -gt 0) { $forestSummary[0] } else { $null }
-
-    $forestName = if ($summaryRow) { $summaryRow.ForestName } else { "Unknown" }
-    if (-not $CustomerName) { $CustomerName = $forestName }
-
-    # Default output
-    if (-not $OutputPath) {
-        $ts = (Get-Date).ToString('yyyyMMdd-HHmmss')
-        $OutputPath = Join-Path $DiscoveryOutputPath "LC__Migration__LOE__$CustomerName`__$ts.xlsx"
-    }
-
-    # Aggregate identity + complexity data
-    $usersTotal = 0; $groupsTotal = 0; $computersTotal = 0
-    $usersStale = 0; $computersStale = 0
-    $groupNesting = @(); $ouDepth = @(); $crossDomain = @()
-    $dupSpns = @(); $emptyGroups = @(); $disabled = @(); $adminSd = @(); $tokenBloat = @()
-    $duplicateObjects = @()
-
+    # Load discovery data from all source paths
     $domainDirs = @()
-    foreach ($root in @($DiscoveryOutputPath, $domains20)) {
-        if (Test-Path $root) {
-            $domainDirs += (Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^Domain-' })
+    $totalEnabledUsers = 0
+    $totalActiveWorkstations = 0
+    $totalServers = 0
+    $totalGroups = 0
+    $totalGpos = 0
+    $domainMetrics = @()
+
+    # Collect domain directories from all source paths
+    foreach ($srcPath in $sourcePaths) {
+        $domains20 = Join-Path $srcPath '20_domains'
+        if (Test-Path $domains20) {
+            $domainDirs += (Get-ChildItem -Path $domains20 -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^Domain-' })
         }
     }
-    $domainDirs = $domainDirs | Sort-Object -Property FullName -Unique
 
+    # Auto-detect target domain from first source if not specified
+    if ($TargetDomain -eq 'TBD') {
+        $assessmentFile = Get-ChildItem -Path $sourcePaths[0] -Filter '*Assessment__Summary__Forest.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($assessmentFile) {
+            $assessment = _imp($assessmentFile.FullName) | Select-Object -First 1
+            if ($assessment.ForestName) {
+                $TargetDomain = $assessment.ForestName
+                Write-Verbose "Auto-detected target domain: $TargetDomain"
+            }
+        }
+    }
+
+    # Aggregate domain metrics from all sources
     foreach ($ddir in $domainDirs) {
-        $usersFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__Users__*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        $groupsFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__Groups__*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-        $computersFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__ComputersAll__*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        $domainName = $ddir.Name -replace '^Domain-', ''
 
-        $users = if ($usersFile) { @(Import-Csv $usersFile.FullName) } else { @() }
-        $groups = if ($groupsFile) { @(Import-Csv $groupsFile.FullName) } else { @() }
-        $computers = if ($computersFile) { @(Import-Csv $computersFile.FullName) } else { @() }
+        $usersFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__Users*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        $users = if ($usersFile) { _imp($usersFile.FullName) } else { @() }
+        $enabledUsers = @($users | Where-Object { $_.Enabled -eq 'True' }).Count
 
-        $usersTotal += @($users).Count
-        $groupsTotal += @($groups).Count
-        $computersTotal += @($computers).Count
-        $usersStale += @($users | Where-Object { ($_.'LastLogonDays' -as [double]) -gt 180 }).Count
-        $computersStale += @($computers | Where-Object { ($_.'LastLogonDays' -as [double]) -gt 90 }).Count
+        $computersFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__ComputersAll*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        $computers = if ($computersFile) { _imp($computersFile.FullName) } else { @() }
+        $activeWorkstations = @($computers | Where-Object {
+                $_.Enabled -eq 'True' -and $_.OperatingSystem -notmatch 'Server' -and ($_.'LastLogonDays' -as [int]) -le 30
+            }).Count
+        $servers = @($computers | Where-Object { $_.OperatingSystem -match 'Server' }).Count
 
-        $groupNesting += _imp((Get-ChildItem $ddir.FullName -Filter '*GroupNestingDepth*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $ouDepth += _imp((Get-ChildItem $ddir.FullName -Filter '*OuDepthAnalysis*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $crossDomain += _imp((Get-ChildItem $ddir.FullName -Filter '*CrossDomainGroupMembership*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $dupSpns += _imp((Get-ChildItem $ddir.FullName -Filter '*DuplicateSpns*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $emptyGroups += _imp((Get-ChildItem $ddir.FullName -Filter '*EmptyGroups*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $disabled += _imp((Get-ChildItem $ddir.FullName -Filter '*DisabledAccounts*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $adminSd += _imp((Get-ChildItem $ddir.FullName -Filter '*AdminSdHolderImpact*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-        $tokenBloat += _imp((Get-ChildItem $ddir.FullName -Filter '*GroupTokenBloat*' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
+        $groupsFile = Get-ChildItem -Path $ddir.FullName -Filter '*Identity__Groups*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        $groups = if ($groupsFile) { _imp($groupsFile.FullName) } else { @() }
+        $groupCount = @($groups).Count
+
+        $gpoFile = Get-ChildItem -Path $ddir.FullName -Filter '*Policy__GpoInventory*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        $gpos = if ($gpoFile) { _imp($gpoFile.FullName) } else { @() }
+        $gpoCount = @($gpos).Count
+
+        $dcFile = Get-ChildItem -Path $ddir.FullName -Filter '*Infrastructure__DomainControllers*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        $dcs = if ($dcFile) { _imp($dcFile.FullName) } else { @() }
+        $dcCount = @($dcs).Count
+
+        $domainMetrics += @{
+            Prefix             = ($domainName -split '\.' | Select-Object -First 1).ToUpper()
+            Domain             = $domainName
+            EnabledUsers       = $enabledUsers
+            ActiveWorkstations = $activeWorkstations
+            Servers            = $servers
+            Groups             = $groupCount
+            DCs                = $dcCount
+            GPOs               = $gpoCount
+            Role               = 'Source'
+        }
+
+        $totalEnabledUsers += $enabledUsers
+        $totalActiveWorkstations += $activeWorkstations
+        $totalServers += $servers
+        $totalGroups += $groupCount
+        $totalGpos += $gpoCount
     }
 
-    $duplicateObjects = _imp((Get-ChildItem $forest10 -Filter '*DuplicateObjectsForAdmt*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-    $trustMap = _imp((Get-ChildItem $forest10 -Filter '*TrustRelationshipMap*Forest*.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName)
-
-    # Compute metrics
-    $groupsWithDeepNesting = @($groupNesting | Where-Object { ($_.'NestingDepth' -as [int]) -ge 3 }).Count
-    $ouWithDeepStructure = @($ouDepth | Where-Object { ($_.'MaxDepth' -as [int]) -ge 6 }).Count
-    $stalePct = if ($usersTotal -gt 0) { [math]::Round((($usersStale + $computersStale) / ($usersTotal + $computersTotal)) * 100, 1) } else { 0 }
-
-    # Wave calculations
-    $userWaves = [math]::Max(1, [math]::Ceiling($usersTotal / $config.waveDefaults.usersPerWave))
-    $computerWaves = [math]::Max(1, [math]::Ceiling($computersTotal / $config.waveDefaults.computersPerWave))
-
-    # Compute LOE per phase with multipliers
-    $phaseData = @()
-    foreach ($phase in $config.phases) {
-        $phaseDays = 0
-        $taskDetails = @()
-
-        foreach ($task in $phase.tasks) {
-            $taskDays = $task.baseDays
-
-            # Apply multipliers
-            foreach ($mult in $task.multipliers.PSObject.Properties) {
-                $factor = $mult.Value
-                $indicator = $mult.Name
-
-                switch ($indicator) {
-                    'domainsPerDay' { $taskDays += @($domainDirs).Count * $factor }
-                    'complexityScore' { $taskDays += 50 * $factor } # Assume mid-range 50/100
-                    'waveCount' { $taskDays += ($userWaves + $computerWaves) * $factor }
-                    'duplicateObjectsCount' { $taskDays += @($duplicateObjects).Count * $factor }
-                    'duplicateSpnsCount' { $taskDays += @($dupSpns).Count * $factor }
-                    'emptyGroupsCount' { $taskDays += @($emptyGroups).Count * $factor }
-                    'adminSdHolderImpactCount' { $taskDays += @($adminSd).Count * $factor }
-                    'disabledAccountsCount' { $taskDays += @($disabled).Count * $factor }
-                    'tokenBloatCount' { $taskDays += @($tokenBloat).Count * $factor }
-                    'crossDomainGroupCount' { $taskDays += @($crossDomain).Count * $factor }
-                    'usersPerWave' { $taskDays += ($usersTotal / $config.waveDefaults.usersPerWave) * $factor }
-                    'computersPerWave' { $taskDays += ($computersTotal / $config.waveDefaults.computersPerWave) * $factor }
-                    'waveCount' { $taskDays += ($userWaves + $computerWaves) * $factor }
-                }
-            }
-
-            $taskDays = [math]::Max(0.5, [math]::Round($taskDays, 1))
-            $phaseDays += $taskDays
-            $taskDetails += [pscustomobject]@{
-                Task  = $task.name
-                Days  = $taskDays
-                Notes = $task.notes
+    # Optionally append target domain metrics (do not change source totals)
+    if ($TargetDiscoveryPath -and (Test-Path -LiteralPath $TargetDiscoveryPath)) {
+        $tDomains20 = Join-Path $TargetDiscoveryPath '20_domains'
+        $tDomainDirs = @()
+        foreach ($root in @($TargetDiscoveryPath, $tDomains20)) {
+            if (Test-Path $root) {
+                $tDomainDirs += (Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^Domain-' })
             }
         }
+        $tDomainDirs = $tDomainDirs | Sort-Object -Property FullName -Unique
 
-        $phaseData += [pscustomobject]@{
-            Phase       = $phase.name
-            Description = $phase.description
-            Days        = [math]::Round($phaseDays, 1)
-            Tasks       = $taskDetails
+        foreach ($tdd in $tDomainDirs) {
+            $tDomainName = $tdd.Name -replace '^Domain-', ''
+
+            $tUsersFile = Get-ChildItem -Path $tdd.FullName -Filter '*Identity__Users*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            $tUsers = if ($tUsersFile) { _imp($tUsersFile.FullName) } else { @() }
+            $tEnabledUsers = @($tUsers | Where-Object { $_.Enabled -eq 'True' }).Count
+
+            $tComputersFile = Get-ChildItem -Path $tdd.FullName -Filter '*Identity__ComputersAll*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            $tComputers = if ($tComputersFile) { _imp($tComputersFile.FullName) } else { @() }
+            $tActiveWorkstations = @($tComputers | Where-Object { $_.Enabled -eq 'True' -and $_.OperatingSystem -notmatch 'Server' -and ($_.'LastLogonDays' -as [int]) -le 30 }).Count
+            $tServers = @($tComputers | Where-Object { $_.OperatingSystem -match 'Server' }).Count
+
+            $tGroupsFile = Get-ChildItem -Path $tdd.FullName -Filter '*Identity__Groups*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            $tGroups = if ($tGroupsFile) { _imp($tGroupsFile.FullName) } else { @() }
+            $tGroupCount = @($tGroups).Count
+
+            $tDcFile = Get-ChildItem -Path $tdd.FullName -Filter '*Infrastructure__DomainControllers*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            $tDcs = if ($tDcFile) { _imp($tDcFile.FullName) } else { @() }
+            $tDcCount = @($tDcs).Count
+
+            $tGpoFile = Get-ChildItem -Path $tdd.FullName -Filter '*Policy__GpoInventory*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            $tGpos = if ($tGpoFile) { _imp($tGpoFile.FullName) } else { @() }
+            $tGpoCount = @($tGpos).Count
+
+            $domainMetrics += @{
+                Prefix             = ($tDomainName -split '\.' | Select-Object -First 1).ToUpper()
+                Domain             = $tDomainName
+                EnabledUsers       = $tEnabledUsers
+                ActiveWorkstations = $tActiveWorkstations
+                Servers            = $tServers
+                Groups             = $tGroupCount
+                DCs                = $tDcCount
+                GPOs               = $tGpoCount
+                Role               = 'Target'
+            }
         }
     }
 
-    # Apply risk multipliers
-    $riskMultiplier = 1.0
-    foreach ($risk in $config.riskFactors) {
-        $riskValue = switch ($risk.indicator) {
-            'groupsWithDeepNestingCount' { $groupsWithDeepNesting }
-            'ouDepthCount' { $ouWithDeepStructure }
-            'crossDomainGroupCount' { @($crossDomain).Count }
-            'trustCount' { @($trustMap).Count }
-            'rc4OnlyObjectsCount' { 0 } # Would need to check summary
-            'stalePct' { if ($stalePct -gt 10) { 1 } else { 0 } }
-            default { 0 }
-        }
+    # Load duplicate conflicts from first source
+    $dupFile = Get-ChildItem $sourcePaths[0] -Filter '*Duplicate__Objects__Cross_Forest*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $dupFile) {
+        $forest10 = Join-Path $sourcePaths[0] '10_forest'
+        $dupFile = Get-ChildItem $forest10 -Filter '*DuplicateObjectsForAdmt*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    }
+    $duplicates = if ($dupFile) { _imp($dupFile.FullName) } else { @() }
+    $userConflicts = @($duplicates | Where-Object { $_.ObjectClasses -match 'user' }).Count
+    $groupConflicts = @($duplicates | Where-Object { $_.ObjectClasses -match 'group' }).Count
+    $computerConflicts = @($duplicates | Where-Object { $_.ObjectClasses -match 'computer' }).Count
+    $totalConflicts = $userConflicts + $groupConflicts + $computerConflicts
+    $conflictAdderHours = [math]::Round($totalConflicts * 0.1, 1)
 
-        if ($riskValue -gt 0) {
-            $riskMultiplier *= $risk.multiplier
-        }
+    # Default output path to first source
+    if (-not $OutputPath) {
+        $ts = (Get-Date).ToString('yyyyMMdd_HHmmss')
+        $OutputPath = Join-Path $sourcePaths[0] "$CustomerName`_AD_Migration_LOE_Calculator_$ts.xlsx"
     }
 
-    $totalLoe = ([double]($phaseData | Measure-Object -Property Days -Sum).Sum) * $riskMultiplier
-    $totalLoe = [math]::Round($totalLoe, 1)
+    # Calculate LOE line items
+    $loeCalculatorData = @(
+        @{ Category = 'Discovery - Review AD assessments'; Count = 1; HrsUnit = 6; Comments = 'Review existing AD assessments and inventories.' }
+        @{ Category = 'Discovery - Validate trusts/DNS/object readiness'; Count = 1; HrsUnit = 6; Comments = 'Validate trusts, DNS, and object readiness across domains.' }
+        @{ Category = 'Design - Validate target OU readiness'; Count = 1; HrsUnit = 4; Comments = 'Validate target OU structure, delegation, and placement.' }
+        @{ Category = 'Design - GPO planning (review source GPOs; create new as needed)'; Count = $totalGpos; HrsUnit = 0.2; Comments = 'GPOs not migrated; review and create required equivalents.' }
+        @{ Category = 'Design - Naming conflicts remediation planning'; Count = $totalConflicts; HrsUnit = 0.1; Comments = "Name conflicts ($userConflicts users, $groupConflicts groups, $computerConflicts computers) drive decisions." }
+        @{ Category = 'Migration - User migrations (source domains)'; Count = $totalEnabledUsers; HrsUnit = 0.15; Comments = 'Enabled users in source domains to migrate.' }
+        @{ Category = 'Migration - Group migrations (source domains)'; Count = $totalGroups; HrsUnit = 0.05; Comments = 'Groups in source domains to migrate as needed.' }
+        @{ Category = 'Migration - Workstation migrations (active; source domains)'; Count = $totalActiveWorkstations; HrsUnit = 0.25; Comments = 'Active workstations in source domains to migrate.' }
+        @{ Category = 'Migration - Server migrations (identity-only; source domains)'; Count = $totalServers; HrsUnit = 0.1; Comments = 'Servers in source domains (identity-only unless scoped).' }
+        @{ Category = 'Post - Access validation & remediation'; Count = ($totalEnabledUsers + $totalGroups); HrsUnit = 0.05; Comments = 'Validate user logon + resource access; remediation buffer.' }
+        @{ Category = 'Post - Legacy domain decommissioning support'; Count = @($domainMetrics).Count; HrsUnit = 2; Comments = 'Decommissioning support per legacy source domain.' }
+    )
 
-    # Create Excel
-    $excel = New-Object -ComObject Excel.Application
-    $excel.Visible = $false
-    $workbook = $excel.Workbooks.Add()
-
-    # Remove default sheets
-    while ($workbook.Sheets.Count -gt 1) {
-        $workbook.Sheets.Item($workbook.Sheets.Count).Delete()
+    # Calculate totals for reference (used in other sheets)
+    $totalLoeHours = 0
+    foreach ($item in $loeCalculatorData) {
+        $totalLoeHours += [math]::Round($item.Count * $item.HrsUnit, 1)
     }
 
-    # Worksheet 1: Executive Summary
-    $ws1 = $workbook.Sheets.Item(1)
-    $ws1.Name = "Executive Summary"
-    $ws1.Range("A1").Value = "AD Migration - Level of Effort Estimate"
-    $ws1.Range("A1").Font.Bold = $true
-    $ws1.Range("A1").Font.Size = 14
-    $ws1.Range("A2").Value = "Customer: $CustomerName"
-    $ws1.Range("A3").Value = "Forest: $forestName"
-    $ws1.Range("A4").Value = "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+    Write-Verbose "Creating Excel workbook: $OutputPath with formulas"
 
-    $row = 6
-    $ws1.Range("A$row").Value = "Metrics"
-    $ws1.Range("A$row").Font.Bold = $true
-    $row++
-    $ws1.Range("A$row").Value = "Users"; $ws1.Range("B$row").Value = $usersTotal; $row++
-    $ws1.Range("A$row").Value = "Groups"; $ws1.Range("B$row").Value = $groupsTotal; $row++
-    $ws1.Range("A$row").Value = "Computers"; $ws1.Range("B$row").Value = $computersTotal; $row++
-    $ws1.Range("A$row").Value = "User Waves"; $ws1.Range("B$row").Value = $userWaves; $row++
-    $ws1.Range("A$row").Value = "Computer Waves"; $ws1.Range("B$row").Value = $computerWaves; $row++
-
-    $row += 2
-    $ws1.Range("A$row").Value = "Level of Effort (Days)"
-    $ws1.Range("A$row").Font.Bold = $true
-    $row++
-    foreach ($phase in $phaseData) {
-        $ws1.Range("A$row").Value = $phase.Phase
-        $ws1.Range("B$row").Value = $phase.Days
-        $row++
+    # Remove existing file if it exists
+    if (Test-Path $OutputPath) {
+        Remove-Item $OutputPath -Force
     }
-    $ws1.Range("A$row").Value = "Subtotal"
-    $ws1.Range("A$row").Font.Bold = $true
-    $ws1.Range("B$row").Value = [double]($phaseData | Measure-Object -Property Days -Sum).Sum
-    $row++
-    $ws1.Range("A$row").Value = "Risk Multiplier"
-    $ws1.Range("B$row").Value = [math]::Round($riskMultiplier, 2)
-    $row++
-    $ws1.Range("A$row").Value = "TOTAL LOE (Days)"
-    $ws1.Range("A$row").Font.Bold = $true
-    $ws1.Range("A$row").Font.Size = 12
-    $ws1.Range("B$row").Value = $totalLoe
-    $ws1.Range("B$row").Font.Bold = $true
-    $ws1.Range("B$row").Font.Size = 12
 
-    # Auto-fit columns
-    $ws1.Columns("A:B").AutoFit() | Out-Null
+    # Create workbook and build LOE Calculator sheet with formulas
+    $excel = Open-ExcelPackage -Create -Path $OutputPath
 
-    # Worksheet 2: Phase Details
-    $ws2 = $workbook.Sheets.Add([System.Reflection.Missing]::Value, $ws1)
-    $ws2.Name = "Phase Details"
-    $row = 1
-    $ws2.Range("A$row").Value = "Phase"
-    $ws2.Range("B$row").Value = "Description"
-    $ws2.Range("C$row").Value = "Days"
-    $ws2.Range("A$row:C$row").Font.Bold = $true
-    $row++
+    try {
+        # ===== Sheet 1: LOE Calculator (with formulas) =====
+        $wsCalc = $excel.Workbook.Worksheets.Add('LOE Calculator')
+        Write-Verbose ("wsCalc.Cells type: " + ($wsCalc.Cells.GetType().FullName))
 
-    foreach ($phase in $phaseData) {
-        $ws2.Range("A$row").Value = $phase.Phase
-        $ws2.Range("B$row").Value = $phase.Description
-        $ws2.Range("C$row").Value = $phase.Days
-        $row++
+        # Headers
+        $wsCalc.Cells['A1'].Value = 'Category'
+        $wsCalc.Cells['B1'].Value = 'Count'
+        $wsCalc.Cells['C1'].Value = 'Hours/Unit'
+        $wsCalc.Cells['D1'].Value = 'Total Hours'
 
-        foreach ($task in $phase.Tasks) {
-            $ws2.Range("A$row").Value = "  ↳ " + $task.Task
-            $ws2.Range("B$row").Value = $task.Notes
-            $ws2.Range("C$row").Value = $task.Days
+        $row = 2
+        foreach ($item in $loeCalculatorData) {
+            $wsCalc.Cells["A$row"].Value = $item.Category
+            $wsCalc.Cells["B$row"].Value = $item.Count
+            $wsCalc.Cells["C$row"].Value = $item.HrsUnit
+            # Formula: =B2*C2 (Count * Hours/Unit)
+            $wsCalc.Cells["D$row"].Formula = "=B$row*C$row"
+            $wsCalc.Cells["E$row"].Value = $item.Comments
             $row++
         }
-    }
 
-    $ws2.Columns("A:C").AutoFit() | Out-Null
+        # Total row with SUM formula
+        $lastDataRow = $row - 1
+        $wsCalc.Cells["A$row"].Value = 'TOTAL'
+        $wsCalc.Cells["A$row"].Style.Font.Bold = $true
+        $wsCalc.Cells["B$row"].Value = ''
+        $wsCalc.Cells["C$row"].Value = ''
+        # Formula: =SUM(D2:D12)
+        $wsCalc.Cells["D$row"].Formula = "=SUM(D2:D$lastDataRow)"
+        $wsCalc.Cells["D$row"].Style.Font.Bold = $true
+        $wsCalc.Cells["E$row"].Value = ''
 
-    # Worksheet 3: Wave Schedule
-    $ws3 = $workbook.Sheets.Add([System.Reflection.Missing]::Value, $ws2)
-    $ws3.Name = "Wave Schedule"
-    $row = 1
-    $ws3.Range("A$row").Value = "Wave"
-    $ws3.Range("B$row").Value = "Object Type"
-    $ws3.Range("C$row").Value = "Quantity"
-    $ws3.Range("D$row").Value = "Estimated Days"
-    $ws3.Range("A$row:D$row").Font.Bold = $true
-    $row++
+        $wsCalc.Cells[$wsCalc.Dimension.Address].AutoFitColumns()
 
-    for ($w = 1; $w -le $userWaves; $w++) {
-        $qty = if ($w -eq $userWaves) { $usersTotal - (($w - 1) * $config.waveDefaults.usersPerWave) } else { $config.waveDefaults.usersPerWave }
-        $ws3.Range("A$row").Value = "Wave $w"
-        $ws3.Range("B$row").Value = "Users"
-        $ws3.Range("C$row").Value = $qty
-        $ws3.Range("D$row").Value = $config.waveDefaults.daysPerUserWave
+        # ===== Sheet 2: LOE by Phase (with formulas) =====
+        # ===== Sheet 2: LOE by Phase (with formulas) =====
+        # Map phase names to row ranges in LOE Calculator sheet
+        $phaseMapping = @{
+            'Discovery & Validation' = @(2, 3)   # Rows 2-3
+            'Design & Planning'      = @(4, 6)   # Rows 4-6
+            'Migration Execution'    = @(7, 10)  # Rows 7-10
+            'Post-Migration'         = @(11, 12) # Rows 11-12
+        }
+
+        $wsPhase = $excel.Workbook.Worksheets.Add('LOE by Phase')
+        $row = 1
+        $wsPhase.Cells.Item($row, 1).Value = 'Phase'
+        $wsPhase.Cells.Item($row, 2).Value = 'Total Hours'
+        $wsPhase.Cells.Item($row, 3).Value = 'Notes'
+        $wsPhase.Cells.Item($row, 1).Style.Font.Bold = $true
+        $wsPhase.Cells.Item($row, 2).Style.Font.Bold = $true
+        $wsPhase.Cells.Item($row, 3).Style.Font.Bold = $true
+
+        $row = 2
+        foreach ($phase in @('Discovery & Validation', 'Design & Planning', 'Migration Execution', 'Post-Migration')) {
+            $wsPhase.Cells.Item($row, 1).Value = $phase
+            $startRow = $phaseMapping[$phase][0]
+            $endRow = $phaseMapping[$phase][1]
+            # Formula: =SUM('LOE Calculator'!D2:D3)
+            $wsPhase.Cells.Item($row, 2).Formula = "=SUM('LOE Calculator'!D$($startRow):D$($endRow))"
+            $wsPhase.Cells.Item($row, 3).Value = 'Derived from LOE Calculator'
+            $row++
+        }
+
+        # Total row with formula
+        $wsPhase.Cells.Item($row, 1).Value = 'TOTAL'
+        $wsPhase.Cells.Item($row, 1).Style.Font.Bold = $true
+        # Formula: =SUM(B2:B5)
+        $wsPhase.Cells.Item($row, 2).Formula = "=SUM(B2:B$($row-1))"
+        $wsPhase.Cells.Item($row, 2).Style.Font.Bold = $true
+        $wsPhase.Cells.Item($row, 3).Value = ''
+
+        # Add pricing section with formulas
+        $totalHoursRow = $row
+        $row += 2
+        $wsPhase.Cells.Item($row, 1).Value = 'Pricing'
+        $wsPhase.Cells.Item($row, 1).Style.Font.Bold = $true
         $row++
-    }
-
-    for ($w = 1; $w -le $computerWaves; $w++) {
-        $qty = if ($w -eq $computerWaves) { $computersTotal - (($w - 1) * $config.waveDefaults.computersPerWave) } else { $config.waveDefaults.computersPerWave }
-        $ws3.Range("A$row").Value = "Wave $($userWaves + $w)"
-        $ws3.Range("B$row").Value = "Computers"
-        $ws3.Range("C$row").Value = $qty
-        $ws3.Range("D$row").Value = $config.waveDefaults.daysPerComputerWave
+        $wsPhase.Cells.Item($row, 1).Value = 'T&M Rate (per hour)'
+        $wsPhase.Cells.Item($row, 2).Value = 0
+        $rateRow = $row
         $row++
-    }
-
-    $ws3.Columns("A:D").AutoFit() | Out-Null
-
-    # Worksheet 4: Complexity Drivers
-    $ws4 = $workbook.Sheets.Add([System.Reflection.Missing]::Value, $ws3)
-    $ws4.Name = "Complexity Drivers"
-    $row = 1
-    $ws4.Range("A$row").Value = "Driver"
-    $ws4.Range("B$row").Value = "Count"
-    $ws4.Range("C$row").Value = "Impact"
-    $ws4.Range("A$row:C$row").Font.Bold = $true
-    $row++
-
-    $drivers = @(
-        @{ Name = "Groups with Deep Nesting (≥3)"; Count = $groupsWithDeepNesting; Impact = "Increases remediation complexity" }
-        @{ Name = "Domains with Deep OU Structure (≥6)"; Count = $ouWithDeepStructure; Impact = "Increases structure planning" }
-        @{ Name = "Cross-Domain Groups"; Count = @($crossDomain).Count; Impact = "Requires special handling during waves" }
-        @{ Name = "Duplicate SPNs"; Count = @($dupSpns).Count; Impact = "Needs cleanup before cutover" }
-        @{ Name = "Empty Groups"; Count = @($emptyGroups).Count; Impact = "Cleanup opportunity" }
-        @{ Name = "AdminSDHolder Protected"; Count = @($adminSd).Count; Impact = "Requires careful handling" }
-        @{ Name = "Duplicate Objects (ADMT)"; Count = @($duplicateObjects).Count; Impact = "Conflict resolution required" }
-        @{ Name = "Stale Accounts %"; Count = "$stalePct%"; Impact = "Cleanup candidate" }
-    )
-
-    foreach ($driver in $drivers) {
-        $ws4.Range("A$row").Value = $driver.Name
-        $ws4.Range("B$row").Value = $driver.Count
-        $ws4.Range("C$row").Value = $driver.Impact
+        $wsPhase.Cells.Item($row, 1).Value = 'Fixed Fee Multiplier'
+        $wsPhase.Cells.Item($row, 2).Value = 1.15
+        $multiplierRow = $row
         $row++
+        $wsPhase.Cells.Item($row, 1).Value = 'T&M Estimated Cost'
+        # Formula: =B6*B8 (Total Hours * T&M Rate)
+        $wsPhase.Cells.Item($row, 2).Formula = "=B$totalHoursRow*B$rateRow"
+        $tmCostRow = $row
+        $row++
+        $wsPhase.Cells.Item($row, 1).Value = 'Fixed Fee Price'
+        # Formula: =B10*B9 (T&M Cost * Multiplier)
+        $wsPhase.Cells.Item($row, 2).Formula = "=B$tmCostRow*B$multiplierRow"
+
+        $wsPhase.Cells[$wsPhase.Dimension.Address].AutoFitColumns()
+
+        # ===== Sheet 3: Executive Summary (with formulas) =====
+        $wsExec = $excel.Workbook.Worksheets.Add('Executive Summary')
+
+        $row = 1
+        $wsExec.Cells.Item($row, 1).Value = 'Executive LOE Summary'
+        $wsExec.Cells.Item($row, 1).Style.Font.Bold = $true
+        $wsExec.Cells.Item($row, 1).Style.Font.Size = 14
+
+        $row = 3
+        $wsExec.Cells.Item($row, 1).Value = 'Project / Customer'
+        $wsExec.Cells.Item($row, 2).Value = $CustomerName
+        $row++
+        $wsExec.Cells.Item($row, 1).Value = 'Target Domain'
+        $wsExec.Cells.Item($row, 2).Value = $TargetDomain
+        $row++
+        $wsExec.Cells.Item($row, 1).Value = 'Source Domains'
+        $sourceDomains = ($domainMetrics | ForEach-Object { $_['Domain'] }) -join ', '
+        $wsExec.Cells.Item($row, 2).Value = if ($sourceDomains) { $sourceDomains } else { 'TBD' }
+        $row++
+        $wsExec.Cells.Item($row, 1).Value = 'Report Date'
+        $wsExec.Cells.Item($row, 2).Value = (Get-Date).ToString('yyyy-MM-dd')
+
+        $row = 8
+        $wsExec.Cells.Item($row, 1).Value = 'Environment Snapshot'
+        $wsExec.Cells.Item($row, 1).Style.Font.Bold = $true
+
+        $row = 9
+        $wsExec.Cells.Item($row, 1).Value = 'Metric'
+        $wsExec.Cells.Item($row, 2).Value = 'Value'
+        $wsExec.Cells.Item($row, 1).Style.Font.Bold = $true
+        $wsExec.Cells.Item($row, 2).Style.Font.Bold = $true
+
+        $metrics = @(
+            @('Enabled Users', $totalEnabledUsers),
+            @('Active Workstations', $totalActiveWorkstations),
+            @('Servers', $totalServers),
+            @('Total Groups', $totalGroups),
+            @('Name Conflicts', $totalConflicts),
+            @('Conflict LOE Adder (hrs)', $conflictAdderHours)
+        )
+
+        $row = 10
+        foreach ($m in $metrics) {
+            $wsExec.Cells.Item($row, 1).Value = $m[0]
+            $wsExec.Cells.Item($row, 2).Value = $m[1]
+            $row++
+        }
+
+        $row += 1
+        $wsExec.Cells.Item($row, 1).Value = 'LOE Summary by Phase'
+        $wsExec.Cells.Item($row, 1).Style.Font.Bold = $true
+        $row++
+        $wsExec.Cells.Item($row, 1).Value = 'Phase'
+        $wsExec.Cells.Item($row, 2).Value = 'Hours'
+        $wsExec.Cells.Item($row, 1).Style.Font.Bold = $true
+        $wsExec.Cells.Item($row, 2).Style.Font.Bold = $true
+
+        $row++
+        $phaseStartRow = $row
+        foreach ($phase in @('Discovery & Validation', 'Design & Planning', 'Migration Execution', 'Post-Migration')) {
+            $wsExec.Cells.Item($row, 1).Value = $phase
+            # Formula: ='LOE by Phase'!B2 (reference phase sheet)
+            $phaseRow = $row - $phaseStartRow + 2
+            $wsExec.Cells.Item($row, 2).Formula = "='LOE by Phase'!B$phaseRow"
+            $row++
+        }
+        $wsExec.Cells.Item($row, 1).Value = 'TOTAL'
+        $wsExec.Cells.Item($row, 1).Style.Font.Bold = $true
+        # Formula: ='LOE by Phase'!B6 (reference phase total)
+        $wsExec.Cells.Item($row, 2).Formula = "='LOE by Phase'!B6"
+        $wsExec.Cells.Item($row, 2).Style.Font.Bold = $true
+
+        # Add Environment Snapshot (by Domain) section
+        $row += 2
+        $wsExec.Cells.Item($row, 1).Value = 'Environment Snapshot (by Domain)'
+        $wsExec.Cells.Item($row, 1).Style.Font.Bold = $true
+
+        $row++
+        $wsExec.Cells.Item($row, 1).Value = 'Prefix'
+        $wsExec.Cells.Item($row, 2).Value = 'Domain'
+        $wsExec.Cells.Item($row, 3).Value = 'Enabled Users'
+        $wsExec.Cells.Item($row, 4).Value = 'Active Workstations'
+        $wsExec.Cells.Item($row, 5).Value = 'Servers'
+        $wsExec.Cells.Item($row, 6).Value = 'Groups'
+        $wsExec.Cells.Item($row, 7).Value = 'DCs'
+        $wsExec.Cells.Item($row, 8).Value = 'GPOs'
+        $wsExec.Cells.Item($row, 9).Value = 'Role'
+        for ($col = 1; $col -le 9; $col++) {
+            $wsExec.Cells.Item($row, $col).Style.Font.Bold = $true
+        }
+
+        $row++
+        $domainStartRow = $row
+        foreach ($dm in $domainMetrics) {
+            $wsExec.Cells.Item($row, 1).Value = $dm['Prefix']
+            $wsExec.Cells.Item($row, 2).Value = $dm['Domain']
+            $wsExec.Cells.Item($row, 3).Value = $dm['EnabledUsers']
+            $wsExec.Cells.Item($row, 4).Value = $dm['ActiveWorkstations']
+            $wsExec.Cells.Item($row, 5).Value = $dm['Servers']
+            $wsExec.Cells.Item($row, 6).Value = $dm['Groups']
+            $wsExec.Cells.Item($row, 7).Value = $dm['DCs']
+            $wsExec.Cells.Item($row, 8).Value = $dm['GPOs']
+            $wsExec.Cells.Item($row, 9).Value = $dm['Role']
+            $row++
+        }
+
+        # TOTAL row for domain snapshot
+        $domainEndRow = $row - 1
+        $wsExec.Cells.Item($row, 1).Value = 'TOTAL'
+        $wsExec.Cells.Item($row, 1).Style.Font.Bold = $true
+        $wsExec.Cells.Item($row, 3).Formula = "=SUM(C$($domainStartRow):C$domainEndRow)"
+        $wsExec.Cells.Item($row, 4).Formula = "=SUM(D$($domainStartRow):D$domainEndRow)"
+        $wsExec.Cells.Item($row, 5).Formula = "=SUM(E$($domainStartRow):E$domainEndRow)"
+        $wsExec.Cells.Item($row, 6).Formula = "=SUM(F$($domainStartRow):F$domainEndRow)"
+        $wsExec.Cells.Item($row, 7).Formula = "=SUM(G$($domainStartRow):G$domainEndRow)"
+        $wsExec.Cells.Item($row, 8).Formula = "=SUM(H$($domainStartRow):H$domainEndRow)"
+        for ($col = 3; $col -le 8; $col++) {
+            $wsExec.Cells.Item($row, $col).Style.Font.Bold = $true
+        }
+
+        # Add Key Assumptions / Notes section
+        $row += 2
+        $wsExec.Cells.Item($row, 1).Value = 'Key Assumptions / Notes'
+        $wsExec.Cells.Item($row, 1).Style.Font.Bold = $true
+
+        $row++
+        $assumptions = @(
+            "• Target domain exists; UPN suffix standardized in target.",
+            "• GPO approach: create new GPOs as needed (inventory used for planning).",
+            "• Trusts must exist prior to migration (flagged if missing).",
+            "• Naming conflicts add remediation effort."
+        )
+        foreach ($assumption in $assumptions) {
+            $wsExec.Cells.Item($row, 1).Value = $assumption
+            $row++
+        }
+
+        $wsExec.Cells[$wsExec.Dimension.Address].AutoFitColumns()
+
+        # ===== Sheet 4: Infra & Readiness =====
+        $wsInfra = $excel.Workbook.Worksheets.Add('Infra & Readiness')
+
+        $row = 1
+        $wsInfra.Cells.Item($row, 1).Value = 'Domain'
+        $wsInfra.Cells.Item($row, 2).Value = 'DCs'
+        $wsInfra.Cells.Item($row, 3).Value = 'Baseline'
+        $wsInfra.Cells.Item($row, 4).Value = 'GPOs'
+        $wsInfra.Cells.Item($row, 5).Value = 'Role'
+        $wsInfra.Cells.Item($row, 1).Style.Font.Bold = $true
+        $wsInfra.Cells.Item($row, 2).Style.Font.Bold = $true
+        $wsInfra.Cells.Item($row, 3).Style.Font.Bold = $true
+        $wsInfra.Cells.Item($row, 4).Style.Font.Bold = $true
+        $wsInfra.Cells.Item($row, 5).Style.Font.Bold = $true
+
+        $row = 2
+        foreach ($dm in $domainMetrics) {
+            $wsInfra.Cells.Item($row, 1).Value = $dm['Domain']
+            $wsInfra.Cells.Item($row, 2).Value = $dm['DCs']
+            $wsInfra.Cells.Item($row, 3).Value = 2
+            $wsInfra.Cells.Item($row, 4).Value = $dm['GPOs']
+            $wsInfra.Cells.Item($row, 5).Value = $dm['Role']
+            $row++
+        }
+
+        $wsInfra.Cells[$wsInfra.Dimension.Address].AutoFitColumns()
+
+        # ===== Sheet 5: Assumptions =====
+        $wsAssump = $excel.Workbook.Worksheets.Add('Assumptions')
+
+        $row = 1
+        $wsAssump.Cells.Item($row, 1).Value = 'LOE Assumptions (Generated by Automation)'
+        $wsAssump.Cells.Item($row, 1).Style.Font.Bold = $true
+        $row++
+        $wsAssump.Cells.Item($row, 1).Value = 'Generated: ' + (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+        $row++
+        $wsAssump.Cells.Item($row, 1).Value = 'Discovery Path: ' + $DiscoveryOutputPath
+
+        $assumptions = @(
+            '- Target domain is existing. Name collisions expected; UPN suffix standardized in target.',
+            '- Target DC baseline: minimum 2 DCs.',
+            '- GPO strategy: do not migrate GPOs; create new GPOs as required.',
+            '- Trust readiness: trusts should exist between target and each source domain.',
+            '- Users count = enabled users. Workstations = enabled non-server OS with recent logon.',
+            '- Conflict remediation LOE adders: 0.1h per conflict for planning/communication.',
+            '- Built-in AD accounts excluded from conflict detection.',
+            '- Phase-based LOE model uses Base (fixed), Variable (count-driven), and Risk (adder) categories.',
+            '- Fixed fee multiplier: 1.15 (15% markup over T&M for scope/risk buffer).'
+        )
+
+        $row = 5
+        foreach ($a in $assumptions) {
+            $wsAssump.Cells.Item($row, 1).Value = $a
+            $row++
+        }
+
+        $wsAssump.Cells[$wsAssump.Dimension.Address].AutoFitColumns()
+
+    } finally {
+        Close-ExcelPackage $excel
     }
 
-    $ws4.Columns("A:C").AutoFit() | Out-Null
+    Write-Verbose "Workbook saved to $OutputPath with 5 sheets"
 
-    # Save
-    $workbook.SaveAs($OutputPath)
-    $excel.Quit()
-    [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel) | Out-Null
-
-    [pscustomobject]@{
-        ExcelPath      = $OutputPath
-        TotalLOE       = $totalLoe
-        UserWaves      = $userWaves
-        ComputerWaves  = $computerWaves
-        RiskMultiplier = [math]::Round($riskMultiplier, 2)
+    return [pscustomobject]@{
+        ExcelPath          = $OutputPath
+        TotalLOE           = $totalLoeHours
+        EnabledUsers       = $totalEnabledUsers
+        ActiveWorkstations = $totalActiveWorkstations
+        Servers            = $totalServers
+        Groups             = $totalGroups
+        UserConflicts      = $userConflicts
+        GroupConflicts     = $groupConflicts
+        ComputerConflicts  = $computerConflicts
+        ConflictAdderHours = $conflictAdderHours
     }
 }

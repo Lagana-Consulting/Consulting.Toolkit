@@ -1,0 +1,11 @@
+{
+  "OpenReports": false,
+  "GenerateLoeForBoth": true,
+  "TargetRunRoot": "C:\\scripts\\Reports\\ADOnly__target_20260122-123933",
+  "CustomerName": "Lab Multi-Source Test",
+  "OutputRoot": "C:\\scripts\\Reports\\Analysis_MultiSourceTest_20260122",
+  "SourceRunRoots": [
+    "C:\\scripts\\Reports\\ADOnly_20260122-103143",
+    "C:\\scripts\\Reports\\ADOnly2_20260122-110000"
+  ]
+}

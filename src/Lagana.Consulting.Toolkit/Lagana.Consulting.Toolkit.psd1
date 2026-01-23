@@ -30,6 +30,7 @@
     'New-LcEnvironmentComparisonReport',
     'New-LcMigrationReadinessChecklist',
     'Invoke-LcDiscoveryComparison',
+    'Invoke-LcDiscoveryAnalysis',
 
     # Forest + domains
     'Get-LcAdForest',

@@ -32,14 +32,55 @@ function New-LcAssessmentReport {
         $OutputPath = Join-Path $DiscoveryOutputPath "LC__Assessment__Report__$timestamp.html"
     }
 
-    # Read assessment summary
-    $summaryFile = Get-ChildItem -Path $DiscoveryOutputPath -Filter "*Assessment__Summary*" -File | Select-Object -First 1
+    # Read assessment summary (look in root and 00_schemas folder)
+    $summaryFile = Get-ChildItem -Path $DiscoveryOutputPath -Filter "*Assessment__Summary*" -File -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $summaryFile) {
-        throw "Assessment summary CSV not found in $DiscoveryOutputPath"
+        $schemasDir = Join-Path $DiscoveryOutputPath '00_schemas'
+        if (Test-Path -LiteralPath $schemasDir) {
+            $summaryFile = Get-ChildItem -Path $schemasDir -Filter "*Assessment__Summary*" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        }
     }
 
-    $summary = Import-Csv $summaryFile.FullName
-    if ($summary -is [array]) { $summary = $summary[0] }
+    $summary = $null
+    if ($summaryFile) {
+        $summaryData = Import-Csv $summaryFile.FullName
+        if ($summaryData -is [array]) { $summary = $summaryData[0] } else { $summary = $summaryData }
+    } else {
+        # Fallback: build summary from domain data
+        $summary = [pscustomobject]@{
+            ForestName                   = 'Unknown'
+            ForestRootDomain             = 'Unknown'
+            DomainsCount                 = 0
+            UsersTotal                   = 0
+            GroupsTotal                  = 0
+            ComputersTotal               = 0
+            RunTimestamp                 = (Get-Date).ToString('yyyyMMdd-HHmmss')
+            UsersStalePct                = 0
+            UsersStaleCount              = 0
+            ComputersStalePct            = 0
+            ComputersStaleCount          = 0
+            HighDepthGroupsCount         = 0
+            HighDepthOUsCount            = 0
+            AdminSdHolderImpactCount     = 0
+            DisabledUsersCount           = 0
+            DisabledComputersCount       = 0
+            EmptyGroupsCount             = 0
+            DuplicateSpnsCount           = 0
+            ObjectsRC4OnlyCount          = 0
+            ObjectsRC4OnlyPct            = 0
+            PrivilegedAccountsCount      = 0
+            FsmoUnavailableCount         = 0
+            LowTombstoneLifetimeCount    = 0
+            WeakPasswordPoliciesCount    = 0
+            UsersSIDHistoryCount         = 0
+            UsersSIDHistoryPct           = 0
+            UsersNonRoutableUPNCount     = 0
+            UsersNonRoutableUPNPct       = 0
+            CrossDomainDependenciesCount = 0
+            HighCostSiteLinksCount       = 0
+            TopServiceTypesCount         = 0
+        }
+    }
 
     # Read migration risk flags summary (contains Flag, ObjectClass, Count columns)
     $riskSummaryFile = Get-ChildItem -Path $DiscoveryOutputPath -Filter "*Migration__RiskFlagsSummary*" -File | Select-Object -First 1

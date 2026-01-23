@@ -31,6 +31,7 @@ Export-ModuleMember -Function @(
   'Get-LcSchemaDefinitions',
   'Export-LcSchemas',
   'New-LcAssessmentReport',
+  'New-LcComprehensiveAssessmentReport',
   'New-LcMigrationPlanningReport',
   'New-LcMigrationLoeExcel',
   'New-LcEnvironmentComparisonReport',
@@ -50,14 +51,14 @@ Export-ModuleMember -Function @(
   'Get-LcAdForestTrusts',
 
   'Get-LcAdDomainContext',
-  'New-LcDomainRunFolder'
+  'New-LcDomainRunFolder',
 
   'Get-LcAdDomainSummary',
   'Get-LcAdDomainControllers',
   'Get-LcAdDefaultPasswordPolicy',
   'Get-LcAdFineGrainedPasswordPolicies',
   'Get-LcAdFineGrainedPasswordPolicyAssignments',
-  'Get-LcAdOrganizationalUnits'
+  'Get-LcAdOrganizationalUnits',
 
   'Get-LcAdGroups',
   'Get-LcAdUsers',
