@@ -104,6 +104,7 @@ if (-not $top) {
 }
 
 # Module path inside repo
+# Note: Only downloads server-side module (PS 5.1+). Analysis module (PS 7+) stays on client workstation.
 $srcModule = Join-Path $top.FullName 'src\Lagana.Consulting.Toolkit'
 if (-not (Test-Path -LiteralPath $srcModule)) {
     # Help diagnose if the folder moved

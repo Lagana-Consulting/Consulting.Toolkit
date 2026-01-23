@@ -90,6 +90,9 @@ Export-ModuleMember -Function @(
   #ADMT Functions
   'New-LcAdmtRunLayout',
   'Test-LcAdmtPrereqs',
+  'Test-LcAdmtTrustPath',
+  'Get-LcAdmtPasswordExportReadiness',
+  'New-LcAdmtIncludeFiles',
   'Find-LcAdObjectConflicts',
   'Export-LcAdmtIncludeFileUsers',
   'Export-LcAdmtIncludeFileGroups',
