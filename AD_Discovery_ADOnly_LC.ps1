@@ -2,7 +2,7 @@
 param(
   [string]$Environment = "Source",
   [string]$OutputRoot = "c:\scripts\Reports",
-  [string]$Prefix = "ADOnly",
+  [string]$Prefix = "",
   [string]$CustomerName = ""
 )
 
@@ -30,10 +30,23 @@ function Get-DomainScopeTag([string]$DomainFqdn) {
   return ("Domain-{0}" -f $DomainFqdn)
 }
 
+# Discover forest early so we can name the run folder with the forest root domain
+$forest = Get-LcAdForest
+$domains = Get-LcAdDomains -Forest $forest
+$suffixSet = Get-LcKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
+
+# Build a default prefix based on forest root domain when not explicitly provided
+$rootDomainTag = if ([string]::IsNullOrWhiteSpace($forest.RootDomain)) { 'UnknownDomain' } else { $forest.RootDomain.ToLower().Replace(' ', '_') }
+$basePrefix = if ($PSBoundParameters.ContainsKey('Prefix') -and -not [string]::IsNullOrWhiteSpace($Prefix)) {
+  $Prefix
+} else {
+  "AD_{0}" -f $rootDomainTag
+}
+
 # -------------------------
 # Run layout + folders
 # -------------------------
-$EnvironmentPrefix = if ($EnvironmentSafeTag -eq "source") { $Prefix } else { "${Prefix}__${EnvironmentSafeTag}" }
+$EnvironmentPrefix = if ($EnvironmentSafeTag -eq "source") { $basePrefix } else { "${basePrefix}__${EnvironmentSafeTag}" }
 $layout = New-LcRunLayout -OutputRoot $OutputRoot -Prefix $EnvironmentPrefix -CreateLog
 
 $schemasDir = Join-Path $layout.RunRoot '00_schemas'
@@ -50,13 +63,6 @@ foreach ($p in @($schemasDir, $forestDir, $domainsRoot, $manifestDir, $logsDir))
 # Schemas
 # -------------------------
 Export-LcSchemas -SchemasDir $schemasDir | Out-Null
-
-# -------------------------
-# Forest + domains
-# -------------------------
-$forest = Get-LcAdForest
-$domains = Get-LcAdDomains -Forest $forest
-$suffixSet = Get-LcKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
 
 # -------------------------
 # Forest exports

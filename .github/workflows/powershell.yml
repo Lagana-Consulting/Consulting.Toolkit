@@ -22,7 +22,7 @@ jobs:
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
-          $settings = Join-Path $env:GITHUB_WORKSPACE 'PSScriptAnalyzerSettings.psd1'
+          $settings = Join-Path $env:GITHUB_WORKSPACE 'src/Lagana.Consulting.Toolkit/PSScriptAnalyzerSettings.psd1'
           $target = Join-Path $env:GITHUB_WORKSPACE 'src'
           $results = Invoke-ScriptAnalyzer -Path $target -Recurse -Settings $settings
 
