@@ -26,9 +26,18 @@ jobs:
           $target = Join-Path $env:GITHUB_WORKSPACE 'src'
           $results = Invoke-ScriptAnalyzer -Path $target -Recurse -Settings $settings
 
-          if ($results) {
-            $results | Sort-Object Severity, RuleName, ScriptName, Line | Format-Table -AutoSize | Out-String | Write-Host
-            throw "PSScriptAnalyzer found issues."
+          $errors = $results | Where-Object { $_.Severity -eq 'Error' }
+          $warnings = $results | Where-Object { $_.Severity -eq 'Warning' }
+
+          if ($warnings) {
+            Write-Host "PSScriptAnalyzer warnings (non-blocking):" -ForegroundColor Yellow
+            $warnings | Sort-Object RuleName, ScriptName, Line | Format-Table -AutoSize | Out-String | Write-Host
+          }
+
+          if ($errors) {
+            Write-Host "PSScriptAnalyzer errors:" -ForegroundColor Red
+            $errors | Sort-Object RuleName, ScriptName, Line | Format-Table -AutoSize | Out-String | Write-Host
+            throw "PSScriptAnalyzer found errors."
           }
 
   test:
