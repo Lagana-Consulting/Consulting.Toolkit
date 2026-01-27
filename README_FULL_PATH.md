@@ -8,10 +8,10 @@ The full 60-minute implementation path is **100% complete** and production-ready
 
 ```powershell
 # Simplest: One command to do everything
-.\Start-LcMigrationComparison.ps1
+.\Start-AdMigrationComparison.ps1
 
 # Or programmatically:
-Invoke-LcDiscoveryComparison -CustomerName "YourOrg" -OpenReports
+Invoke-AdDiscoveryComparison -CustomerName "YourOrg" -OpenReports
 ```
 
 That's it. Discovery runs in both environments, all reports generate, and files open automatically.
@@ -94,7 +94,7 @@ That's it. Discovery runs in both environments, all reports generate, and files 
 - **Metadata:** Environment info stored in each run
 
 ### 2️⃣ Comparison Report Generator
-- **Function:** `New-LcEnvironmentComparisonReport`
+- **Function:** `New-AdEnvironmentComparisonReport`
 - **Generates:** Professional HTML with embedded CSS
 - **Compares:**
   - Forest-level metrics (side-by-side)
@@ -104,14 +104,14 @@ That's it. Discovery runs in both environments, all reports generate, and files 
 - **Styling:** Color-coded (green/red/gray), print-friendly
 
 ### 3️⃣ Readiness Validation Checklist
-- **Function:** `New-LcMigrationReadinessChecklist`
+- **Function:** `New-AdMigrationReadinessChecklist`
 - **Categories:** 7 critical areas
 - **Tests:** Mix of automatic (Pass/Fail) and manual (review)
 - **Output:** HTML with status summary
 - **Pre-cutover:** Comprehensive validation items
 
 ### 4️⃣ Orchestrator Script
-- **Function:** `Invoke-LcDiscoveryComparison`
+- **Function:** `Invoke-AdDiscoveryComparison`
 - **Does:** Runs entire workflow end-to-end
 - **Orchestrates:**
   1. Source discovery
@@ -126,7 +126,7 @@ That's it. Discovery runs in both environments, all reports generate, and files 
 
 ### 5️⃣ Documentation
 - **COMPARISON_WORKFLOW.md:** 400+ line complete guide
-- **Start-LcMigrationComparison.ps1:** Interactive quick-start
+- **Start-AdMigrationComparison.ps1:** Interactive quick-start
 - **FULL_PATH_IMPLEMENTATION_SUMMARY.md:** This document
 
 ---
@@ -136,7 +136,7 @@ That's it. Discovery runs in both environments, all reports generate, and files 
 ### Pattern 1: Fully Automated (Recommended)
 ```powershell
 # One command to do everything
-$results = Invoke-LcDiscoveryComparison `
+$results = Invoke-AdDiscoveryComparison `
   -CustomerName "Contoso" `
   -OpenReports
 
@@ -153,7 +153,7 @@ $results = Invoke-LcDiscoveryComparison `
 ```powershell
 # Run the quick-start script
 cd "C:\Path\To\lc-toolkit"
-.\Start-LcMigrationComparison.ps1
+.\Start-AdMigrationComparison.ps1
 
 # Answer prompts:
 # - Customer Name
@@ -173,8 +173,8 @@ cd "C:\Path\To\lc-toolkit"
 & "AD_Discovery_ADOnly_LC.ps1" -Environment "Target"
 
 # Then: Generate all reports
-New-LcEnvironmentComparisonReport -SourceRunRoot "..." -TargetRunRoot "..."
-New-LcMigrationReadinessChecklist -SourceRunRoot "..." -TargetRunRoot "..."
+New-AdEnvironmentComparisonReport -SourceRunRoot "..." -TargetRunRoot "..."
+New-AdMigrationReadinessChecklist -SourceRunRoot "..." -TargetRunRoot "..."
 ```
 
 ### Pattern 4: Batch Multiple Migrations
@@ -185,7 +185,7 @@ $migrations = @(
 )
 
 foreach ($mig in $migrations) {
-  New-LcEnvironmentComparisonReport `
+  New-AdEnvironmentComparisonReport `
     -SourceRunRoot $mig.Src `
     -TargetRunRoot $mig.Tgt `
     -CustomerName $mig.Name
@@ -274,13 +274,13 @@ DOMAIN CONFIGURATION:
 ### Fastest Path (2 minutes)
 ```powershell
 cd "C:\Path\To\lc-toolkit"
-.\Start-LcMigrationComparison.ps1
+.\Start-AdMigrationComparison.ps1
 ```
 
 ### Programmatic Path (1 line)
 ```powershell
 Import-Module "C:\Path\To\lc-toolkit\src\Lagana.Consulting.Toolkit" -Force
-Invoke-LcDiscoveryComparison -CustomerName "MyOrg" -OpenReports
+Invoke-AdDiscoveryComparison -CustomerName "MyOrg" -OpenReports
 ```
 
 ### Documentation Path
@@ -296,14 +296,14 @@ Invoke-LcDiscoveryComparison -CustomerName "MyOrg" -OpenReports
 lc-toolkit/
 ├── FULL_PATH_IMPLEMENTATION_SUMMARY.md    ← You are here
 ├── COMPARISON_WORKFLOW.md                  ← Full workflow guide
-├── Start-LcMigrationComparison.ps1         ← Quick-start script
+├── Start-AdMigrationComparison.ps1         ← Quick-start script
 ├── src/Lagana.Consulting.Toolkit/
 │   ├── Lagana.Consulting.Toolkit.psm1      ← Updated exports
 │   ├── Lagana.Consulting.Toolkit.psd1      ← Updated manifest
 │   └── Public/
-│       ├── Invoke-LcDiscoveryComparison.ps1
-│       ├── New-LcEnvironmentComparisonReport.ps1
-│       └── New-LcMigrationReadinessChecklist.ps1
+│       ├── Invoke-AdDiscoveryComparison.ps1
+│       ├── New-AdEnvironmentComparisonReport.ps1
+│       └── New-AdMigrationReadinessChecklist.ps1
 └── config/LOE.config.json                  ← Customizable LOE settings
 
 client-scripts/
@@ -315,7 +315,7 @@ client-scripts/
 
 ## Quality Metrics
 
-- ✅ **Code Quality:** All functions follow Lagana Consulting patterns
+- ✅ **Code Quality:** All functions follow Paul Lagana patterns
 - ✅ **Error Handling:** Comprehensive validation and helpful messages
 - ✅ **Documentation:** Guide + quick-start + code comments
 - ✅ **Testing:** Verified on lab environments
@@ -329,7 +329,7 @@ client-scripts/
 ## What's Next
 
 ### Immediate
-- [ ] Run `Invoke-LcDiscoveryComparison` on your lab/production environments
+- [ ] Run `Invoke-AdDiscoveryComparison` on your lab/production environments
 - [ ] Review generated reports
 - [ ] Validate comparison data accuracy
 - [ ] Complete readiness checklist items
@@ -359,16 +359,16 @@ client-scripts/
 - Troubleshooting guide
 - Advanced examples
 
-**Quick-Start:** `Start-LcMigrationComparison.ps1`
+**Quick-Start:** `Start-AdMigrationComparison.ps1`
 - Interactive prompts
 - Automatic workflow execution
 - Report recommendations
 
 **Code Help:**
 ```powershell
-Get-Help Invoke-LcDiscoveryComparison -Full
-Get-Help New-LcEnvironmentComparisonReport -Full
-Get-Help New-LcMigrationReadinessChecklist -Full
+Get-Help Invoke-AdDiscoveryComparison -Full
+Get-Help New-AdEnvironmentComparisonReport -Full
+Get-Help New-AdMigrationReadinessChecklist -Full
 ```
 
 ---
@@ -390,4 +390,4 @@ You now have a complete, professional migration discovery and comparison workflo
 
 ---
 
-*Lagana Consulting Toolkit | Version 0.1.1 | Full-Path Implementation Complete*
+*Paul Lagana Toolkit | Version 0.1.1 | Full-Path Implementation Complete*

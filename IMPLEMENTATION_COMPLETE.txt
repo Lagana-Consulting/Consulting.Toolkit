@@ -14,7 +14,7 @@
 - ✅ READY TO USE
 
 ### 🔹 Comparison Report Generator
-**Created:** `New-LcEnvironmentComparisonReport.ps1`
+**Created:** `New-AdEnvironmentComparisonReport.ps1`
 - Compares source vs target discovery outputs
 - Professional HTML with embedded CSS
 - Forest-level metrics grid
@@ -24,7 +24,7 @@
 - ✅ READY TO USE
 
 ### 🔹 Readiness Validation Checklist
-**Created:** `New-LcMigrationReadinessChecklist.ps1`
+**Created:** `New-AdMigrationReadinessChecklist.ps1`
 - Pre-cutover validation framework
 - 7 assessment categories
 - Automatic Pass/Fail + Manual review items
@@ -33,7 +33,7 @@
 - ✅ READY TO USE
 
 ### 🔹 Discovery Orchestrator
-**Created:** `Invoke-LcDiscoveryComparison.ps1`
+**Created:** `Invoke-AdDiscoveryComparison.ps1`
 - One command to orchestrate entire workflow
 - Runs source discovery
 - Runs target discovery
@@ -58,7 +58,7 @@
 - `COMPARISON_WORKFLOW.md` (400+ lines, comprehensive guide)
 - `FULL_PATH_IMPLEMENTATION_SUMMARY.md` (detailed technical summary)
 - `README_FULL_PATH.md` (quick reference with examples)
-- `Start-LcMigrationComparison.ps1` (interactive quick-start)
+- `Start-AdMigrationComparison.ps1` (interactive quick-start)
 - ✅ COMPLETE
 
 ---
@@ -67,19 +67,19 @@
 
 ### Option 1: One-Line Automated (Simplest)
 ```powershell
-Invoke-LcDiscoveryComparison -CustomerName "Your Org" -OpenReports
+Invoke-AdDiscoveryComparison -CustomerName "Your Org" -OpenReports
 ```
 ✅ Runs both discoveries, generates all reports, opens them automatically
 
 ### Option 2: Interactive Quick-Start
 ```powershell
-.\Start-LcMigrationComparison.ps1
+.\Start-AdMigrationComparison.ps1
 ```
 ✅ Answers prompts, runs workflow, displays results
 
 ### Option 3: Custom Workflow
 ```powershell
-$results = Invoke-LcDiscoveryComparison `
+$results = Invoke-AdDiscoveryComparison `
   -SourceServer "dc1.source.com" `
   -TargetServer "dc1.target.com" `
   -OutputRoot "E:\Reports" `
@@ -186,13 +186,13 @@ Discovery Script (Updated)
 ## Files Changed
 
 ### Created
-- `src/Lagana.Consulting.Toolkit/Public/Invoke-LcDiscoveryComparison.ps1` (orchestrator)
-- `src/Lagana.Consulting.Toolkit/Public/New-LcEnvironmentComparisonReport.ps1` (comparison)
-- `src/Lagana.Consulting.Toolkit/Public/New-LcMigrationReadinessChecklist.ps1` (checklist)
+- `src/Lagana.Consulting.Toolkit/Public/Invoke-AdDiscoveryComparison.ps1` (orchestrator)
+- `src/Lagana.Consulting.Toolkit/Public/New-AdEnvironmentComparisonReport.ps1` (comparison)
+- `src/Lagana.Consulting.Toolkit/Public/New-AdMigrationReadinessChecklist.ps1` (checklist)
 - `COMPARISON_WORKFLOW.md` (400+ line guide)
 - `FULL_PATH_IMPLEMENTATION_SUMMARY.md` (technical summary)
 - `README_FULL_PATH.md` (quick reference)
-- `Start-LcMigrationComparison.ps1` (interactive script)
+- `Start-AdMigrationComparison.ps1` (interactive script)
 
 ### Modified
 - `client-scripts/src/client.scripts/Public/AD_Discovery_ADOnly_LC.ps1` (added -Environment)
@@ -206,7 +206,7 @@ Discovery Script (Updated)
 ### Immediate (Right Now!)
 ```powershell
 # Test the complete workflow
-Invoke-LcDiscoveryComparison -CustomerName "Lab Test"
+Invoke-AdDiscoveryComparison -CustomerName "Lab Test"
 ```
 
 ### Today
@@ -231,7 +231,7 @@ Invoke-LcDiscoveryComparison -CustomerName "Lab Test"
 
 ## Quality Metrics
 
-- ✅ **Code:** Follows Lagana Consulting patterns
+- ✅ **Code:** Follows Paul Lagana patterns
 - ✅ **Documentation:** 400+ lines of guides + examples
 - ✅ **Testing:** Verified on lab environments
 - ✅ **Performance:** ~15-20 min for typical forests
@@ -246,7 +246,7 @@ Invoke-LcDiscoveryComparison -CustomerName "Lab Test"
 
 ### For Immediate Use
 1. Import module: `Import-Module "lc-toolkit\src\Lagana.Consulting.Toolkit" -Force`
-2. Run: `Invoke-LcDiscoveryComparison -CustomerName "YourOrg"`
+2. Run: `Invoke-AdDiscoveryComparison -CustomerName "YourOrg"`
 3. Review: HTML reports in output folder
 
 ### For Production Deployment
@@ -270,8 +270,8 @@ Invoke-LcDiscoveryComparison -CustomerName "Lab Test"
 | `README_FULL_PATH.md` | Quick reference with examples |
 | `COMPARISON_WORKFLOW.md` | Comprehensive workflow guide |
 | `FULL_PATH_IMPLEMENTATION_SUMMARY.md` | Technical deep-dive |
-| `Start-LcMigrationComparison.ps1` | Interactive quick-start |
-| PowerShell Help | `Get-Help Invoke-LcDiscoveryComparison -Full` |
+| `Start-AdMigrationComparison.ps1` | Interactive quick-start |
+| PowerShell Help | `Get-Help Invoke-AdDiscoveryComparison -Full` |
 
 ---
 
@@ -293,9 +293,9 @@ The full 60-minute implementation is complete and production-ready.
 
 **Start immediately with:**
 ```powershell
-Invoke-LcDiscoveryComparison -CustomerName "Your Organization" -OpenReports
+Invoke-AdDiscoveryComparison -CustomerName "Your Organization" -OpenReports
 ```
 
 ---
 
-*Lagana Consulting AD Migration Toolkit | Full-Path Implementation v1.0*
+*Paul Lagana AD Migration Toolkit | Full-Path Implementation v1.0*

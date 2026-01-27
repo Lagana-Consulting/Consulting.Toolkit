@@ -30,7 +30,7 @@
 ---
 
 ### 2. Comparison Report Generator ✅
-**File:** `src/Lagana.Consulting.Toolkit/Public/New-LcEnvironmentComparisonReport.ps1`
+**File:** `src/Lagana.Consulting.Toolkit/Public/New-AdEnvironmentComparisonReport.ps1`
 
 **Features:**
 - Compares source vs target discovery outputs
@@ -51,7 +51,7 @@
 
 **Usage:**
 ```powershell
-$report = New-LcEnvironmentComparisonReport `
+$report = New-AdEnvironmentComparisonReport `
   -SourceRunRoot "C:\Reports\ADOnly_<timestamp>" `
   -TargetRunRoot "C:\Reports\ADOnly__target_<timestamp>" `
   -CustomerName "Contoso Corp"
@@ -60,7 +60,7 @@ $report = New-LcEnvironmentComparisonReport `
 ---
 
 ### 3. Migration Readiness Checklist ✅
-**File:** `src/Lagana.Consulting.Toolkit/Public/New-LcMigrationReadinessChecklist.ps1`
+**File:** `src/Lagana.Consulting.Toolkit/Public/New-AdMigrationReadinessChecklist.ps1`
 
 **Features:**
 - Pre-cutover validation checklist
@@ -82,7 +82,7 @@ $report = New-LcEnvironmentComparisonReport `
 
 **Usage:**
 ```powershell
-$checklist = New-LcMigrationReadinessChecklist `
+$checklist = New-AdMigrationReadinessChecklist `
   -SourceRunRoot "C:\Reports\ADOnly_<timestamp>" `
   -TargetRunRoot "C:\Reports\ADOnly__target_<timestamp>" `
   -CustomerName "Contoso Corp"
@@ -91,7 +91,7 @@ $checklist = New-LcMigrationReadinessChecklist `
 ---
 
 ### 4. Discovery Orchestrator ✅
-**File:** `src/Lagana.Consulting.Toolkit/Public/Invoke-LcDiscoveryComparison.ps1`
+**File:** `src/Lagana.Consulting.Toolkit/Public/Invoke-AdDiscoveryComparison.ps1`
 
 **Features:**
 - Orchestrates complete end-to-end workflow
@@ -124,7 +124,7 @@ $checklist = New-LcMigrationReadinessChecklist `
 
 **Usage:**
 ```powershell
-$results = Invoke-LcDiscoveryComparison `
+$results = Invoke-AdDiscoveryComparison `
   -SourceServer "dc1.source.com" `
   -TargetServer "dc1.target.com" `
   -OutputRoot "C:\Reports" `
@@ -141,9 +141,9 @@ $results = Invoke-LcDiscoveryComparison `
 
 **Changes:**
 - Added exports for:
-  - `New-LcEnvironmentComparisonReport`
-  - `New-LcMigrationReadinessChecklist`
-  - `Invoke-LcDiscoveryComparison`
+  - `New-AdEnvironmentComparisonReport`
+  - `New-AdMigrationReadinessChecklist`
+  - `Invoke-AdDiscoveryComparison`
 - All three functions now accessible via module
 
 ---
@@ -151,7 +151,7 @@ $results = Invoke-LcDiscoveryComparison `
 ### 6. Documentation ✅
 **Files:**
 - `COMPARISON_WORKFLOW.md` - Complete workflow guide with all options
-- `Start-LcMigrationComparison.ps1` - Interactive quick-start script
+- `Start-AdMigrationComparison.ps1` - Interactive quick-start script
 
 **COMPARISON_WORKFLOW.md Contents:**
 - Architecture overview with output structure
@@ -164,7 +164,7 @@ $results = Invoke-LcDiscoveryComparison `
 - Next steps after reports
 - File locations reference
 
-**Start-LcMigrationComparison.ps1:**
+**Start-AdMigrationComparison.ps1:**
 - Interactive script for easy execution
 - Prompts for customer name, output path, server details
 - Runs complete workflow automatically
@@ -182,7 +182,7 @@ $results = Invoke-LcDiscoveryComparison `
 cd "C:\Path\To\lc-toolkit"
 
 # 2. Run quick-start script
-.\Start-LcMigrationComparison.ps1
+.\Start-AdMigrationComparison.ps1
 
 # 3. Answer prompts for customer name and paths
 # 4. Wait for discovery to complete (15-20 minutes)
@@ -197,7 +197,7 @@ cd "C:\Path\To\lc-toolkit"
 Import-Module "C:\Path\To\lc-toolkit\src\Lagana.Consulting.Toolkit" -Force
 
 # 2. Run orchestrator
-$results = Invoke-LcDiscoveryComparison `
+$results = Invoke-AdDiscoveryComparison `
   -CustomerName "Acme Corp" `
   -OutputRoot "E:\Reports" `
   -SourceServer "dc1.source.com" `
@@ -218,8 +218,8 @@ $results | Format-Table -AutoSize
 & "C:\scripts\AD_Discovery_ADOnly_LC.ps1" -Environment "Target"
 
 # 3. Generate individual reports
-New-LcEnvironmentComparisonReport -SourceRunRoot "..." -TargetRunRoot "..."
-New-LcMigrationReadinessChecklist -SourceRunRoot "..." -TargetRunRoot "..."
+New-AdEnvironmentComparisonReport -SourceRunRoot "..." -TargetRunRoot "..."
+New-AdMigrationReadinessChecklist -SourceRunRoot "..." -TargetRunRoot "..."
 ```
 
 ---
@@ -326,7 +326,7 @@ Categories and items:
 - Clear pass/fail/review status for each item
 
 ### 4. **Single-Command Execution**
-- `Invoke-LcDiscoveryComparison` handles entire workflow
+- `Invoke-AdDiscoveryComparison` handles entire workflow
 - No intermediate steps needed
 - All reports generated automatically
 
@@ -365,10 +365,10 @@ Import-Module "C:\Path\To\lc-toolkit\src\Lagana.Consulting.Toolkit" -Force
 Get-Command -Module Lagana.Consulting.Toolkit |
   Where-Object Name -match "Discovery|Comparison|Readiness" |
   Select-Object Name
-# Should return: Invoke-LcDiscoveryComparison, New-LcEnvironmentComparisonReport, New-LcMigrationReadinessChecklist
+# Should return: Invoke-AdDiscoveryComparison, New-AdEnvironmentComparisonReport, New-AdMigrationReadinessChecklist
 
 # 3. Run orchestrator with lab environment
-$result = Invoke-LcDiscoveryComparison -CustomerName "Lab Test"
+$result = Invoke-AdDiscoveryComparison -CustomerName "Lab Test"
 
 # 4. Verify all outputs exist
 Test-Path $result.SourceRunRoot
@@ -380,7 +380,7 @@ Test-Path $result.ReadinessChecklist
 ### Full Integration Test
 ```powershell
 # Run in actual AD environments
-$result = Invoke-LcDiscoveryComparison `
+$result = Invoke-AdDiscoveryComparison `
   -SourceServer "dc1.source.local" `
   -TargetServer "dc1.target.local" `
   -OutputRoot "C:\Reports" `
@@ -396,7 +396,7 @@ Get-Content $result.ReadinessChecklist | Select-String "Readiness Summary"
 
 ## Next Steps
 
-1. **Test in Lab:** Run `Invoke-LcDiscoveryComparison` against lab forests
+1. **Test in Lab:** Run `Invoke-AdDiscoveryComparison` against lab forests
 2. **Customize Branding:** Add company logo/colors to HTML reports
 3. **Integrate with SOW:** Include report generation in customer SOW deliverables
 4. **Create Dashboard:** Optional - build summary Excel with exec overview
@@ -410,13 +410,13 @@ Get-Content $result.ReadinessChecklist | Select-String "Readiness Summary"
 | File | Path | Purpose |
 |------|------|---------|
 | Discovery Script | `client-scripts/src/client.scripts/Public/AD_Discovery_ADOnly_LC.ps1` | Core discovery (updated with -Environment) |
-| Comparison Report | `lc-toolkit/src/Lagana.Consulting.Toolkit/Public/New-LcEnvironmentComparisonReport.ps1` | Compare source vs target |
-| Readiness Checklist | `lc-toolkit/src/Lagana.Consulting.Toolkit/Public/New-LcMigrationReadinessChecklist.ps1` | Pre-cutover validation |
-| Orchestrator | `lc-toolkit/src/Lagana.Consulting.Toolkit/Public/Invoke-LcDiscoveryComparison.ps1` | Automated workflow |
+| Comparison Report | `lc-toolkit/src/Lagana.Consulting.Toolkit/Public/New-AdEnvironmentComparisonReport.ps1` | Compare source vs target |
+| Readiness Checklist | `lc-toolkit/src/Lagana.Consulting.Toolkit/Public/New-AdMigrationReadinessChecklist.ps1` | Pre-cutover validation |
+| Orchestrator | `lc-toolkit/src/Lagana.Consulting.Toolkit/Public/Invoke-AdDiscoveryComparison.ps1` | Automated workflow |
 | Module Manifest | `lc-toolkit/src/Lagana.Consulting.Toolkit/Lagana.Consulting.Toolkit.psm1` | Exports new functions |
 | Module Definition | `lc-toolkit/src/Lagana.Consulting.Toolkit/Lagana.Consulting.Toolkit.psd1` | Module metadata |
 | Workflow Guide | `lc-toolkit/COMPARISON_WORKFLOW.md` | Complete user documentation |
-| Quick-Start Script | `lc-toolkit/Start-LcMigrationComparison.ps1` | Interactive entry point |
+| Quick-Start Script | `lc-toolkit/Start-AdMigrationComparison.ps1` | Interactive entry point |
 
 ---
 

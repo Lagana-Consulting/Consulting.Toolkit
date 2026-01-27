@@ -17,12 +17,12 @@ $Now = Get-Date
 $EnvironmentSafeTag = $Environment.ToLower().Replace(' ', '_')
 
 
-if (-not (Get-Command Export-LcCsvSafe -ErrorAction SilentlyContinue)) {
-  throw "Export-LcCsvSafe not found. Update/import Lagana.Consulting.Toolkit that includes Export-LcCsvSafe."
+if (-not (Get-Command Export-AdCsvSafe -ErrorAction SilentlyContinue)) {
+  throw "Export-AdCsvSafe not found. Update/import Lagana.Consulting.Toolkit that includes Export-AdCsvSafe."
 }
 
-if (-not (Get-Command Export-LcSchemas -ErrorAction SilentlyContinue)) {
-  throw "Export-LcSchemas not found. Update/import Lagana.Consulting.Toolkit that includes Export-LcSchemas."
+if (-not (Get-Command Export-AdSchemas -ErrorAction SilentlyContinue)) {
+  throw "Export-AdSchemas not found. Update/import Lagana.Consulting.Toolkit that includes Export-AdSchemas."
 }
 
 
@@ -31,9 +31,9 @@ function Get-DomainScopeTag([string]$DomainFqdn) {
 }
 
 # Discover forest early so we can name the run folder with the forest root domain
-$forest = Get-LcAdForest
-$domains = Get-LcAdDomains -Forest $forest
-$suffixSet = Get-LcKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
+$forest = Get-AdAdForest
+$domains = Get-AdAdDomains -Forest $forest
+$suffixSet = Get-AdKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
 
 # Build a default prefix based on forest root domain when not explicitly provided
 $rootDomainTag = if ([string]::IsNullOrWhiteSpace($forest.RootDomain)) { 'UnknownDomain' } else { $forest.RootDomain.ToLower().Replace(' ', '_') }
@@ -47,7 +47,7 @@ $basePrefix = if ($PSBoundParameters.ContainsKey('Prefix') -and -not [string]::I
 # Run layout + folders
 # -------------------------
 $EnvironmentPrefix = if ($EnvironmentSafeTag -eq "source") { $basePrefix } else { "${basePrefix}__${EnvironmentSafeTag}" }
-$layout = New-LcRunLayout -OutputRoot $OutputRoot -Prefix $EnvironmentPrefix -CreateLog
+$layout = New-AdRunLayout -OutputRoot $OutputRoot -Prefix $EnvironmentPrefix -CreateLog
 
 $schemasDir = Join-Path $layout.RunRoot '00_schemas'
 $forestDir = Join-Path $layout.RunRoot '10_forest'
@@ -62,28 +62,28 @@ foreach ($p in @($schemasDir, $forestDir, $domainsRoot, $manifestDir, $logsDir))
 # -------------------------
 # Schemas
 # -------------------------
-Export-LcSchemas -SchemasDir $schemasDir | Out-Null
+Export-AdSchemas -SchemasDir $schemasDir | Out-Null
 
 # -------------------------
 # Forest exports
 # -------------------------
-(Get-LcAdForestSummary -Forest $forest) |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Summary__Forest.csv') -Force -AllowEmpty
+(Get-AdAdForestSummary -Forest $forest) |
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Summary__Forest.csv') -Force -AllowEmpty
 
-(Get-LcAdForestUpnSuffixes -Forest $forest -Domains $domains) |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Identity__UpnSuffixes__Forest.csv') -Force -AllowEmpty
+(Get-AdAdForestUpnSuffixes -Forest $forest -Domains $domains) |
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Identity__UpnSuffixes__Forest.csv') -Force -AllowEmpty
 
-(Get-LcAdReplicationSites) |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Network__Sites__Forest.csv') -Force -AllowEmpty
+(Get-AdAdReplicationSites) |
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Network__Sites__Forest.csv') -Force -AllowEmpty
 
-(Get-LcAdReplicationSubnets) |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Network__Subnets__Forest.csv') -Force -AllowEmpty
+(Get-AdAdReplicationSubnets) |
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Network__Subnets__Forest.csv') -Force -AllowEmpty
 
-(Get-LcAdReplicationSiteLinks) |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Network__SiteLinks__Forest.csv') -Force -AllowEmpty
+(Get-AdAdReplicationSiteLinks) |
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Network__SiteLinks__Forest.csv') -Force -AllowEmpty
 
-(Get-LcAdForestTrusts -LogPath $layout.LogPath) |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Security__Trusts__Forest.csv') -Force -AllowEmpty
+(Get-AdAdForestTrusts -LogPath $layout.LogPath) |
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Security__Trusts__Forest.csv') -Force -AllowEmpty
 
 # -------------------------
 # Domain loop
@@ -111,41 +111,41 @@ $allTokenBloat = @()
 $allGpoPerformance = @()
 
 foreach ($d in $domains) {
-  $ctx = Get-LcAdDomainContext -DomainFqdn $d -LogPath $layout.LogPath
+  $ctx = Get-AdAdDomainContext -DomainFqdn $d -LogPath $layout.LogPath
   $scopeTag = Get-DomainScopeTag $ctx.DomainFqdn
 
   $domainDir = Join-Path $domainsRoot $scopeTag
   if (-not (Test-Path -LiteralPath $domainDir)) { New-Item -ItemType Directory -Path $domainDir -Force | Out-Null }
 
   # Domain summaries / infra
-  (Get-LcAdDomainSummary -DomainContext $ctx) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Summary__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdAdDomainSummary -DomainContext $ctx) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Summary__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  (Get-LcAdDomainControllers -DomainContext $ctx) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Infrastructure__DomainControllers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdAdDomainControllers -DomainContext $ctx) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Infrastructure__DomainControllers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # Password policy
-  (Get-LcAdDefaultPasswordPolicy -DomainContext $ctx) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__PasswordPolicyDefault__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdAdDefaultPasswordPolicy -DomainContext $ctx) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__PasswordPolicyDefault__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  (Get-LcAdFineGrainedPasswordPolicies -DomainContext $ctx -LogPath $layout.LogPath) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__PasswordPolicyFgpp__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdAdFineGrainedPasswordPolicies -DomainContext $ctx -LogPath $layout.LogPath) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__PasswordPolicyFgpp__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  (Get-LcAdFineGrainedPasswordPolicyAssignments -DomainContext $ctx -LogPath $layout.LogPath) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__PasswordPolicyFgppAssignments__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdAdFineGrainedPasswordPolicyAssignments -DomainContext $ctx -LogPath $layout.LogPath) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__PasswordPolicyFgppAssignments__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # Structure / delegation
-  (Get-LcAdOrganizationalUnits -DomainContext $ctx) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Structure__OrganizationalUnits__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdAdOrganizationalUnits -DomainContext $ctx) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Structure__OrganizationalUnits__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  (Get-LcAdOuDelegationAcls -DomainContext $ctx -Scope OneLevel) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__OuDelegationAcls__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdAdOuDelegationAcls -DomainContext $ctx -Scope OneLevel) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__OuDelegationAcls__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # Identity objects (keep materialized arrays if you reuse them)
-  $groups = @(Get-LcAdGroups -DomainContext $ctx)
-  $users = @(Get-LcAdUsers -DomainContext $ctx -Now $Now -KnownUpnSuffixSet $suffixSet)
-  $comps = @(Get-LcAdComputers -DomainContext $ctx -Now $Now)
-  $ous = @(Get-LcAdOrganizationalUnits -DomainContext $ctx)
+  $groups = @(Get-AdAdGroups -DomainContext $ctx)
+  $users = @(Get-AdAdUsers -DomainContext $ctx -Now $Now -KnownUpnSuffixSet $suffixSet)
+  $comps = @(Get-AdAdComputers -DomainContext $ctx -Now $Now)
+  $ous = @(Get-AdAdOrganizationalUnits -DomainContext $ctx)
 
   # Collect for forest-level assessment
   $allUsers += $users
@@ -154,134 +154,134 @@ foreach ($d in $domains) {
   $allOus += $ous
 
   $groups |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__Groups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__Groups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   $users |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__Users__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__Users__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   $comps |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__ComputersAll__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__ComputersAll__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # Workstations vs servers split
   @($comps | Where-Object { -not $_.IsServer }) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__ComputersWorkstations__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__ComputersWorkstations__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   @($comps | Where-Object { $_.IsServer }) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__ComputersServers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__ComputersServers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # SPNs
-  (Get-LcAdSpns -DomainContext $ctx) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__Spns__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdAdSpns -DomainContext $ctx) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__Spns__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # SIDHistory, service candidates, privileged
-  (Get-LcUsersSidHistory -DomainContext $ctx) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__UsersSidHistory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdUsersSidHistory -DomainContext $ctx) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__UsersSidHistory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  (Get-LcServiceAccountCandidates -DomainContext $ctx -Now $Now) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__ServiceAccountCandidates__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdServiceAccountCandidates -DomainContext $ctx -Now $Now) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Identity__ServiceAccountCandidates__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $privAccounts = @(Get-LcPrivilegedAccounts -DomainContext $ctx)
+  $privAccounts = @(Get-AdPrivilegedAccounts -DomainContext $ctx)
   $allPrivilegedAccounts += $privAccounts
   $privAccounts |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__PrivilegedAccounts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__PrivilegedAccounts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # GPO inventory + links
-  $gpos = @(Get-LcGpoInventory -DomainContext $ctx -LogPath $layout.LogPath)
+  $gpos = @(Get-AdGpoInventory -DomainContext $ctx -LogPath $layout.LogPath)
   $allGpos += $gpos
   $gpos |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__GPO__Inventory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__GPO__Inventory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  (Get-LcGpoLinks -DomainContext $ctx -Scope OneLevel) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__GPO__Links__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  (Get-AdGpoLinks -DomainContext $ctx -Scope OneLevel) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__GPO__Links__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # Kerberos encryption focused datasets
   $userKerb = $users | Select-Object DomainFqdn, SamAccountName, UserPrincipalName, EncryptionTypes, EncryptionRisk, SPNCount, SidHistoryCount, AdminCount
   @($userKerb) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__KerberosEncryptionUsers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__KerberosEncryptionUsers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # Computers Kerberos encryption dataset
   $compKerb = $comps | Select-Object DomainFqdn, Name, DnsHostName, IsServer, EncryptionTypes, EncryptionRisk, SPNCount
   @($compKerb) |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__KerberosEncryptionComputers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Security__KerberosEncryptionComputers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # Extended assessment - Per-domain analysis
   Write-Host "Running extended assessments for $($ctx.DomainFqdn)..."
 
-  $nestingDepth = @(Get-LcGroupNestingDepth -DomainContext $ctx)
+  $nestingDepth = @(Get-AdGroupNestingDepth -DomainContext $ctx)
   $allGroupNesting += $nestingDepth
   $nestingDepth |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__GroupNestingDepth__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__GroupNestingDepth__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $crossDomainMember = @(Get-LcCrossDomainGroupMembership -DomainContext $ctx)
+  $crossDomainMember = @(Get-AdCrossDomainGroupMembership -DomainContext $ctx)
   $allCrossDomainMembership += $crossDomainMember
   $crossDomainMember |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__CrossDomainGroupMembership__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__CrossDomainGroupMembership__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $weakPwdPolicies = @(Get-LcWeakPasswordPolicies -DomainContext $ctx)
+  $weakPwdPolicies = @(Get-AdWeakPasswordPolicies -DomainContext $ctx)
   $allWeakPasswordPolicies += $weakPwdPolicies
   $weakPwdPolicies |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__WeakPasswordPolicies__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__WeakPasswordPolicies__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $emptyGroups = @(Get-LcEmptyGroups -DomainContext $ctx)
+  $emptyGroups = @(Get-AdEmptyGroups -DomainContext $ctx)
   $allEmptyGroups += $emptyGroups
   $emptyGroups |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__EmptyGroups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__EmptyGroups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $dupSpns = @(Get-LcDuplicateSpns -DomainContext $ctx)
+  $dupSpns = @(Get-AdDuplicateSpns -DomainContext $ctx)
   $allDuplicateSpns += $dupSpns
   $dupSpns |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__DuplicateSpns__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__DuplicateSpns__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $topSpns = @(Get-LcTopSpnsByType -DomainContext $ctx -Top 10)
+  $topSpns = @(Get-AdTopSpnsByType -DomainContext $ctx -Top 10)
   $allTopSpns += $topSpns
   $topSpns |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__TopSpnsByType__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__TopSpnsByType__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $ouDepth = @(Get-LcOuDepthAnalysis -DomainContext $ctx)
+  $ouDepth = @(Get-AdOuDepthAnalysis -DomainContext $ctx)
   $allOuDepth += $ouDepth
   $ouDepth |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__OuDepthAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__OuDepthAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $disabledAccts = @(Get-LcDisabledAccounts -AllUsers $users -AllComputers $comps)
+  $disabledAccts = @(Get-AdDisabledAccounts -AllUsers $users -AllComputers $comps)
   $allDisabledAccounts += $disabledAccts
   $disabledAccts |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__DisabledAccounts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__DisabledAccounts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $adminSdHolder = @(Get-LcAdminSdHolderImpact -DomainContext $ctx)
+  $adminSdHolder = @(Get-AdAdminSdHolderImpact -DomainContext $ctx)
   $allAdminSdHolder += $adminSdHolder
   $adminSdHolder |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__AdminSdHolderImpact__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__AdminSdHolderImpact__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # Tombstone lifetime per domain
-  $tombstone = @(Get-LcTombstoneLifetime -DomainContext $ctx)
+  $tombstone = @(Get-AdTombstoneLifetime -DomainContext $ctx)
   $allTombstone += $tombstone
   $tombstone |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__TombstoneLifetime__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__TombstoneLifetime__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $dnsZones = @(Get-LcDnsZoneInventory -DomainFqdn $ctx.DomainFqdn -Server $ctx.Server)
+  $dnsZones = @(Get-AdDnsZoneInventory -DomainFqdn $ctx.DomainFqdn -Server $ctx.Server)
   $allDnsZones += $dnsZones
   $dnsZones |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__DnsZoneInventory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__DnsZoneInventory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $dhcpScopes = @(Get-LcDhcpScopeAnalysis -DomainFqdn $ctx.DomainFqdn -Server $ctx.Server)
+  $dhcpScopes = @(Get-AdDhcpScopeAnalysis -DomainFqdn $ctx.DomainFqdn -Server $ctx.Server)
   $allDhcpScopes += $dhcpScopes
   $dhcpScopes |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__DhcpScopeAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__DhcpScopeAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $sysvolSizes = @(Get-LcSysvolSizeAnalysis -DomainFqdn $ctx.DomainFqdn -Server $ctx.Server)
+  $sysvolSizes = @(Get-AdSysvolSizeAnalysis -DomainFqdn $ctx.DomainFqdn -Server $ctx.Server)
   $allSysvolSizes += $sysvolSizes
   $sysvolSizes |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__SysvolSizeAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__SysvolSizeAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $tokenBloat = @(Get-LcGroupTokenBloat -AllUsers $users)
+  $tokenBloat = @(Get-AdGroupTokenBloat -AllUsers $users)
   $allTokenBloat += $tokenBloat
   $tokenBloat |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__GroupTokenBloat__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__GroupTokenBloat__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-  $gpoPerf = @(Get-LcGpoPerformanceAnalysis -AllGpos $gpos)
+  $gpoPerf = @(Get-AdGpoPerformanceAnalysis -AllGpos $gpos)
   $allGpoPerformance += $gpoPerf
   $gpoPerf |
-  Export-LcCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__GpoPerformanceAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("LC__AD__Domain__Analysis__GpoPerformanceAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 }
 
 # -------------------------
@@ -289,21 +289,21 @@ foreach ($d in $domains) {
 # -------------------------
 Write-Host "Running forest-level extended assessments..."
 
-$siteLinkData = @(Get-LcSiteLinkCostAnalysis)
+$siteLinkData = @(Get-AdSiteLinkCostAnalysis)
 $siteLinkData |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__SiteLinkCostAnalysis__Forest.csv') -Force -AllowEmpty
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__SiteLinkCostAnalysis__Forest.csv') -Force -AllowEmpty
 
-$fsmoData = @(Get-LcFsmoRoleAvailability -ForestName $($forest.Name))
+$fsmoData = @(Get-AdFsmoRoleAvailability -ForestName $($forest.Name))
 $fsmoData |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__FsmoRoleAvailability__Forest.csv') -Force -AllowEmpty
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__FsmoRoleAvailability__Forest.csv') -Force -AllowEmpty
 
-$certServicesData = @(Get-LcCertificateServicesInventory -Forest $forest)
+$certServicesData = @(Get-AdCertificateServicesInventory -Forest $forest)
 $certServicesData |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__CertificateServicesInventory__Forest.csv') -Force -AllowEmpty
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__CertificateServicesInventory__Forest.csv') -Force -AllowEmpty
 
-$trustMapData = @(Get-LcTrustRelationshipMap -Forest $forest)
+$trustMapData = @(Get-AdTrustRelationshipMap -Forest $forest)
 $trustMapData |
-Export-LcCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__TrustRelationshipMap__Forest.csv') -Force -AllowEmpty
+Export-AdCsvSafe -Path (Join-Path $forestDir 'LC__AD__Forest__Analysis__TrustRelationshipMap__Forest.csv') -Force -AllowEmpty
 
 # -------------------------
 # Aggregate analysis from all domains
@@ -319,7 +319,7 @@ Write-Host "Preparing assessment summary data..."
 Write-Host "Generating assessment summary and risk flags..."
 
 # Ensure all arrays are at least empty arrays, not $null
-$assessmentSummary = Get-LcAssessmentSummary `
+$assessmentSummary = Get-AdAssessmentSummary `
   -ForestName $forest.Name `
   -AllUsers @($allUsers) `
   -AllComputers @($allComputers) `
@@ -339,15 +339,15 @@ $assessmentSummary = Get-LcAssessmentSummary `
   -TombstoneData @($allTombstone)
 
 $assessmentSummary |
-Export-LcCsvSafe -Path (Join-Path $layout.RunRoot 'LC__AD__Assessment__Summary__Forest.csv') -Force
+Export-AdCsvSafe -Path (Join-Path $layout.RunRoot 'LC__AD__Assessment__Summary__Forest.csv') -Force
 
-$migrationRiskFlags = Get-LcMigrationRiskFlags -AllUsers @($allUsers) -AllComputers @($allComputers)
+$migrationRiskFlags = Get-AdMigrationRiskFlags -AllUsers @($allUsers) -AllComputers @($allComputers)
 $migrationRiskFlags |
-Export-LcCsvSafe -Path (Join-Path $layout.RunRoot 'LC__AD__Migration__RiskFlags__Forest.csv') -Force -AllowEmpty
+Export-AdCsvSafe -Path (Join-Path $layout.RunRoot 'LC__AD__Migration__RiskFlags__Forest.csv') -Force -AllowEmpty
 
-$migrationRiskFlagsSummary = Get-LcMigrationRiskFlagsSummary -RiskFlagsData @($migrationRiskFlags)
+$migrationRiskFlagsSummary = Get-AdMigrationRiskFlagsSummary -RiskFlagsData @($migrationRiskFlags)
 $migrationRiskFlagsSummary |
-Export-LcCsvSafe -Path (Join-Path $layout.RunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv') -Force -AllowEmpty
+Export-AdCsvSafe -Path (Join-Path $layout.RunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv') -Force -AllowEmpty
 
 
 # -------------------------
@@ -391,9 +391,9 @@ $manifestInfo = [pscustomobject]@{
 }
 
 @($manifest) |
-Export-LcCsvSafe -Path (Join-Path $manifestDir 'LC__Run__Manifest__Run.csv') -Force -AllowEmpty
+Export-AdCsvSafe -Path (Join-Path $manifestDir 'LC__Run__Manifest__Run.csv') -Force -AllowEmpty
 
-$manifestInfo | Export-LcCsvSafe -Path (Join-Path $manifestDir 'LC__Run__Info__Run.csv') -Force
+$manifestInfo | Export-AdCsvSafe -Path (Join-Path $manifestDir 'LC__Run__Info__Run.csv') -Force
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
@@ -402,7 +402,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Outputs in: $($layout.RunRoot)" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "To generate reports, run:" -ForegroundColor Cyan
-Write-Host "  New-LcAssessmentReport -RunRoot '$($layout.RunRoot)' -OutputPath '$(Join-Path $layout.RunRoot "LC__Assessment__Report__$EnvironmentSafeTag.html")'" -ForegroundColor White
-Write-Host "  New-LcMigrationPlanningReport -RunRoot '$($layout.RunRoot)' -OutputPath '$(Join-Path $layout.RunRoot "LC__Migration__Planning__$EnvironmentSafeTag.html")'" -ForegroundColor White
+Write-Host "  New-AdAssessmentReport -RunRoot '$($layout.RunRoot)' -OutputPath '$(Join-Path $layout.RunRoot "LC__Assessment__Report__$EnvironmentSafeTag.html")'" -ForegroundColor White
+Write-Host "  New-AdMigrationPlanningReport -RunRoot '$($layout.RunRoot)' -OutputPath '$(Join-Path $layout.RunRoot "LC__Migration__Planning__$EnvironmentSafeTag.html")'" -ForegroundColor White
 Write-Host ""
 

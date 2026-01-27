@@ -39,7 +39,7 @@ Run the orchestrator script to automatically execute discovery in both environme
 Import-Module "$PWD\src\Lagana.Consulting.Toolkit" -Force
 
 # Run complete workflow
-$result = Invoke-LcDiscoveryComparison -CustomerName "Contoso Corp" -OpenReports
+$result = Invoke-AdDiscoveryComparison -CustomerName "Contoso Corp" -OpenReports
 
 # View results
 $result | Format-Table
@@ -106,7 +106,7 @@ $targetRunRoot = Get-ChildItem "C:\Reports" -Directory |
   Sort-Object CreationTime -Desc | Select-Object -First 1 -ExpandProperty FullName
 
 # Generate comparison report
-$comparison = New-LcEnvironmentComparisonReport `
+$comparison = New-AdEnvironmentComparisonReport `
   -SourceRunRoot $sourceRunRoot `
   -TargetRunRoot $targetRunRoot `
   -CustomerName "Contoso Corp"
@@ -119,7 +119,7 @@ Invoke-Item $comparison.ReportPath
 
 ```powershell
 # Generate readiness checklist
-$readiness = New-LcMigrationReadinessChecklist `
+$readiness = New-AdMigrationReadinessChecklist `
   -SourceRunRoot $sourceRunRoot `
   -TargetRunRoot $targetRunRoot `
   -CustomerName "Contoso Corp"
@@ -146,7 +146,7 @@ Import-Csv "C:\Reports\ADOnly_<timestamp>\99_manifest\LC__Run__Info__Run.csv"
 
 ### Comparison Report
 
-The comparison report (`New-LcEnvironmentComparisonReport`) generates HTML with:
+The comparison report (`New-AdEnvironmentComparisonReport`) generates HTML with:
 
 - **Forest-Level Metrics:** Side-by-side comparison of users, groups, computers, trusts
 - **Domain-Level Breakdown:** Per-domain delta analysis
@@ -156,7 +156,7 @@ The comparison report (`New-LcEnvironmentComparisonReport`) generates HTML with:
 
 ### Readiness Checklist
 
-The readiness checklist (`New-LcMigrationReadinessChecklist`) provides:
+The readiness checklist (`New-AdMigrationReadinessChecklist`) provides:
 
 - **Automatic Validation:** Tests that count objects match expectations (Pass/Fail)
 - **Manual Review Items:** Tasks requiring human verification (7 categories)
@@ -175,10 +175,10 @@ The readiness checklist (`New-LcMigrationReadinessChecklist`) provides:
 
 ### Orchestrator Script
 
-The orchestrator (`Invoke-LcDiscoveryComparison`) automates the entire workflow:
+The orchestrator (`Invoke-AdDiscoveryComparison`) automates the entire workflow:
 
 ```powershell
-Invoke-LcDiscoveryComparison `
+Invoke-AdDiscoveryComparison `
   -SourceServer "dc1.source.com" `     # Optional: specific DC in source
   -TargetServer "dc1.target.com" `     # Optional: specific DC in target
   -OutputRoot "C:\Reports" `           # Where to store outputs
@@ -299,16 +299,16 @@ $source = "C:\Reports\ADOnly_20260121-132028"
 $target = "C:\Reports\ADOnly__target_20260121-143515"
 
 # Comparison
-New-LcEnvironmentComparisonReport -SourceRunRoot $source -TargetRunRoot $target
+New-AdEnvironmentComparisonReport -SourceRunRoot $source -TargetRunRoot $target
 
 # Readiness
-New-LcMigrationReadinessChecklist -SourceRunRoot $source -TargetRunRoot $target
+New-AdMigrationReadinessChecklist -SourceRunRoot $source -TargetRunRoot $target
 
 # Assessment for source
-New-LcAssessmentReport -RunRoot $source
+New-AdAssessmentReport -RunRoot $source
 
 # Assessment for target
-New-LcAssessmentReport -RunRoot $target
+New-AdAssessmentReport -RunRoot $target
 ```
 
 ### Batch Multiple Migrations
@@ -323,7 +323,7 @@ $migrations = @(
 foreach ($mig in $migrations) {
   Write-Host "Processing: $($mig.Name)"
 
-  New-LcEnvironmentComparisonReport `
+  New-AdEnvironmentComparisonReport `
     -SourceRunRoot $mig.Source `
     -TargetRunRoot $mig.Target `
     -CustomerName $mig.Name
@@ -348,9 +348,9 @@ foreach ($mig in $migrations) {
 For detailed function documentation, use:
 
 ```powershell
-Get-Help New-LcEnvironmentComparisonReport -Detailed
-Get-Help New-LcMigrationReadinessChecklist -Detailed
-Get-Help Invoke-LcDiscoveryComparison -Detailed
+Get-Help New-AdEnvironmentComparisonReport -Detailed
+Get-Help New-AdMigrationReadinessChecklist -Detailed
+Get-Help Invoke-AdDiscoveryComparison -Detailed
 ```
 
 ## File Locations
@@ -359,9 +359,9 @@ Get-Help Invoke-LcDiscoveryComparison -Detailed
 - **Toolkit Module:** `lc-toolkit/src/Lagana.Consulting.Toolkit/`
 - **LOE Config:** `lc-toolkit/config/LOE.config.json`
 - **Report Functions:**
-  - `New-LcEnvironmentComparisonReport.ps1`
-  - `New-LcMigrationReadinessChecklist.ps1`
-  - `Invoke-LcDiscoveryComparison.ps1`
-  - `New-LcAssessmentReport.ps1`
-  - `New-LcMigrationPlanningReport.ps1`
-  - `New-LcMigrationLoeExcel.ps1`
+  - `New-AdEnvironmentComparisonReport.ps1`
+  - `New-AdMigrationReadinessChecklist.ps1`
+  - `Invoke-AdDiscoveryComparison.ps1`
+  - `New-AdAssessmentReport.ps1`
+  - `New-AdMigrationPlanningReport.ps1`
+  - `New-AdMigrationLoeExcel.ps1`
