@@ -13,6 +13,10 @@
     'New-AdLog',
     'Write-AdLog',
     'Export-AdCsv',
+    'Export-AdCsvSafe',
+    'Get-AdSchemaDefinitions',
+    'Export-AdSchemas',
+    'Write-AdSchemaCsv',
 
     # Tenant safety / auth
     'Confirm-AdTenant',
