@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 
 $EngagementRoot = "C:\Scripts"
 $Org = 'Lagana-Consulting'
-$Repo = 'lc-toolkit'
+$Repo = 'Migration.Toolkit'
 $Ref = 'main'   # branch name OR tag OR commit SHA
 
 # --- PS 5.1: ensure TLS 1.2 for GitHub ---
@@ -105,13 +105,13 @@ if (-not $top) {
 
 # Module path inside repo
 # Note: Only downloads server-side module (PS 5.1+). Analysis module (PS 7+) stays on client workstation.
-$srcModule = Join-Path $top.FullName 'src\Lagana.Consulting.Toolkit'
+$srcModule = Join-Path $top.FullName 'src\Migration.Toolkit'
 if (-not (Test-Path -LiteralPath $srcModule)) {
     # Help diagnose if the folder moved
     $candidates = @()
     try {
         $candidates = Get-ChildItem -Path $top.FullName -Recurse -Directory -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -eq 'Lagana.Consulting.Toolkit' } |
+        Where-Object { $_.Name -eq 'Migration.Toolkit' } |
         Select-Object -First 5 -ExpandProperty FullName
     } catch {
         # Ignore errors during recursive search (race conditions with antivirus/file system)
@@ -122,7 +122,7 @@ if (-not (Test-Path -LiteralPath $srcModule)) {
 }
 
 # Destination (project-local module)
-$dstModule = Join-Path $EngagementRoot 'modules\Lagana.Consulting.Toolkit'
+$dstModule = Join-Path $EngagementRoot 'modules\Migration.Toolkit'
 New-Item -ItemType Directory -Path (Split-Path $dstModule -Parent) -Force | Out-Null
 
 Write-Host "Copying module to $dstModule ..." -ForegroundColor Cyan
@@ -130,7 +130,7 @@ Copy-Item -Path $srcModule -Destination $dstModule -Recurse -Force
 
 Write-Host "Done." -ForegroundColor Green
 Write-Host "Module path: $dstModule"
-Write-Host "Import with: Import-Module `"$dstModule\Lagana.Consulting.Toolkit.psd1`" -Force"
+Write-Host "Import with: Import-Module `"$dstModule\Migration.Toolkit.psd1`" -Force"
 
 # Cleanup temporary files
 Write-Host "Cleaning up temporary files..." -ForegroundColor Cyan

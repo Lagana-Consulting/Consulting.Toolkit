@@ -1,5 +1,5 @@
 @{
-  RootModule        = 'Lagana.Consulting.Toolkit.psm1'
+  RootModule        = 'Migration.Toolkit.psm1'
   ModuleVersion     = '0.1.1'
   GUID              = '7a3e2d92-6df5-4043-88bd-d332cfec4f65'
   Author            = 'Paul Lagana'
