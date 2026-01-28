@@ -1,8 +1,0 @@
-{
-    "SourceRunRoot": "c:\\scripts\\Reports\\ADOnly_20260122-103143",
-    "TargetRunRoot": "c:\\scripts\\Reports\\ADOnly__target_20260122-123933",
-    "CustomerName": "Contoso Corp",
-    "OutputRoot": "c:\\scripts\\Reports\\Analysis_Contoso",
-    "GenerateLoeForBoth": false,
-    "IncludeTargetPlanning": false
-}

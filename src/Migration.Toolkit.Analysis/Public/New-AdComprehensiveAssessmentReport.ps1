@@ -49,22 +49,22 @@ function New-AdComprehensiveAssessmentReport {
     Write-Host "Generating comprehensive assessment report for $CustomerName..." -ForegroundColor Yellow
 
     # Load all discovery data with null-safe array wrapping
-    $forestSummary = Import-CsvSafe (Join-Path $DiscoveryOutputPath "10_forest\LC__AD__Forest__Summary__Forest.csv") | Select-Object -First 1
+    $forestSummary = Import-CsvSafe (Join-Path $DiscoveryOutputPath "10_forest\AD__Forest__Summary__Forest.csv") | Select-Object -First 1
     $domainSummaries = @()
     # Root-level domain summaries (support file name variations)
-    $rootSummaryFiles = @(Get-ChildItem -Path $DiscoveryOutputPath -Filter 'LC__AD__Domain__Summary__Domain*' -ErrorAction SilentlyContinue)
+    $rootSummaryFiles = @(Get-ChildItem -Path $DiscoveryOutputPath -Filter 'AD__Domain__Summary__Domain*' -ErrorAction SilentlyContinue)
     foreach ($f in $rootSummaryFiles) { $domainSummaries += @(Import-CsvSafe $f.FullName) }
-    $upnSuffixes = @(Import-CsvSafe (Join-Path $DiscoveryOutputPath "10_forest\LC__AD__Forest__Identity__UpnSuffixes__Forest.csv"))
+    $upnSuffixes = @(Import-CsvSafe (Join-Path $DiscoveryOutputPath "10_forest\AD__Forest__Identity__UpnSuffixes__Forest.csv"))
     # Load trusts from any matching CSVs under 10_forest (support naming variations)
     $trusts = @()
     $forestDir = Join-Path $DiscoveryOutputPath "10_forest"
-    $trustFiles = @(Get-ChildItem -Path $forestDir -Filter 'LC__AD__Forest__Security__Trusts__*.csv' -ErrorAction SilentlyContinue)
+    $trustFiles = @(Get-ChildItem -Path $forestDir -Filter 'AD__Forest__Security__Trusts__*.csv' -ErrorAction SilentlyContinue)
     foreach ($tf in $trustFiles) { $trusts += @(Import-CsvSafe $tf.FullName) }
 
     $domainDir = Join-Path $DiscoveryOutputPath "20_domains"
     $domainFolders = @(Get-ChildItem -Path $domainDir -Directory -ErrorAction SilentlyContinue)
     foreach ($df in $domainFolders) {
-        $perDomainSummaryFiles = @(Get-ChildItem -Path $df.FullName -Filter 'LC__AD__Domain__Summary__Domain*' -ErrorAction SilentlyContinue)
+        $perDomainSummaryFiles = @(Get-ChildItem -Path $df.FullName -Filter 'AD__Domain__Summary__Domain*' -ErrorAction SilentlyContinue)
         foreach ($f in $perDomainSummaryFiles) { $domainSummaries += @(Import-CsvSafe $f.FullName) }
     }
     # Dedupe summaries by DomainFqdn or DomainName
@@ -83,43 +83,43 @@ function New-AdComprehensiveAssessmentReport {
 
     foreach ($df in $domainFolders) {
         # Find and load user CSV files
-        $userFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "LC__AD__Domain__Identity__Users__*.csv") -ErrorAction SilentlyContinue)
+        $userFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "AD__Domain__Identity__Users__*.csv") -ErrorAction SilentlyContinue)
         foreach ($file in $userFiles) {
             $users += Import-CsvSafe $file.FullName
         }
 
         # Find and load group CSV files
-        $groupFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "LC__AD__Domain__Identity__Groups__*.csv") -ErrorAction SilentlyContinue)
+        $groupFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "AD__Domain__Identity__Groups__*.csv") -ErrorAction SilentlyContinue)
         foreach ($file in $groupFiles) {
             $groups += Import-CsvSafe $file.FullName
         }
 
         # Find and load computer CSV files
-        $computerFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "LC__AD__Domain__Inventory__Computers__*.csv") -ErrorAction SilentlyContinue)
+        $computerFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "AD__Domain__Identity__ComputersAll__*.csv") -ErrorAction SilentlyContinue)
         foreach ($file in $computerFiles) {
             $computers += Import-CsvSafe $file.FullName
         }
 
         # Find and load policy CSV files (DefaultPasswordPolicy)
-        $policyFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "LC__AD__Domain__Security__DefaultPasswordPolicy__*.csv") -ErrorAction SilentlyContinue)
+        $policyFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "AD__Domain__Security__PasswordPolicyDefault__*.csv") -ErrorAction SilentlyContinue)
         foreach ($file in $policyFiles) {
             $policies += Import-CsvSafe $file.FullName
         }
 
         # Also load PasswordPolicyDefault (alternate naming)
-        $policyDefaultFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "LC__AD__Domain__Security__PasswordPolicyDefault__*.csv") -ErrorAction SilentlyContinue)
+        $policyDefaultFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "AD__Domain__Security__DefaultPasswordPolicy__*.csv") -ErrorAction SilentlyContinue)
         foreach ($file in $policyDefaultFiles) {
             $policies += Import-CsvSafe $file.FullName
         }
 
         # Fine-Grained Password Policies (FGPP)
-        $fgppPolicyFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "LC__AD__Domain__Security__FineGrainedPasswordPolicies__*.csv") -ErrorAction SilentlyContinue)
+        $fgppPolicyFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "AD__Domain__Security__PasswordPolicyFgpp__*.csv") -ErrorAction SilentlyContinue)
         foreach ($file in $fgppPolicyFiles) {
             $fgppPolicies += Import-CsvSafe $file.FullName
         }
 
         # FGPP Assignments
-        $fgppAssignmentFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "LC__AD__Domain__Security__FineGrainedPasswordPolicyAssignments__*.csv") -ErrorAction SilentlyContinue)
+        $fgppAssignmentFiles = @(Get-ChildItem -Path (Join-Path $df.FullName "AD__Domain__Security__PasswordPolicyFgppAssignments__*.csv") -ErrorAction SilentlyContinue)
         foreach ($file in $fgppAssignmentFiles) {
             $fgppAssignments += Import-CsvSafe $file.FullName
         }

@@ -29,7 +29,7 @@ function New-AdAssessmentReport {
     # Default output to discovery root with timestamp
     if (-not $OutputPath) {
         $timestamp = (Get-Date).ToString('yyyyMMdd-HHmmss')
-        $OutputPath = Join-Path $DiscoveryOutputPath "LC__Assessment__Report__$timestamp.html"
+        $OutputPath = Join-Path $DiscoveryOutputPath "AD__Assessment__Report__$timestamp.html"
     }
 
     # Read assessment summary (look in root and 00_schemas folder)

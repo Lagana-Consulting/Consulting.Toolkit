@@ -49,7 +49,7 @@ function New-AdMigrationReadinessChecklist {
   # Determine output path
   if (-not $OutputPath) {
     $timestamp = (Get-AdTimestamp -Format File)
-    $OutputPath = Join-Path $SourceRunRoot "LC__Migration__Readiness__Checklist__$timestamp.html"
+    $OutputPath = Join-Path $SourceRunRoot "AD__Migration__Readiness__Checklist__$timestamp.html"
   }
 
   # Helper to safely import CSV
@@ -63,16 +63,16 @@ function New-AdMigrationReadinessChecklist {
   }
 
   # Load assessments
-  $sourceAssess = Import-CsvSafe (Join-Path $SourceRunRoot 'LC__AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
-  $targetAssess = Import-CsvSafe (Join-Path $TargetRunRoot 'LC__AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
+  $sourceAssess = Import-CsvSafe (Join-Path $SourceRunRoot 'AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
+  $targetAssess = Import-CsvSafe (Join-Path $TargetRunRoot 'AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
 
   # Provide fallbacks if missing
   if (-not $sourceAssess) { $sourceAssess = [pscustomobject]@{ UsersTotal = 0; GroupsTotal = 0; ComputersTotal = 0 } }
   if (-not $targetAssess) { $targetAssess = [pscustomobject]@{ UsersTotal = 0; GroupsTotal = 0; ComputersTotal = 0 } }
 
   # Load risk flags
-  $sourceRiskFlags = Import-CsvSafe (Join-Path $SourceRunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv')
-  $targetRiskFlags = Import-CsvSafe (Join-Path $TargetRunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv')
+  $sourceRiskFlags = Import-CsvSafe (Join-Path $SourceRunRoot 'AD__Migration__RiskFlagsSummary__Forest.csv')
+  $targetRiskFlags = Import-CsvSafe (Join-Path $TargetRunRoot 'AD__Migration__RiskFlagsSummary__Forest.csv')
 
   # Parse risk flag counts (safely handle empty arrays)
   $sourceCritical = ($sourceRiskFlags | Where-Object { $_.Flag -match 'Critical' } | Measure-Object).Count

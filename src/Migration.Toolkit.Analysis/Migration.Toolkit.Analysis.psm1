@@ -8,8 +8,10 @@ Get-ChildItem -Path $PrivatePath -Filter *.ps1 -File -ErrorAction SilentlyContin
     . $_.FullName
 }
 
-# Dot-source Public
-Get-ChildItem -Path $PublicPath -Filter *.ps1 -File -ErrorAction SilentlyContinue | ForEach-Object {
+# Dot-source Public (skip helper scripts)
+Get-ChildItem -Path $PublicPath -Filter *.ps1 -File -ErrorAction SilentlyContinue |
+Where-Object { $_.Name -ne 'run-discoveryanalysis.ps1' } |
+ForEach-Object {
     . $_.FullName
 }
 

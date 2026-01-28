@@ -1,5 +1,5 @@
 @{
-    RootModule        = 'Lagana.Consulting.Toolkit.Analysis.psm1'
+    RootModule        = 'Migration.Toolkit.Analysis.psm1'
     ModuleVersion     = '0.1.0'
     GUID              = '26a638ce-362a-4514-a567-5b93d9e050ba'
     Author            = 'Paul Lagana'
@@ -8,7 +8,7 @@
     Description       = 'Client-side analysis and reporting toolkit for AD assessments (PowerShell 7.0+).'
     PowerShellVersion = '7.0'
 
-    RequiredModules   = @('Lagana.Consulting.Toolkit')
+    RequiredModules   = @('Migration.Toolkit')
 
     FunctionsToExport = @(
         # Schema and safe exports

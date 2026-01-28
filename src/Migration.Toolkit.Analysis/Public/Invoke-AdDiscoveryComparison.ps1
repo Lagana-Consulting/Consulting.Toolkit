@@ -14,7 +14,7 @@ function Invoke-AdDiscoveryComparison {
     OutputRoot/
       ADOnly_<source_timestamp>/         # Source discovery run
       ADOnly__target_<target_timestamp>/ # Target discovery run
-      LC__Discovery__Config__*.json      # Analysis configuration
+      AD__Discovery__Config__*.json      # Analysis configuration
 
   .PARAMETER SourceServer
   Domain controller or GC in source forest to query (optional)
@@ -119,7 +119,7 @@ function Invoke-AdDiscoveryComparison {
   $configPath = $null
   if (-not $SkipConfigFile) {
     $timestamp = Get-AdTimestamp -Format File
-    $configPath = Join-Path $OutputRoot "LC__Discovery__Config__$timestamp.json"
+    $configPath = Join-Path $OutputRoot "AD__Discovery__Config__$timestamp.json"
 
     $config = [ordered]@{
       SourceRunRoot         = $sourceRunRoot

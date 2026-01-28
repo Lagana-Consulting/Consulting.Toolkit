@@ -8,9 +8,7 @@ function Invoke-AdDiscoveryAnalysis {
     Reads CSV files from discovery run folders and generates:
     - Source and target assessment reports (HTML)
     - Migration planning report
-    - LOE estimation workbook
     - Environment comparison HTML
-    - Migration readiness checklist
     - Cross-forest duplicate object analysis
 
     No Active Directory queries are performed—all analysis uses previously collected CSV data.
@@ -31,7 +29,7 @@ function Invoke-AdDiscoveryAnalysis {
     Root folder for analysis outputs
 
     .PARAMETER GenerateLoeForBoth
-    Generate LOE workbooks for both source and target
+    Deprecated. LOE workbook generation has been removed.
 
     .PARAMETER IncludeTargetPlanning
     Generate migration planning report for target environment
@@ -114,15 +112,12 @@ function Invoke-AdDiscoveryAnalysis {
     }
 
     # Define all output paths upfront
-    $sourceAssessmentPath = Join-Path $OutputRoot "LC__Assessment__Report__Source.html"
-    $targetAssessmentPath = Join-Path $OutputRoot "LC__Assessment__Report__Target.html"
-    $targetComprehensivePath = Join-Path $OutputRoot "LC__Comprehensive__Assessment__Target.html"
-    $comparisonPath = Join-Path $OutputRoot "LC__Environment__Comparison__Report.html"
-    $checklistPath = Join-Path $OutputRoot "LC__Migration__Readiness__Checklist.html"
-    $duplicatePath = Join-Path $OutputRoot "LC__Duplicate__Objects__Cross_Forest.csv"
-    $planningPath = Join-Path $OutputRoot "LC__Migration__Planning__Report__Source.html"
-    $loePathSource = Join-Path $OutputRoot "LC__Migration__LOE__Source.xlsx"
-    $loePathTarget = Join-Path $OutputRoot "LC__Migration__LOE__Target.xlsx"
+    $sourceAssessmentPath = Join-Path $OutputRoot "AD__Assessment__Report__Source.html"
+    $targetAssessmentPath = Join-Path $OutputRoot "AD__Assessment__Report__Target.html"
+    $targetComprehensivePath = Join-Path $OutputRoot "AD__Comprehensive__Assessment__Target.html"
+    $comparisonPath = Join-Path $OutputRoot "AD__Environment__Comparison__Report.html"
+    $duplicatePath = Join-Path $OutputRoot "AD__Duplicate__Objects__Cross_Forest.csv"
+    $planningPath = Join-Path $OutputRoot "AD__Migration__Planning__Report__Source.html"
 
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host "AD Discovery Analysis Engine" -ForegroundColor Cyan
@@ -161,7 +156,7 @@ function Invoke-AdDiscoveryAnalysis {
     # ========================================
     # Step 1: Generate per-source assessment reports
     # ========================================
-    Write-Host "[1/7] Generating source environment assessments..." -ForegroundColor Yellow
+    Write-Host "[1/6] Generating source environment assessments..." -ForegroundColor Yellow
     $assessmentSources = @()
     $sourceAssessmentPaths = @()
     $sourceComprehensivePaths = @()
@@ -172,8 +167,8 @@ function Invoke-AdDiscoveryAnalysis {
         $prefix = if ($pathParts -match '^([A-Za-z0-9_]+)') { $matches[1] } else { "Source" }
 
         # Generate per-source assessment with suffix
-        $srcAssessmentPath = Join-Path $OutputRoot "LC__Assessment__Report__Source__$prefix.html"
-        $srcComprehensivePath = Join-Path $OutputRoot "LC__Comprehensive__Assessment__Source__$prefix.html"
+        $srcAssessmentPath = Join-Path $OutputRoot "AD__Assessment__Report__Source__$prefix.html"
+        $srcComprehensivePath = Join-Path $OutputRoot "AD__Comprehensive__Assessment__Source__$prefix.html"
 
         try {
             $assessment = New-AdAssessmentReport -DiscoveryOutputPath $srcRoot -OutputPath $srcAssessmentPath
@@ -198,7 +193,7 @@ function Invoke-AdDiscoveryAnalysis {
     # ========================================
     # Step 2: Generate target assessment report
     # ========================================
-    Write-Host "[2/7] Generating target environment assessment..." -ForegroundColor Yellow
+    Write-Host "[2/6] Generating target environment assessment..." -ForegroundColor Yellow
     try {
         $assessmentTarget = New-AdAssessmentReport -DiscoveryOutputPath $TargetRunRoot -OutputPath $targetAssessmentPath
         Write-Host "  [OK] Target assessment: $targetAssessmentPath" -ForegroundColor Green
@@ -220,7 +215,7 @@ function Invoke-AdDiscoveryAnalysis {
     # ========================================
     # Step 3: Generate environment comparison
     # ========================================
-    Write-Host "[3/7] Generating environment comparison report..." -ForegroundColor Yellow
+    Write-Host "[3/6] Generating environment comparison report..." -ForegroundColor Yellow
     try {
         $comparisonReport = New-AdEnvironmentComparisonReport -SourceRunRoot $SourceRunRoot[0] -TargetRunRoot $TargetRunRoot -OutputPath $comparisonPath -CustomerName $CustomerName
         Write-Host "  [OK] Comparison report: $comparisonPath" -ForegroundColor Green
@@ -233,20 +228,10 @@ function Invoke-AdDiscoveryAnalysis {
     # ========================================
     # Step 4: Generate readiness checklist
     # ========================================
-    Write-Host "[4/7] Generating migration readiness checklist..." -ForegroundColor Yellow
-    try {
-        $readinessChecklist = New-AdMigrationReadinessChecklist -SourceRunRoot $SourceRunRoot[0] -TargetRunRoot $TargetRunRoot -OutputPath $checklistPath -CustomerName $CustomerName
-        Write-Host "  [OK] Readiness checklist: $checklistPath" -ForegroundColor Green
-    } catch {
-        Write-Warning "Readiness checklist failed: $_"
-        $readinessChecklist = $null
-    }
-    Write-Host ""
-
     # ========================================
-    # Step 5: Cross-forest duplicate object analysis
+    # Step 4: Cross-forest duplicate object analysis
     # ========================================
-    Write-Host "[5/7] Analyzing cross-forest duplicate objects..." -ForegroundColor Yellow
+    Write-Host "[4/5] Analyzing cross-forest duplicate objects..." -ForegroundColor Yellow
     $crossForestDuplicates = @()
     try {
         $sourceUsers = @()
@@ -263,13 +248,13 @@ function Invoke-AdDiscoveryAnalysis {
                 Get-ChildItem -Path $sourceDomainDir -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer } | ForEach-Object {
                     $domainFolder = $_.FullName
 
-                    $userPattern = Join-Path $domainFolder 'LC__AD__Domain__Identity__Users__*.csv'
+                    $userPattern = Join-Path $domainFolder 'AD__Domain__Identity__Users__*.csv'
                     @(Find-CsvFile $userPattern) | ForEach-Object { $sourceUsers += Import-CsvSafe $_ }
 
-                    $groupPattern = Join-Path $domainFolder 'LC__AD__Domain__Identity__Groups__*.csv'
+                    $groupPattern = Join-Path $domainFolder 'AD__Domain__Identity__Groups__*.csv'
                     @(Find-CsvFile $groupPattern) | ForEach-Object { $sourceGroups += Import-CsvSafe $_ }
 
-                    $compPattern = Join-Path $domainFolder 'LC__AD__Domain__Identity__ComputersAll__*.csv'
+                    $compPattern = Join-Path $domainFolder 'AD__Domain__Identity__ComputersAll__*.csv'
                     @(Find-CsvFile $compPattern) | ForEach-Object { $sourceComputers += Import-CsvSafe $_ }
                 }
             }
@@ -281,13 +266,13 @@ function Invoke-AdDiscoveryAnalysis {
             Get-ChildItem -Path $targetDomainDir -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer } | ForEach-Object {
                 $domainFolder = $_.FullName
 
-                $userPattern = Join-Path $domainFolder 'LC__AD__Domain__Identity__Users__*.csv'
+                $userPattern = Join-Path $domainFolder 'AD__Domain__Identity__Users__*.csv'
                 @(Find-CsvFile $userPattern) | ForEach-Object { $targetUsers += Import-CsvSafe $_ }
 
-                $groupPattern = Join-Path $domainFolder 'LC__AD__Domain__Identity__Groups__*.csv'
+                $groupPattern = Join-Path $domainFolder 'AD__Domain__Identity__Groups__*.csv'
                 @(Find-CsvFile $groupPattern) | ForEach-Object { $targetGroups += Import-CsvSafe $_ }
 
-                $compPattern = Join-Path $domainFolder 'LC__AD__Domain__Identity__ComputersAll__*.csv'
+                $compPattern = Join-Path $domainFolder 'AD__Domain__Identity__ComputersAll__*.csv'
                 @(Find-CsvFile $compPattern) | ForEach-Object { $targetComputers += Import-CsvSafe $_ }
             }
         }
@@ -322,7 +307,10 @@ function Invoke-AdDiscoveryAnalysis {
                 })
 
             if ($crossForestDuplicates.Count -gt 0) {
-                $crossForestDuplicates | Export-Csv -Path $duplicatePath -NoTypeInformation -Force
+                $exportColumns = $crossForestDuplicates[0].PSObject.Properties.Name | Where-Object { $_ -notin @('Severity', 'Recommendations', 'Recommendation') }
+                $crossForestDuplicates |
+                Select-Object -Property $exportColumns |
+                Export-Csv -Path $duplicatePath -NoTypeInformation -Force
                 Write-Host "  [OK] Cross-forest duplicates: $duplicatePath ($($crossForestDuplicates.Count) conflicts)" -ForegroundColor Yellow
             } else {
                 Write-Host "  [OK] No cross-forest duplicate objects detected" -ForegroundColor Green
@@ -339,7 +327,7 @@ function Invoke-AdDiscoveryAnalysis {
     # ========================================
     # Step 6: Generate migration planning report
     # ========================================
-    Write-Host "[6/7] Generating migration planning report..." -ForegroundColor Yellow
+    Write-Host "[5/5] Generating migration planning report..." -ForegroundColor Yellow
     try {
         $planningReport = New-AdMigrationPlanningReport -DiscoveryOutputPath $SourceRunRoot[0] -OutputPath $planningPath
         Write-Host "  [OK] Planning report (source): $planningPath" -ForegroundColor Green
@@ -349,45 +337,12 @@ function Invoke-AdDiscoveryAnalysis {
     }
 
     if ($IncludeTargetPlanning) {
-        $targetPlanningPath = Join-Path $OutputRoot "LC__Migration__Planning__Report__Target.html"
+        $targetPlanningPath = Join-Path $OutputRoot "AD__Migration__Planning__Report__Target.html"
         try {
             $targetPlanningReport = New-AdMigrationPlanningReport -DiscoveryOutputPath $TargetRunRoot -OutputPath $targetPlanningPath
             Write-Host "  [OK] Planning report (target): $targetPlanningPath" -ForegroundColor Green
         } catch {
             Write-Warning "Target planning report failed: $_"
-        }
-    }
-    Write-Host ""
-
-    # ========================================
-    # Step 7: Generate LOE workbook
-    # ========================================
-    Write-Host "[7/7] Generating LOE estimation workbook..." -ForegroundColor Yellow
-
-    # Auto-detect target domain name from target discovery data
-    $targetDomainName = 'TBD'
-    $targetAssessmentFile = Get-ChildItem -Path $TargetRunRoot -Filter '*Assessment__Summary__Forest.csv' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($targetAssessmentFile) {
-        $targetAssessment = Import-Csv $targetAssessmentFile.FullName -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($targetAssessment.ForestName) {
-            $targetDomainName = $targetAssessment.ForestName
-        }
-    }
-
-    try {
-        $loeExcelSource = New-AdMigrationLoeExcel -SourceDiscoveryPaths $SourceRunRoot -OutputPath $loePathSource -CustomerName $CustomerName -TargetDomain $targetDomainName -TargetDiscoveryPath $TargetRunRoot
-        Write-Host "  [OK] LOE workbook (source): $loePathSource" -ForegroundColor Green
-    } catch {
-        Write-Warning "LOE workbook failed: $_"
-        $loeExcelSource = $null
-    }
-
-    if ($GenerateLoeForBoth) {
-        try {
-            $loeExcelTarget = New-AdMigrationLoeExcel -DiscoveryOutputPath $TargetRunRoot -OutputPath $loePathTarget -CustomerName $CustomerName
-            Write-Host "  [OK] LOE workbook (target): $loePathTarget" -ForegroundColor Green
-        } catch {
-            Write-Warning "Target LOE workbook failed: $_"
         }
     }
     Write-Host ""
@@ -424,16 +379,14 @@ function Invoke-AdDiscoveryAnalysis {
     }
     Write-Host "  - Target: $targetComprehensivePath" -ForegroundColor White
     Write-Host ""
-    Write-Host "Comparison & Readiness:" -ForegroundColor Yellow
+    Write-Host "Comparison:" -ForegroundColor Yellow
     Write-Host "  - Environment Comparison: $comparisonPath" -ForegroundColor White
-    Write-Host "  - Readiness Checklist: $checklistPath" -ForegroundColor White
     if ($crossForestDuplicates.Count -gt 0) {
         Write-Host "  - Cross-Forest Duplicates: $duplicatePath ($($crossForestDuplicates.Count) conflicts)" -ForegroundColor Yellow
     }
     Write-Host ""
-    Write-Host "Planning & LOE:" -ForegroundColor Yellow
+    Write-Host "Planning:" -ForegroundColor Yellow
     Write-Host "  - Planning Report (Source): $planningPath" -ForegroundColor White
-    Write-Host "  - LOE Workbook (Source): $loePathSource" -ForegroundColor White
     Write-Host ""
 
     # Open reports if requested
@@ -455,10 +408,8 @@ function Invoke-AdDiscoveryAnalysis {
         TargetAssessment              = $targetAssessmentPath
         TargetComprehensiveAssessment = $targetComprehensivePath
         ComparisonReport              = $comparisonPath
-        ReadinessChecklist            = $checklistPath
         CrossForestDuplicates         = if ($crossForestDuplicates.Count -gt 0) { $duplicatePath } else { $null }
         PlanningReport                = $planningPath
-        LoeWorkbook                   = $loePathSource
         DuplicateConflictCount        = $crossForestDuplicates.Count
     }
 }

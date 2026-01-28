@@ -22,7 +22,7 @@ function New-AdMigrationPlanningReport {
 
   if (-not $OutputPath) {
     $ts = (Get-Date).ToString('yyyyMMdd-HHmmss')
-    $OutputPath = Join-Path $DiscoveryOutputPath "LC__Migration__Planning__Report__$ts.html"
+    $OutputPath = Join-Path $DiscoveryOutputPath "AD__Migration__Planning__Report__$ts.html"
   }
 
   # Helper: safe import

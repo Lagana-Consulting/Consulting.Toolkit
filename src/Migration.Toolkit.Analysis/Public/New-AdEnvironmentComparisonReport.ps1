@@ -46,7 +46,7 @@ function New-AdEnvironmentComparisonReport {
   # Determine output path
   if (-not $OutputPath) {
     $timestamp = (Get-AdTimestamp -Format File)
-    $OutputPath = Join-Path $SourceRunRoot "LC__Comparison__Report__$timestamp.html"
+    $OutputPath = Join-Path $SourceRunRoot "AD__Environment__Comparison__Report__$timestamp.html"
   }
 
   # Helper function to safely import CSV
@@ -63,8 +63,8 @@ function New-AdEnvironmentComparisonReport {
   }
 
   # Load assessment summaries
-  $sourceAssessment = Import-CsvSafe (Join-Path $SourceRunRoot 'LC__AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
-  $targetAssessment = Import-CsvSafe (Join-Path $TargetRunRoot 'LC__AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
+  $sourceAssessment = Import-CsvSafe (Join-Path $SourceRunRoot 'AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
+  $targetAssessment = Import-CsvSafe (Join-Path $TargetRunRoot 'AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
 
   # Provide fallback if either is null
   if (-not $sourceAssessment) {
@@ -79,8 +79,8 @@ function New-AdEnvironmentComparisonReport {
   }
 
   # Load risk flags summary
-  $sourceRiskFlags = Import-CsvSafe (Join-Path $SourceRunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv')
-  $targetRiskFlags = Import-CsvSafe (Join-Path $TargetRunRoot 'LC__AD__Migration__RiskFlagsSummary__Forest.csv')
+  $sourceRiskFlags = Import-CsvSafe (Join-Path $SourceRunRoot 'AD__Migration__RiskFlagsSummary__Forest.csv')
+  $targetRiskFlags = Import-CsvSafe (Join-Path $TargetRunRoot 'AD__Migration__RiskFlagsSummary__Forest.csv')
 
   # Load domain-level CSVs for each domain
   $sourceDomainDir = Join-Path $SourceRunRoot '20_domains'
