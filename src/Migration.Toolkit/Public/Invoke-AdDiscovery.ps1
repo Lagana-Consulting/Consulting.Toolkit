@@ -11,7 +11,7 @@ function Invoke-AdDiscovery {
   - Identity objects (users, groups, computers, OUs)
   - Security analysis (privileged accounts, encryption, SID history)
   - Extended assessments (group nesting, cross-domain membership, stale objects)
-  - Migration risk flags and assessment summary
+  - Migration risk flags and assessment summary (forest and per-domain)
 
   Creates a timestamped directory structure with organized CSV outputs suitable for
   offline analysis and reporting.
@@ -143,7 +143,8 @@ function Invoke-AdDiscovery {
     $rootDomainTag = if ([string]::IsNullOrWhiteSpace($forest.RootDomain)) { 'UnknownDomain' } else { $forest.RootDomain.ToLower().Replace(' ', '_') }
     $basePrefix = if ($PSBoundParameters.ContainsKey('Prefix') -and -not [string]::IsNullOrWhiteSpace($Prefix)) {
         $Prefix
-    } else {
+    }
+    else {
         "AD_{0}" -f $rootDomainTag
     }
 
@@ -428,6 +429,16 @@ function Invoke-AdDiscovery {
         $allGpoPerformance += $gpoPerf
         $gpoPerf |
         Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__GpoPerformanceAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+        # Migration risk flags - per domain
+        Write-Host "  - Migration risk flags and summary" -ForegroundColor Gray
+        $domainRiskFlags = @(Get-AdMigrationRiskFlags -AllUsers $users -AllComputers $comps -LegacyWorkstationOsRegex $LegacyWorkstationOsRegex -LegacyServerOsRegex $LegacyServerOsRegex)
+        $domainRiskFlags |
+        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__MigrationRiskFlags__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+        $domainRiskFlagsSummary = @(Get-AdMigrationRiskFlagsSummary -RiskFlagsData $domainRiskFlags)
+        $domainRiskFlagsSummary |
+        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__MigrationRiskFlagsSummary__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
     }
 
     # -------------------------
