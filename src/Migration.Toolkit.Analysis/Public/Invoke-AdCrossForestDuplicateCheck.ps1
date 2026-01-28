@@ -22,6 +22,10 @@ function Invoke-AdCrossForestDuplicateCheck {
     Directory where cross-forest duplicate report will be saved.
     If not provided, defaults to current directory with timestamp.
 
+    .PARAMETER ExcludeBuiltIn
+    Exclude built-in users, groups, and computer accounts (e.g., Administrator, Domain Admins)
+    from duplicate analysis.
+
     .PARAMETER PassThru
     Return the duplicate objects instead of only writing to CSV.
 
@@ -47,11 +51,15 @@ function Invoke-AdCrossForestDuplicateCheck {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
-        [ValidateScript({ Test-Path $_ -PathType Leaf })]
         [string]$ConfigPath,
 
         [Parameter(Mandatory = $false)]
-        [ValidateScript({ $_ | ForEach-Object { Test-Path $_ -PathType Container } | Where-Object { $_ -eq $false } | Measure-Object | Select-Object -ExpandProperty Count -eq 0 })]
+        [ValidateScript({
+                foreach ($p in $_) {
+                    if (-not (Test-Path -LiteralPath $p -PathType Container)) { return $false }
+                }
+                return $true
+            })]
         [string[]]$SourceRunRoots,
 
         [Parameter(Mandatory = $false)]
@@ -60,6 +68,9 @@ function Invoke-AdCrossForestDuplicateCheck {
 
         [Parameter(Mandatory = $false)]
         [string]$OutputRoot,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ExcludeBuiltIn,
 
         [Parameter(Mandatory = $false)]
         [switch]$PassThru
@@ -71,7 +82,8 @@ function Invoke-AdCrossForestDuplicateCheck {
     # Resolve configuration
     # ========================================
     if (-not $ConfigPath) {
-        $ConfigPath = "C:\Users\PLagana\OneDrive - Quest\Documents\GitHub\Migration.Toolkit\src\Migration.Toolkit.Analysis\config\Anlaysis_MultiSource_Config.json"
+        $defaultConfigPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'config\Anlaysis_MultiSource_Config.json'
+        $ConfigPath = $defaultConfigPath
     }
 
     $config = $null
@@ -79,13 +91,11 @@ function Invoke-AdCrossForestDuplicateCheck {
         try {
             $config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
             Write-Verbose "Loaded config from: $ConfigPath"
-        }
-        catch {
+        } catch {
             Write-Warning "Failed to parse config file: $($_.Exception.Message)"
             $config = $null
         }
-    }
-    else {
+    } else {
         Write-Verbose "Config file not found: $ConfigPath (will use parameters)"
     }
 
@@ -93,23 +103,20 @@ function Invoke-AdCrossForestDuplicateCheck {
     if ($PSBoundParameters.ContainsKey('SourceRunRoots') -and $SourceRunRoots.Count -gt 0) {
         $SourceRunRoot = $SourceRunRoots
         Write-Verbose "Using parameter SourceRunRoots (overriding config)"
-    }
-    else {
+    } else {
         $SourceRunRoot = $config.SourceRunRoots
     }
 
     if ($PSBoundParameters.ContainsKey('TargetRunRoot')) {
         # Already set
         Write-Verbose "Using parameter TargetRunRoot (overriding config)"
-    }
-    else {
+    } else {
         $TargetRunRoot = $config.TargetRunRoot
     }
 
     if ($PSBoundParameters.ContainsKey('OutputRoot')) {
         # Already set
-    }
-    else {
+    } else {
         $OutputRoot = $config.OutputRoot
     }
 
@@ -240,7 +247,8 @@ function Invoke-AdCrossForestDuplicateCheck {
             AllComputers = @($allComputers)
         }
 
-        $duplicates = Get-AdDuplicateObjectsForAdmt @dupParams
+        if ($ExcludeBuiltIn) { $dupParams['ExcludeBuiltIn'] = $true }
+        $duplicates = Get-AdDuplicateObjectsCrossForest @dupParams
 
         # Filter to cross-forest only (where ConflictingDomains contains multiple entries)
         $crossForestDuplicates = @($duplicates | Where-Object {
@@ -258,13 +266,11 @@ function Invoke-AdCrossForestDuplicateCheck {
                 Select-Object -Property $exportColumns |
                 Export-Csv -Path $reportPath -NoTypeInformation -Force
                 Write-Host "Cross-forest duplicates exported: $reportPath ($($crossForestDuplicates.Count) conflicts)" -ForegroundColor Yellow
-            }
-            else {
+            } else {
                 Write-Host "No cross-forest duplicate objects detected" -ForegroundColor Green
             }
         }
-    }
-    else {
+    } else {
         Write-Warning "No user/group/computer data found to analyze"
     }
 
@@ -273,8 +279,7 @@ function Invoke-AdCrossForestDuplicateCheck {
     # ========================================
     if ($PassThru) {
         return $crossForestDuplicates
-    }
-    else {
+    } else {
         return @{
             ReportPath     = if ($crossForestDuplicates.Count -gt 0) { $reportPath } else { $null }
             ConflictCount  = $crossForestDuplicates.Count

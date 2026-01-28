@@ -39,6 +39,10 @@ function Invoke-AdDiscoveryAnalysis {
     Root directory for analysis outputs. If not specified, creates
     'Analysis_{timestamp}' folder in current directory.
 
+    .PARAMETER ExcludeBuiltIn
+    Exclude built-in users, groups, and computer accounts (e.g., Administrator, Domain Admins)
+    from duplicate analysis.
+
     .PARAMETER GenerateLoeForBoth
     [Deprecated] LOE workbook generation has been removed.
 
@@ -108,6 +112,9 @@ function Invoke-AdDiscoveryAnalysis {
 
         [Parameter(ParameterSetName = 'Manual')]
         [string]$OutputRoot,
+
+        [Parameter()]
+        [switch]$ExcludeBuiltIn,
 
         [switch]$GenerateLoeForBoth,
         [switch]$IncludeTargetPlanning,
@@ -349,7 +356,8 @@ function Invoke-AdDiscoveryAnalysis {
                 AllComputers = @($allComputers)
             }
 
-            $duplicates = Get-AdDuplicateObjectsForAdmt @dupParams
+            if ($ExcludeBuiltIn) { $dupParams['ExcludeBuiltIn'] = $true }
+            $duplicates = Get-AdDuplicateObjectsCrossForest @dupParams
 
             # Filter to cross-forest only (where ConflictingDomains contains both source and target)
             $crossForestDuplicates = @($duplicates | Where-Object {
