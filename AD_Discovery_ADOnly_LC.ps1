@@ -16,6 +16,11 @@ $ErrorActionPreference = 'Stop'
 $Now = Get-Date
 $EnvironmentSafeTag = $Environment.ToLower().Replace(' ', '_')
 
+$StaleUserThresholdDays = 180
+$StaleComputerThresholdDays = 90
+$LegacyWorkstationOsRegex = '(?i)Windows (XP|Vista|7|8|8\.1|2000)'
+$LegacyServerOsRegex = '(?i)Windows Server (2003|2008|2008 R2|2012|2012 R2)'
+
 
 if (-not (Get-Command Export-AdCsvSafe -ErrorAction SilentlyContinue)) {
   throw "Export-AdCsvSafe not found. Update/import Migration.Toolkit that includes Export-AdCsvSafe."
@@ -168,6 +173,30 @@ foreach ($d in $domains) {
 
   @($comps | Where-Object { $_.IsServer }) |
   Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ComputersServers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+  # Published resources
+  (Get-AdAdPublishedPrinters -DomainContext $ctx) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Inventory__PublishedPrinters__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+  (Get-AdAdPublishedSharedFolders -DomainContext $ctx) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Inventory__PublishedSharedFolders__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+  # Stale objects
+  @($users | Where-Object { $_.LastLogonDays -and [int]$_.LastLogonDays -gt $StaleUserThresholdDays }) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__StaleUsers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+  @($comps | Where-Object { -not $_.IsServer -and $_.LastLogonDays -and [int]$_.LastLogonDays -gt $StaleComputerThresholdDays }) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__StaleWorkstations__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+  @($comps | Where-Object { $_.IsServer -and $_.LastLogonDays -and [int]$_.LastLogonDays -gt $StaleComputerThresholdDays }) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__StaleServers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+  # Legacy OS
+  @($comps | Where-Object { -not $_.IsServer -and $_.OperatingSystem -match $LegacyWorkstationOsRegex }) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__LegacyWorkstationOs__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+  @($comps | Where-Object { $_.IsServer -and $_.OperatingSystem -match $LegacyServerOsRegex }) |
+  Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__LegacyServerOs__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
   # SPNs
   (Get-AdAdSpns -DomainContext $ctx) |

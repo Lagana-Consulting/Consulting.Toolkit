@@ -47,6 +47,9 @@
     'Get-AdAdFineGrainedPasswordPolicyAssignments',
     'Get-AdAdOrganizationalUnits',
 
+    'Get-AdAdPublishedPrinters',
+    'Get-AdAdPublishedSharedFolders',
+
     'Get-AdAdGroups',
     'Get-AdAdUsers',
     'Get-AdAdComputers',
