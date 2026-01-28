@@ -31,7 +31,7 @@ function Get-AdAdPublishedSharedFolders {
         $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Server $server -Properties $propsPreferred -ErrorAction Stop |
             Sort-Object Name)
     } catch {
-        if ($_.Exception.Message -match 'properties are invalid') {
+        if ($_.Exception.Message -match 'properties are invalid|invalid property|volumePath') {
             try {
                 $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Server $server -Properties $propsFallback -ErrorAction Stop |
                     Sort-Object Name)
