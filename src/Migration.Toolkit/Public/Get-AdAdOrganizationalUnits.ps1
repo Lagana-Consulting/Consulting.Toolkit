@@ -1,4 +1,57 @@
 function Get-AdAdOrganizationalUnits {
+  <#
+  .SYNOPSIS
+  Retrieves all organizational units from a domain.
+
+  .DESCRIPTION
+  Enumerates all OUs with properties including:
+  - Distinguished name and nesting level
+  - Creation and modification timestamps
+  - Top-level OU detection
+  Results are sorted by distinguished name.
+
+  .PARAMETER DomainContext
+  Domain context object from Get-AdAdDomainContext. Required.
+
+  .EXAMPLE
+  $ctx = Get-AdAdDomainContext -DomainFqdn "contoso.com"
+  $ous = Get-AdAdOrganizationalUnits -DomainContext $ctx
+
+  Gets all OUs in contoso.com domain.
+
+  .EXAMPLE
+  $ous | Where-Object IsTopLevel | Select-Object Name, DistinguishedName
+
+  Shows only top-level OUs (one level below domain root).
+
+  .EXAMPLE
+  $ous | Group-Object Level | Select-Object Count, Name
+
+  Groups OUs by nesting depth to analyze hierarchy complexity.
+
+  .EXAMPLE
+  $deepOus = $ous | Where-Object { $_.Level -gt 5 }
+
+  Finds deeply nested OUs (potential migration complexity indicator).
+
+  .INPUTS
+  None. This function does not accept pipeline input.
+
+  .OUTPUTS
+  PSCustomObject[]. OU objects with properties:
+  - DomainFqdn, Name, DistinguishedName, Description
+  - WhenCreated, WhenChanged
+  - Level (nesting depth), IsTopLevel (boolean)
+
+  .NOTES
+  Requires Active Directory PowerShell module.
+  Level is calculated by counting OU= components in DN.
+  Level 1 = top-level OU directly under domain root.
+
+  .LINK
+  Get-AdAdDomainContext
+  Get-ADOrganizationalUnit
+  #>
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]

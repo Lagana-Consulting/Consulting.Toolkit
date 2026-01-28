@@ -1,4 +1,50 @@
 function Get-AdAdDomainControllers {
+  <#
+  .SYNOPSIS
+  Retrieves all domain controllers for a domain.
+
+  .DESCRIPTION
+  Enumerates all domain controllers in the specified domain with key properties
+  including hostname, site, IP address, operating system, and FSMO role status.
+  Returns normalized PSCustomObject array.
+
+  .PARAMETER DomainContext
+  Domain context object from Get-AdAdDomainContext containing DomainFqdn and Server.
+  Required.
+
+  .EXAMPLE
+  $ctx = Get-AdAdDomainContext -DomainFqdn "contoso.com"
+  $dcs = Get-AdAdDomainControllers -DomainContext $ctx
+
+  Gets all domain controllers in contoso.com domain.
+
+  .EXAMPLE
+  $dcs = Get-AdAdDomainControllers -DomainContext $ctx
+  $dcs | Where-Object IsGlobalCatalog | Select-Object HostName, Site
+
+  Filters to show only global catalog servers.
+
+  .EXAMPLE
+  $pdc = $dcs | Where-Object IsPdc
+
+  Finds the PDC emulator.
+
+  .INPUTS
+  None. This function does not accept pipeline input.
+
+  .OUTPUTS
+  PSCustomObject[]. Array of DC objects with properties:
+  - DomainFqdn, HostName, Name, Site, IPv4Address
+  - OperatingSystem, IsGlobalCatalog, IsReadOnly, IsPdc, IsEnabled
+
+  .NOTES
+  Requires Active Directory PowerShell module.
+  DomainContext typically from Get-AdAdDomainContext.
+
+  .LINK
+  Get-AdAdDomainContext
+  Get-ADDomainController
+  #>
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]

@@ -1,4 +1,62 @@
 function Get-AdAdComputers {
+  <#
+  .SYNOPSIS
+  Retrieves all computer accounts from a domain with migration-relevant properties.
+
+  .DESCRIPTION
+  Enumerates all computer accounts with comprehensive properties for migration:
+  - Account status (enabled, last logon)
+  - Operating system and server detection
+  - SPN count and encryption types
+  - Risk assessment (weak encryption, stale accounts)
+
+  .PARAMETER DomainContext
+  Domain context object from Get-AdAdDomainContext. Required.
+
+  .PARAMETER Now
+  Reference timestamp for age calculations. Defaults to current date/time.
+  Used for calculating LastLogonDays.
+
+  .EXAMPLE
+  $ctx = Get-AdAdDomainContext -DomainFqdn "contoso.com"
+  $computers = Get-AdAdComputers -DomainContext $ctx
+
+  Gets all computer accounts in contoso.com.
+
+  .EXAMPLE
+  $computers | Where-Object IsServer | Select-Object Name, OperatingSystem, LastLogonDays
+
+  Shows all server accounts with last logon age.
+
+  .EXAMPLE
+  $computers | Where-Object { $_.LastLogonDays -gt 90 -and $_.Enabled }
+
+  Finds enabled computers that haven't logged on in 90+ days (stale accounts).
+
+  .EXAMPLE
+  $computers | Where-Object { $_.EncryptionRisk -eq 'High' }
+
+  Identifies computers with weak encryption types.
+
+  .INPUTS
+  None. This function does not accept pipeline input.
+
+  .OUTPUTS
+  PSCustomObject[]. Computer objects with properties:
+  - Account: Name, SamAccountName, DNSHostName, Enabled
+  - OS: OperatingSystem, OperatingSystemVersion, IsServer
+  - Activity: WhenCreated, LastLogonDays
+  - Risk: SpnCount, EncryptionTypes, EncryptionRisk
+
+  .NOTES
+  Requires Active Directory PowerShell module.
+  LastLogonTimestamp is replicated (not real-time, ~14 day replication delay).
+  IsServer detection based on OS name pattern matching.
+
+  .LINK
+  Get-AdAdDomainContext
+  Get-ADComputer
+  #>
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]

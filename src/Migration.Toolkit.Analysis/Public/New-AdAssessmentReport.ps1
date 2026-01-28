@@ -1,21 +1,63 @@
 function New-AdAssessmentReport {
     <#
     .SYNOPSIS
-    Generate an HTML assessment report from AD discovery outputs.
+    Generates executive-level HTML assessment report from AD discovery data.
 
     .DESCRIPTION
-    Creates a professional executive-level HTML report from discovery CSVs, including
-    metrics, risk overview, per-domain summaries, and remediation recommendations.
+    Creates a professional executive summary HTML report from discovery CSVs.
+    Focuses on high-level metrics, risk indicators, and recommendations suitable
+    for stakeholder presentations.
+
+    Report sections:
+    - Executive summary dashboard
+    - Key metrics (user/group/computer counts, stale percentages)
+    - Risk overview (privileged accounts, encryption, SID history)
+    - Per-domain summary tables
+    - Top migration risks and remediation steps
+
+    Lighter-weight alternative to New-AdComprehensiveAssessmentReport.
 
     .PARAMETER DiscoveryOutputPath
-    Path to the discovery output folder containing CSV files and domain subfolders.
+    Path to discovery output folder containing CSV files and domain subfolders.
+    Must contain:
+    - Assessment summary CSV (root or 00_schemas/)
+    - Migration risk flags CSV
+    - Domain summary CSVs in 20_domains/
 
     .PARAMETER OutputPath
-    Path where the HTML report will be saved. Defaults to discovery root with timestamp.
+    Path where HTML report will be saved.
+    If not specified, creates report in discovery root with timestamp:
+    AD__Assessment__Report_{timestamp}.html
 
     .EXAMPLE
-    New-AdAssessmentReport -DiscoveryOutputPath "C:\scripts\Reports\ADOnly_20260121-130000"
+    New-AdAssessmentReport -DiscoveryOutputPath "C:\Discovery\ADOnly_20260128-100000"
 
+    Generates report with auto-generated filename in discovery folder.
+
+    .EXAMPLE
+    New-AdAssessmentReport `
+      -DiscoveryOutputPath "C:\Discovery\Latest" `
+      -OutputPath "C:\Reports\Executive_Summary.html"
+
+    Generates report at specified location.
+
+    .EXAMPLE
+    $reportPath = New-AdAssessmentReport -DiscoveryOutputPath $discoveryPath
+    Start-Process $reportPath
+
+    Generates report and opens it in browser.
+
+    .OUTPUTS
+    None. Creates HTML file at OutputPath (or auto-generated path in discovery folder).
+
+    .NOTES
+    Requires PowerShell 7+ (Analysis module).
+    Falls back gracefully if assessment summary CSV is missing (builds from domain data).
+    Suitable for quick stakeholder briefings and migration kickoff presentations.
+
+    .LINK
+    New-AdComprehensiveAssessmentReport
+    Invoke-AdDiscoveryAnalysis
     #>
     [CmdletBinding()]
     param(

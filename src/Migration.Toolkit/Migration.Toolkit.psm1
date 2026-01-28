@@ -15,6 +15,9 @@ Get-ChildItem -Path $PublicPath -Filter *.ps1 -File -ErrorAction SilentlyContinu
 
 # Export only public functions
 Export-ModuleMember -Function @(
+  # Discovery orchestration
+  'Invoke-AdDiscovery',
+
   # Logging / export
   'New-AdLog',
   'Write-AdLog',
@@ -89,20 +92,7 @@ Export-ModuleMember -Function @(
   'Get-AdDnsZoneInventory',
   'Get-AdDhcpScopeAnalysis',
   'Get-AdSysvolSizeAnalysis',
-  'Get-AdDuplicateObjectsForAdmt',
   'Get-AdGroupTokenBloat',
   'Get-AdTrustRelationshipMap',
-  'Get-AdGpoPerformanceAnalysis',
-
-  #ADMT Functions
-  'New-AdAdmtRunLayout',
-  'Test-AdAdmtPrereqs',
-  'Test-AdAdmtTrustPath',
-  'Get-AdAdmtPasswordExportReadiness',
-  'New-AdAdmtIncludeFiles',
-  'Find-AdAdObjectConflicts',
-  'Export-AdAdmtIncludeFileUsers',
-  'Export-AdAdmtIncludeFileGroups',
-  'Export-AdAdmtIncludeFileComputers',
-  'Export-AdAdmtOptionFile'
+  'Get-AdGpoPerformanceAnalysis'
 )

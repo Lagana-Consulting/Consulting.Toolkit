@@ -1,4 +1,59 @@
 function Get-AdPrivilegedAccounts {
+  <#
+  .SYNOPSIS
+  Identifies privileged accounts in a domain.
+
+  .DESCRIPTION
+  Discovers accounts with elevated privileges through:
+  1. Membership in privileged groups (recursive enumeration):
+     - Enterprise Admins, Schema Admins, Domain Admins
+     - Administrators, Server Operators, Backup Operators, etc.
+  2. adminCount=1 attribute (historically protected accounts)
+
+  Results include all accounts meeting either criterion with detail on
+  which privileged groups they belong to.
+
+  .PARAMETER DomainContext
+  Domain context object from Get-AdAdDomainContext. Required.
+
+  .EXAMPLE
+  $ctx = Get-AdAdDomainContext -DomainFqdn "contoso.com"
+  $privAccounts = Get-AdPrivilegedAccounts -DomainContext $ctx
+
+  Discovers all privileged accounts in contoso.com.
+
+  .EXAMPLE
+  $privAccounts | Where-Object InPrivGroups |
+    Select-Object SamAccountName, @{N='Groups';E={$_.PrivGroups -join ';'}}
+
+  Shows accounts with their privileged group memberships.
+
+  .EXAMPLE
+  $adminCountOnly = $privAccounts | Where-Object { $_.AdminCount -and -not $_.InPrivGroups }
+
+  Finds orphaned privileged accounts (adminCount=1 but not in current priv groups).
+
+  .OUTPUTS
+  PSCustomObject[] with properties:
+  - DomainFqdn, SamAccountName, DistinguishedName
+  - InPrivGroups (boolean)
+  - PrivGroups (array of privileged group names)
+  - AdminCount (boolean)
+
+  .NOTES
+  Requires Active Directory PowerShell module.
+  Group membership is recursively expanded (includes nested memberships).
+  AdminCount=1 indicates historical administrative protection (may not reflect current state).
+  Use for:
+  - Security audit and compliance
+  - Migration planning (privileged accounts need special handling)
+  - Access review
+
+  .LINK
+  Get-AdAdDomainContext
+  Get-AdPrivilegedGroupNames
+  Get-AdGroupMembersRecursive
+  #>
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]

@@ -1,21 +1,78 @@
 function New-AdComprehensiveAssessmentReport {
     <#
     .SYNOPSIS
-    Generate a comprehensive HTML assessment report from AD discovery data.
+    Generates comprehensive HTML assessment report from AD discovery data.
+
     .DESCRIPTION
-    Creates a professional, detailed HTML assessment report covering forest, domain, user,
-    group, computer, password policy, replication, and risk analysis. Includes executive
-    summary, detailed findings, and actionable recommendations.
+    Creates a professional, detailed HTML assessment report covering:
+    - Executive summary with key metrics and trends
+    - Forest topology (domains, sites, trusts, UPN suffixes)
+    - Domain analysis (functional levels, FSMO roles, DCs)
+    - Identity inventory (users, groups, computers)
+    - Password policy assessment
+    - Replication topology
+    - Security and compliance (privileged accounts, weak policies)
+    - Migration risk analysis with actionable recommendations
+
+    Report includes:
+    - Charts and visualizations
+    - Color-coded risk indicators
+    - Remediation guidance
+    - Detailed appendices with supporting data
+
     .PARAMETER DiscoveryOutputPath
-    Path to the discovery output folder containing CSV files.
+    Path to discovery output folder containing CSV files from a discovery run.
+    Must contain standard directory structure:
+    - 10_forest/ (forest-level data)
+    - 20_domains/ (domain-specific data)
+
     .PARAMETER OutputPath
-    Path where the HTML report will be saved.
+    Full path where HTML report will be saved. Required.
+
     .PARAMETER CustomerName
-    Organization name for the report title.
+    Organization name displayed in report header and title.
+    Default is "Organization".
+
     .PARAMETER ReportDate
-    Date for the report (defaults to today).
+    Date shown on report cover. Defaults to current date.
+
     .EXAMPLE
-    New-AdComprehensiveAssessmentReport -DiscoveryOutputPath "C:\Discovery\ADOnly" -OutputPath "C:\Reports\Assessment.html" -CustomerName "Acme Corp"
+    New-AdComprehensiveAssessmentReport `
+      -DiscoveryOutputPath "C:\Discovery\ADOnly_20260128-100000" `
+      -OutputPath "C:\Reports\Assessment.html" `
+      -CustomerName "Acme Corp"
+
+    Generates assessment report for Acme Corp.
+
+    .EXAMPLE
+    $reportPath = New-AdComprehensiveAssessmentReport `
+      -DiscoveryOutputPath "C:\Discovery\Latest" `
+      -OutputPath "C:\Reports\Assessment_$(Get-Date -Format yyyyMMdd).html"
+    Start-Process $reportPath
+
+    Generates report with dated filename and opens it.
+
+    .EXAMPLE
+    New-AdComprehensiveAssessmentReport `
+      -DiscoveryOutputPath "C:\Discovery\Forest1" `
+      -OutputPath "C:\Reports\Forest1_Report.html" `
+      -CustomerName "Contoso" `
+      -ReportDate (Get-Date "2026-01-15")
+
+    Generates report with custom report date.
+
+    .OUTPUTS
+    None. Creates HTML file at specified OutputPath.
+
+    .NOTES
+    Requires PowerShell 7+ (Analysis module).
+    Discovery data must follow Migration.Toolkit CSV schema.
+    Report uses embedded CSS and JavaScript (no external dependencies).
+    Best viewed in modern browsers (Chrome, Edge, Firefox).
+
+    .LINK
+    Invoke-AdDiscoveryAnalysis
+    New-AdAssessmentReport
     #>
     [CmdletBinding()]
     param(

@@ -1,4 +1,51 @@
 function Get-AdAdGroups {
+  <#
+  .SYNOPSIS
+  Retrieves all groups from a domain.
+
+  .DESCRIPTION
+  Enumerates all security and distribution groups with key properties:
+  - Group type (security vs. distribution)
+  - Scope (domain local, global, universal)
+  - Mail attribute for mail-enabled groups
+  - Creation and modification timestamps
+
+  .PARAMETER DomainContext
+  Domain context object from Get-AdAdDomainContext. Required.
+
+  .EXAMPLE
+  $ctx = Get-AdAdDomainContext -DomainFqdn "contoso.com"
+  $groups = Get-AdAdGroups -DomainContext $ctx
+
+  Gets all groups in contoso.com domain.
+
+  .EXAMPLE
+  $groups | Where-Object { $_.GroupCategory -eq 'Security' -and $_.GroupScope -eq 'Universal' }
+
+  Filters to universal security groups.
+
+  .EXAMPLE
+  $groups | Where-Object Mail | Select-Object Name, Mail, GroupCategory
+
+  Shows mail-enabled groups with email addresses.
+
+  .INPUTS
+  None. This function does not accept pipeline input.
+
+  .OUTPUTS
+  PSCustomObject[]. Group objects with properties:
+  - DomainFqdn, Name, SamAccountName, DistinguishedName
+  - GroupCategory (Security/Distribution), GroupScope (DomainLocal/Global/Universal)
+  - Mail, WhenCreated, WhenChanged, Description
+
+  .NOTES
+  Requires Active Directory PowerShell module.
+  Results are sorted by Name.
+
+  .LINK
+  Get-AdAdDomainContext
+  Get-ADGroup
+  #>
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]

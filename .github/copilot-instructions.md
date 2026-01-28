@@ -1,15 +1,24 @@
-# Paul Lagana Toolkit - AI Coding Agent Instructions
+# Migration Toolkit - AI Coding Agent Instructions
 
 ## Project Overview
-**lc-toolkit** is a PowerShell module providing reusable automation utilities for AD/Microsoft Graph consulting engagements. It emphasizes tenant-safe operations, secure logging, and Windows identity querying (AD forest/domain/replication/GPO/ADMT workflows).
+**Migration.Toolkit** is a PowerShell module providing AD discovery, assessment, and migration planning utilities. It emphasizes Quest migration tool integration, secure logging, and comprehensive AD analysis.
 
 ## Architecture & Organization
 
-### Module Structure (src/Lagana.Consulting.Toolkit/)
-- **Lagana.Consulting.Toolkit.psm1**: Root module entry point that dot-sources Private/ then Public/ functions, then exports public API via `Export-ModuleMember`
-- **Lagana.Consulting.Toolkit.psd1**: Module manifest (v0.1.0, PowerShell 5.1+, GUID: 8593c972-06bc-4b0a-a680-0a61fcda0c3e)
-- **Public/**: User-facing functions (~43 exported cmdlets). Organized by domain: logging, auth, forest/domain queries, ADMT operations, risk assessment
-- **Private/**: Helper functions (~18). Prefixed `Get-Ad*` or `Convert-Ad*`. Examples: `Get-AdTimestamp`, `Resolve-AdPath`, `Get-AdGroupMembersRecursive`
+### Module Structure
+This repository contains two PowerShell modules:
+
+#### Migration.Toolkit (src/Migration.Toolkit/)
+- **Migration.Toolkit.psm1**: Root module entry point that dot-sources Private/ then Public/ functions
+- **Migration.Toolkit.psd1**: Module manifest (v0.1.1, PowerShell 5.1+)
+- **Public/**: User-facing functions (~62 exported cmdlets). Organized by domain: logging, auth, forest/domain queries, assessment, risk analysis
+- **Private/**: Helper functions. Prefixed `Get-Ad*` or `Convert-Ad*`. Examples: `Get-AdTimestamp`, `Resolve-AdPath`, `Get-AdGroupMembersRecursive`
+- **Focus**: Server-side AD discovery and assessment (compatible with Quest migration tools)
+
+#### Migration.Toolkit.Analysis (src/Migration.Toolkit.Analysis/)
+- **Migration.Toolkit.Analysis.psd1**: Module manifest (PowerShell 7+ required)
+- **Public/**: Client-side analysis and reporting functions
+- **Focus**: Offline analysis, HTML report generation, cross-forest duplicate detection
 
 ### Function Naming Convention
 All functions use `*-Ad*` prefix: `Verb-AdNoun`. Examples:
@@ -40,7 +49,7 @@ if (-not (Get-Command Get-ADForest -ErrorAction SilentlyContinue)) {
 ## Development Workflows
 
 ### Module Loading (Dev)
-From repo root: `Import-Module "$PWD\src\Lagana.Consulting.Toolkit" -Force`
+From repo root: `Import-Module "$PWD\src\Migration.Toolkit" -Force`
 Always use `-Force` during iteration to reload updated functions.
 
 ### Testing
@@ -51,7 +60,7 @@ Current tests verify exported command names. Expand with functional tests for ne
 
 ### Code Quality
 - **PSScriptAnalyzer** configured via PSScriptAnalyzerSettings.psd1 (Severity: Error, Warning)
-- Run before committing: `Invoke-ScriptAnalyzer -Path src/ -Settings src/Lagana.Consulting.Toolkit/PSScriptAnalyzerSettings.psd1`
+- Run before committing: `Invoke-ScriptAnalyzer -Path src/ -Settings src/Migration.Toolkit/PSScriptAnalyzerSettings.psd1`
 - ExcludePath allows client scripts/ to use looser patterns; core module stays strict
 
 ### Build/Deployment
@@ -94,12 +103,12 @@ Get-AdAdDomains -Server "gc.corp.local"
 2. Follow `*-AdNoun` naming (e.g., `Get-AdAdServers`)
 3. Use `[CmdletBinding()]` and parameter validation (`[Parameter(Mandatory)]`, `[ValidateSet(...)]`)
 4. Add error context (target name, error message) in throw statements
-5. Update Lagana.Consulting.Toolkit.psd1 FunctionsToExport if public
+5. Update Migration.Toolkit.psd1 FunctionsToExport if public
 6. Group in .psm1 comments by domain (e.g., "# Forest + domains")
 7. Add Pester tests verifying export and core behavior
 
 ## File References
-- Core: [src/Lagana.Consulting.Toolkit/Lagana.Consulting.Toolkit.psm1](../src/Lagana.Consulting.Toolkit/Lagana.Consulting.Toolkit.psm1)
-- Config: [PSScriptAnalyzerSettings.psd1](../src/Lagana.Consulting.Toolkit/PSScriptAnalyzerSettings.psd1)
+- Core: [src/Migration.Toolkit/Migration.Toolkit.psm1](../src/Migration.Toolkit/Migration.Toolkit.psm1)
+- Config: [PSScriptAnalyzerSettings.psd1](../src/Migration.Toolkit/PSScriptAnalyzerSettings.psd1)
 - Tests: [tests/Lagana.Consulting.Toolkit.Tests.ps1](../tests/Lagana.Consulting.Toolkit.Tests.ps1)
-- Example: [Public/Get-AdAdForest.ps1](../src/Lagana.Consulting.Toolkit/Public/Get-AdAdForest.ps1)
+- Example: [Public/Get-AdAdForest.ps1](../src/Migration.Toolkit/Public/Get-AdAdForest.ps1)

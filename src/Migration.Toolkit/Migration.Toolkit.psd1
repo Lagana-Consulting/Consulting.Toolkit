@@ -5,10 +5,13 @@
   Author            = 'Paul Lagana'
   CompanyName       = 'Paul Lagana'
   Copyright         = '(c) Paul Lagana. All rights reserved.'
-  Description       = 'Server-side PowerShell toolkit for AD discovery and ADMT operations (PowerShell 5.1+).'
+  Description       = 'Server-side PowerShell toolkit for AD discovery and assessment operations (PowerShell 5.1+).'
   PowerShellVersion = '5.1'
 
   FunctionsToExport = @(
+    # Discovery orchestration
+    'Invoke-AdDiscovery',
+
     # Logging / export
     'New-AdLog',
     'Write-AdLog',
@@ -83,23 +86,9 @@
     'Get-AdDnsZoneInventory',
     'Get-AdDhcpScopeAnalysis',
     'Get-AdSysvolSizeAnalysis',
-    'Get-AdDuplicateObjectsForAdmt',
     'Get-AdGroupTokenBloat',
     'Get-AdTrustRelationshipMap',
-    'Get-AdGpoPerformanceAnalysis',
-
-    #ADMT Functions
-    'New-AdAdmtRunLayout',
-    'Test-AdAdmtPrereqs',
-    'Test-AdAdmtTrustPath',
-    'Get-AdAdmtPasswordExportReadiness',
-    'New-AdAdmtIncludeFiles',
-    'Find-AdAdObjectConflicts',
-    'Export-AdAdmtIncludeFileUsers',
-    'Export-AdAdmtIncludeFileGroups',
-    'Export-AdAdmtIncludeFileComputers',
-    'Export-AdAdmtOptionFile'
-
+    'Get-AdGpoPerformanceAnalysis'
   )
 
   CmdletsToExport   = @()

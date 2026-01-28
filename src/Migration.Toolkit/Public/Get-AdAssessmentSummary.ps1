@@ -1,4 +1,119 @@
 function Get-AdAssessmentSummary {
+    <#
+    .SYNOPSIS
+    Generates comprehensive forest-level assessment metrics.
+
+    .DESCRIPTION
+    Aggregates and calculates key statistics across all forest objects:
+    - User/computer/group totals
+    - Stale account percentages
+    - SID history usage
+    - Privileged account counts
+    - Encryption risk indicators
+    - Extended assessment metrics (nesting, cross-domain, FSMO, etc.)
+
+    Produces a single summary row suitable for executive reporting.
+
+    .PARAMETER ForestName
+    Forest DNS name for the assessment. Required.
+
+    .PARAMETER AllUsers
+    Array of all user objects from Get-AdAdUsers. Required.
+
+    .PARAMETER AllComputers
+    Array of all computer objects from Get-AdAdComputers. Required.
+
+    .PARAMETER AllGroups
+    Array of all group objects from Get-AdAdGroups. Required.
+
+    .PARAMETER PrivilegedAccounts
+    Array of privileged account objects from Get-AdPrivilegedAccounts. Required.
+
+    .PARAMETER StaleUserThresholdDays
+    Days since last logon to consider user stale. Default is 180.
+
+    .PARAMETER StaleComputerThresholdDays
+    Days since last logon to consider computer stale. Default is 90.
+
+    .PARAMETER GroupNestingData
+    Optional array from Get-AdGroupNestingDepth for nesting metrics.
+
+    .PARAMETER CrossDomainMembershipData
+    Optional array from Get-AdCrossDomainGroupMembership.
+
+    .PARAMETER WeakPasswordPoliciesData
+    Optional array from Get-AdWeakPasswordPolicies.
+
+    .PARAMETER EmptyGroupsData
+    Optional array from Get-AdEmptyGroups.
+
+    .PARAMETER DuplicateSpnsData
+    Optional array from Get-AdDuplicateSpns.
+
+    .PARAMETER DisabledAccountsData
+    Optional array from Get-AdDisabledAccounts.
+
+    .PARAMETER AdminSdHolderData
+    Optional array from Get-AdAdminSdHolderImpact.
+
+    .PARAMETER FsmoAvailabilityData
+    Optional array from Get-AdFsmoRoleAvailability.
+
+    .PARAMETER OuDepthData
+    Optional array from Get-AdOuDepthAnalysis.
+
+    .PARAMETER TopSpnsData
+    Optional array from Get-AdTopSpnsByType.
+
+    .PARAMETER SiteLinkData
+    Optional array from Get-AdSiteLinkCostAnalysis.
+
+    .PARAMETER TombstoneData
+    Optional array from Get-AdTombstoneLifetime.
+
+    .EXAMPLE
+    $summary = Get-AdAssessmentSummary `
+      -ForestName "contoso.com" `
+      -AllUsers $users `
+      -AllComputers $computers `
+      -AllGroups $groups `
+      -PrivilegedAccounts $privAccounts
+
+    Generates basic assessment summary.
+
+    .EXAMPLE
+    $summary = Get-AdAssessmentSummary `
+      -ForestName "contoso.com" `
+      -AllUsers $users `
+      -AllComputers $computers `
+      -AllGroups $groups `
+      -PrivilegedAccounts $privAccounts `
+      -GroupNestingData $nesting `
+      -WeakPasswordPoliciesData $weakPwd `
+      -StaleUserThresholdDays 90
+
+    Generates extended assessment with custom stale threshold.
+
+    .OUTPUTS
+    PSCustomObject with comprehensive assessment metrics including:
+    - ForestName, DomainCount
+    - UserTotal, UserStaleCount, UserStalePct
+    - ComputerTotal, ComputerStaleCount, ComputerStalePct
+    - GroupTotal, PrivilegedAccountCount
+    - UserSidHistoryCount, ComputerSidHistoryCount
+    - EncryptionHighRisk counts
+    - Extended metrics (if optional data provided)
+
+    .NOTES
+    Primary input for forest-level assessment reports.
+    Optional parameters enhance metrics but are not required.
+    All percentage calculations handle zero-division safely.
+
+    .LINK
+    Get-AdAdUsers
+    Get-AdPrivilegedAccounts
+    New-AdComprehensiveAssessmentReport
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]

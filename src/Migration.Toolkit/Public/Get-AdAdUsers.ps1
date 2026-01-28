@@ -1,4 +1,65 @@
 function Get-AdAdUsers {
+  <#
+  .SYNOPSIS
+  Retrieves all user accounts from a domain with migration-relevant properties.
+
+  .DESCRIPTION
+  Enumerates all user accounts with comprehensive properties for migration assessment:
+  - Account status (enabled, last logon, password age)
+  - UPN suffix validation and routability
+  - Privilege indicators (adminCount)
+  - SID history count
+  - SPN count and encryption types
+  - Risk assessment (weak encryption)
+
+  .PARAMETER DomainContext
+  Domain context object from Get-AdAdDomainContext. Required.
+
+  .PARAMETER Now
+  Reference timestamp for age calculations. Defaults to current date/time.
+  Used for calculating LastLogonDays and PasswordAgeDays.
+
+  .PARAMETER KnownUpnSuffixSet
+  Hashtable of known UPN suffixes from Get-AdKnownUpnSuffixes -AsHashSet.
+  Used to flag unknown suffixes. Optional.
+
+  .EXAMPLE
+  $ctx = Get-AdAdDomainContext -DomainFqdn "contoso.com"
+  $users = Get-AdAdUsers -DomainContext $ctx
+
+  Gets all users in contoso.com with standard properties.
+
+  .EXAMPLE
+  $knownSuffixes = Get-AdKnownUpnSuffixes -AsHashSet
+  $users = Get-AdAdUsers -DomainContext $ctx -KnownUpnSuffixSet $knownSuffixes
+  $users | Where-Object { -not $_.IsKnownUpnSuffix } | Select-Object SamAccountName, UserPrincipalName
+
+  Finds users with unknown UPN suffixes.
+
+  .EXAMPLE
+  $users | Where-Object { $_.EncryptionRisk -eq 'High' }
+
+  Identifies users with weak encryption types (DES-only or RC4-only).
+
+  .INPUTS
+  None. This function does not accept pipeline input.
+
+  .OUTPUTS
+  PSCustomObject[]. User objects with properties including:
+  - Account: SamAccountName, UPN, Mail, Enabled
+  - Timestamps: WhenCreated, LastLogonDays, PasswordAgeDays
+  - Risk: AdminCount, SidHistoryCount, EncryptionRisk, IsNonRoutableUpn
+  - SPNs: SpnCount, EncryptionTypes
+
+  .NOTES
+  Requires Active Directory PowerShell module.
+  LastLogonTimestamp is replicated (not real-time).
+  Use KnownUpnSuffixSet for cross-forest UPN validation.
+
+  .LINK
+  Get-AdAdDomainContext
+  Get-AdKnownUpnSuffixes
+  #>
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]

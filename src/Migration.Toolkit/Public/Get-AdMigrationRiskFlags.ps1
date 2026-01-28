@@ -1,4 +1,70 @@
 function Get-AdMigrationRiskFlags {
+    <#
+    .SYNOPSIS
+    Identifies migration risk flags for users and computers.
+
+    .DESCRIPTION
+    Analyzes user and computer objects to flag potential migration issues:
+
+    User risk flags:
+    - UPN_NonRoutableSuffix: UPN suffix not routable for cloud
+    - UPN_SuffixNotInForestList: UPN suffix not in forest UPN list
+    - Disabled: Account is disabled
+    - PasswordAgeOver365d: Password unchanged for 365+ days
+    - StaleLastLogonOver180d: No logon for 180+ days
+    - HasSPN(ServiceAcctCandidate): User has SPNs (service account pattern)
+    - Kerberos_NoAES: Weak encryption (no AES support)
+
+    Computer risk flags:
+    - Disabled: Account is disabled
+    - StaleLastLogonOver90d: No logon for 90+ days
+    - Kerberos_NoAES: Weak encryption
+
+    .PARAMETER AllUsers
+    Array of user objects from Get-AdAdUsers. Required.
+
+    .PARAMETER AllComputers
+    Array of computer objects from Get-AdAdComputers. Required.
+
+    .PARAMETER StaleUserThresholdDays
+    Days since last logon to flag user as stale. Default is 180.
+
+    .PARAMETER PasswordAgeThresholdDays
+    Days since password change to flag as aged. Default is 365.
+
+    .EXAMPLE
+    $riskFlags = Get-AdMigrationRiskFlags -AllUsers $users -AllComputers $computers
+
+    Generates risk flags with default thresholds.
+
+    .EXAMPLE
+    $riskFlags | Where-Object { $_.RiskFlags -contains 'UPN_NonRoutableSuffix' } |
+      Select-Object ObjectClass, SamAccountName, RiskFlags
+
+    Filters to objects with non-routable UPN suffixes.
+
+    .EXAMPLE
+    $highRisk = $riskFlags | Where-Object { $_.RiskFlags.Count -ge 3 }
+
+    Finds objects with 3+ risk flags (high complexity for migration).
+
+    .OUTPUTS
+    PSCustomObject[] with properties:
+    - ObjectClass (user/computer)
+    - DomainFqdn, SamAccountName, DistinguishedName
+    - RiskFlags (array of flag strings)
+    - RiskCount (total number of flags)
+
+    .NOTES
+    Use for pre-migration risk assessment and remediation prioritization.
+    Risk flag counts help estimate migration complexity and effort.
+    Consider filtering disabled/stale accounts from migration scope.
+
+    .LINK
+    Get-AdAdUsers
+    Get-AdAdComputers
+    Get-AdMigrationRiskFlagsSummary
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]

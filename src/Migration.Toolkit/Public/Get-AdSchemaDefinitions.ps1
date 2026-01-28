@@ -1,4 +1,61 @@
 function Get-AdSchemaDefinitions {
+  <#
+  .SYNOPSIS
+  Returns standardized schema definitions for all assessment CSV outputs.
+
+  .DESCRIPTION
+  Provides a hashtable of schema definitions used across the toolkit.
+  Each schema defines column names, types, descriptions, examples, and notes
+  for consistent CSV formatting.
+
+  Used by:
+  - Export-AdCsvSafe for column ordering and validation
+  - Write-AdSchemaCsv for generating schema documentation
+  - Reporting functions for consistent output structure
+
+  Schema names correspond to assessment output types:
+  - Forest_Summary, Domain_Summary
+  - Users, Groups, Computers, OrganizationalUnits
+  - PrivilegedAccounts, Migration_RiskFlags
+  - GpoInventory, DnsZone_Inventory, etc.
+
+  .EXAMPLE
+  $schemas = Get-AdSchemaDefinitions
+  $userSchema = $schemas['Users']
+  $userSchema | Format-Table Column, Type, Description
+
+  Views the Users schema definition.
+
+  .EXAMPLE
+  $schemas = Get-AdSchemaDefinitions
+  $schemas.Keys | Sort-Object
+
+  Lists all available schema names.
+
+  .EXAMPLE
+  $schemas = Get-AdSchemaDefinitions
+  $forestCols = $schemas['Forest_Summary'] | Select-Object -ExpandProperty Column
+
+  Gets column names for Forest_Summary schema.
+
+  .OUTPUTS
+  Hashtable. Keys are schema names (strings), values are arrays of schema
+  definition objects with properties:
+  - Column (string): Column name
+  - Type (string): Data type (string/int/bool/datetime)
+  - Description (string): Purpose of the column
+  - Example (string): Sample value
+  - Notes (string): Additional context
+
+  .NOTES
+  Central schema registry for the toolkit.
+  Adding new assessment functions should include corresponding schema here.
+  Schema definitions enforce consistency across discovery runs and reports.
+
+  .LINK
+  Export-AdCsvSafe
+  Write-AdSchemaCsv
+  #>
   [CmdletBinding()]
   param()
 

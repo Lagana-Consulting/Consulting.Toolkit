@@ -1,46 +1,97 @@
 function Invoke-AdDiscoveryAnalysis {
     <#
     .SYNOPSIS
-    Analyze pre-collected AD discovery data and generate assessment/migration reports.
+    Performs offline analysis of AD discovery data and generates comprehensive reports.
 
     .DESCRIPTION
-    Performs offline analysis of discovery data collected from source and target environments.
-    Reads CSV files from discovery run folders and generates:
+    Analyzes pre-collected AD discovery CSV data from source and target environments
+    to generate:
     - Source and target assessment reports (HTML)
     - Migration planning report
-    - Environment comparison HTML
+    - Environment comparison report (HTML)
     - Cross-forest duplicate object analysis
 
-    No Active Directory queries are performed—all analysis uses previously collected CSV data.
+    No live Active Directory queries are performed—all analysis is based on CSV data
+    from discovery runs. Supports multi-source forest scenarios.
+
+    Requires PowerShell 7+ (Analysis module requirement).
 
     .PARAMETER ConfigFile
-    Path to JSON configuration file containing run roots and analysis settings.
+    Path to JSON configuration file containing:
+    - SourceRunRoots (array): Source discovery output paths
+    - TargetRunRoot (string): Target discovery output path
+    - CustomerName (string): Organization name for reports
+    - OutputRoot (string): Analysis output directory
 
     .PARAMETER SourceRunRoot
-    Path to source environment discovery output folder
+    Array of paths to source environment discovery output folders.
+    Used when not providing ConfigFile. Required in Manual parameter set.
 
     .PARAMETER TargetRunRoot
-    Path to target environment discovery output folder
+    Path to target environment discovery output folder.
+    Used when not providing ConfigFile. Required in Manual parameter set.
 
     .PARAMETER CustomerName
-    Customer name for report headers
+    Customer/organization name for report headers and titles.
+    Default is "Organization".
 
     .PARAMETER OutputRoot
-    Root folder for analysis outputs
+    Root directory for analysis outputs. If not specified, creates
+    'Analysis_{timestamp}' folder in current directory.
 
     .PARAMETER GenerateLoeForBoth
-    Deprecated. LOE workbook generation has been removed.
+    [Deprecated] LOE workbook generation has been removed.
 
     .PARAMETER IncludeTargetPlanning
-    Generate migration planning report for target environment
+    Generate migration planning report for target environment.
+    Useful for understanding target environment preparation needs.
 
     .PARAMETER OpenReports
-    Automatically open generated reports
+    Automatically open generated HTML reports in browser after creation.
 
     .EXAMPLE
-    Invoke-AdDiscoveryAnalysis -ConfigFile "c:\analysis\config.json"
-    #>
+    Invoke-AdDiscoveryAnalysis -ConfigFile "C:\Analysis\config.json"
 
+    Runs analysis using configuration file.
+
+    .EXAMPLE
+    Invoke-AdDiscoveryAnalysis `
+      -SourceRunRoot "C:\Discovery\Source_20260128-100000" `
+      -TargetRunRoot "C:\Discovery\Target_20260128-110000" `
+      -CustomerName "Contoso Corp" `
+      -OutputRoot "C:\Analysis" `
+      -OpenReports
+
+    Runs analysis with manual parameters and opens reports.
+
+    .EXAMPLE
+    # Multi-source forest scenario
+    Invoke-AdDiscoveryAnalysis `
+      -SourceRunRoot @("C:\Discovery\Forest1", "C:\Discovery\Forest2") `
+      -TargetRunRoot "C:\Discovery\Target" `
+      -CustomerName "Multi-Forest Migration" `
+      -IncludeTargetPlanning
+
+    Analyzes multiple source forests against single target.
+
+    .OUTPUTS
+    Generated reports in OutputRoot:
+    - Source_Assessment_{timestamp}.html
+    - Target_Assessment_{timestamp}.html (if IncludeTargetPlanning)
+    - Migration_Planning_{timestamp}.html
+    - Environment_Comparison_{timestamp}.html
+    - CrossForest_Duplicates_{timestamp}.csv
+
+    .NOTES
+    Requires PowerShell 7+.
+    Discovery data must be from Migration.Toolkit discovery runs (expected CSV schema).
+    Config file format: { "SourceRunRoots": [...], "TargetRunRoot": "...", "CustomerName": "...", "OutputRoot": "..." }
+
+    .LINK
+    New-AdComprehensiveAssessmentReport
+    New-AdMigrationPlanningReport
+    Invoke-AdCrossForestDuplicateCheck
+    #>
     [CmdletBinding(DefaultParameterSetName = 'Manual')]
     param(
         [Parameter(Mandatory, ParameterSetName = 'Config')]
