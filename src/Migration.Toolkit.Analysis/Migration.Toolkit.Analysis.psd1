@@ -21,7 +21,6 @@
         'New-AdAssessmentReport',
         'New-AdComprehensiveAssessmentReport',
         'New-AdMigrationPlanningReport',
-        'New-AdMigrationLoeExcel',
         'New-AdEnvironmentComparisonReport',
         'New-AdMigrationReadinessChecklist',
 
