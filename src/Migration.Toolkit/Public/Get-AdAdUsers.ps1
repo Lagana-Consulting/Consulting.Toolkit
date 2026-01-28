@@ -93,7 +93,8 @@ function Get-AdAdUsers {
   try {
     $users = @(Get-ADUser -Filter * -Server $server -Properties $props -ErrorAction Stop |
       Sort-Object SamAccountName)
-  } catch {
+  }
+  catch {
     throw "Failed to enumerate users for $domain via $server. $($_.Exception.Message)"
   }
 
@@ -115,8 +116,10 @@ function Get-AdAdUsers {
     $sidHistoryCount = @($u.SIDHistory).Count
     $spnCount = @($u.ServicePrincipalName).Count
 
-    $encTypes = Convert-AdEncryptionTypes -EncryptionTypeValue $u.'msDS-SupportedEncryptionTypes'
-    $encRisk = Get-AdEncryptionRisk    -EncryptionTypeValue $u.'msDS-SupportedEncryptionTypes'
+    # Handle msDS-SupportedEncryptionTypes safely (may not exist in older domains or on all objects)
+    $encTypesValue = if ($u.PSObject.Properties['msDS-SupportedEncryptionTypes']) { $u.'msDS-SupportedEncryptionTypes' } else { $null }
+    $encTypes = Convert-AdEncryptionTypes -EncryptionTypeValue $encTypesValue
+    $encRisk = Get-AdEncryptionRisk    -EncryptionTypeValue $encTypesValue
 
     [pscustomobject]@{
       DomainFqdn                   = $domain
@@ -142,7 +145,7 @@ function Get-AdAdUsers {
       SidHistoryCount              = [int]$sidHistoryCount
       SPNCount                     = [int]$spnCount
 
-      MsDsSupportedEncryptionTypes = $u.'msDS-SupportedEncryptionTypes'
+      MsDsSupportedEncryptionTypes = $encTypesValue
       EncryptionTypes              = ($encTypes -join ';')
       EncryptionRisk               = $encRisk
 

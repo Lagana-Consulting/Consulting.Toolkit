@@ -87,7 +87,8 @@ function Get-AdAdComputers {
   try {
     $computers = @(Get-ADComputer -Filter * -Server $server -Properties $props -ErrorAction Stop |
       Sort-Object Name)
-  } catch {
+  }
+  catch {
     throw "Failed to enumerate computers for $domain via $server. $($_.Exception.Message)"
   }
 
@@ -97,8 +98,10 @@ function Get-AdAdComputers {
 
     $spnCount = @($c.ServicePrincipalName).Count
 
-    $encTypes = Convert-AdEncryptionTypes -EncryptionTypeValue $c.'msDS-SupportedEncryptionTypes'
-    $encRisk = Get-AdEncryptionRisk    -EncryptionTypeValue $c.'msDS-SupportedEncryptionTypes'
+    # Handle msDS-SupportedEncryptionTypes safely (may not exist in older domains or on all objects)
+    $encTypesValue = if ($c.PSObject.Properties['msDS-SupportedEncryptionTypes']) { $c.'msDS-SupportedEncryptionTypes' } else { $null }
+    $encTypes = Convert-AdEncryptionTypes -EncryptionTypeValue $encTypesValue
+    $encRisk = Get-AdEncryptionRisk    -EncryptionTypeValue $encTypesValue
 
     $os = [string]$c.OperatingSystem
     $isServer = Get-AdComputerIsServer -OperatingSystem $os
@@ -123,7 +126,7 @@ function Get-AdAdComputers {
 
       SPNCount                     = [int]$spnCount
 
-      MsDsSupportedEncryptionTypes = $c.'msDS-SupportedEncryptionTypes'
+      MsDsSupportedEncryptionTypes = $encTypesValue
       EncryptionTypes              = ($encTypes -join ';')
       EncryptionRisk               = $encRisk
 
