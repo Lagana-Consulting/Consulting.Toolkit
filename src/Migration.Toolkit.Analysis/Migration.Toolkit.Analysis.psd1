@@ -27,7 +27,8 @@
 
         # Discovery orchestration
         'Invoke-AdDiscoveryComparison',
-        'Invoke-AdDiscoveryAnalysis'
+        'Invoke-AdDiscoveryAnalysis',
+        'Invoke-AdCrossForestDuplicateCheck'
     )
 
     CmdletsToExport   = @()

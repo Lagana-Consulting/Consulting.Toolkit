@@ -33,5 +33,6 @@ Export-ModuleMember -Function @(
 
     # Discovery orchestration
     'Invoke-AdDiscoveryComparison',
-    'Invoke-AdDiscoveryAnalysis'
+    'Invoke-AdDiscoveryAnalysis',
+    'Invoke-AdCrossForestDuplicateCheck'
 )
