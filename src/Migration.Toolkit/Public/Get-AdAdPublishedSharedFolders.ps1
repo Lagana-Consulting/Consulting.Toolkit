@@ -17,12 +17,13 @@ function Get-AdAdPublishedSharedFolders {
     $domainDn = [string]$DomainContext.DomainDn
 
     $propsPreferred = @(
-        'name', 'uNCName', 'description',
+        'name', 'uNCName', 'volumePath', 'description',
         'distinguishedName', 'whenCreated', 'whenChanged'
     )
 
     $propsFallback = @(
-        'name', 'distinguishedName', 'whenCreated', 'whenChanged'
+        'name', 'uNCName', 'description',
+        'distinguishedName', 'whenCreated', 'whenChanged'
     )
 
     $shares = @()
