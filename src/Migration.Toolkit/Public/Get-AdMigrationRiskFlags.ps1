@@ -19,6 +19,8 @@ function Get-AdMigrationRiskFlags {
     - Disabled: Account is disabled
     - StaleLastLogonOver90d: No logon for 90+ days
     - Kerberos_NoAES: Weak encryption
+    - LegacyWorkstationOS: Windows XP/Vista/7/8/2000
+    - LegacyServerOS: Windows Server 2003/2008/2008 R2/2012/2012 R2
 
     .PARAMETER AllUsers
     Array of user objects from Get-AdAdUsers. Required.
@@ -31,6 +33,12 @@ function Get-AdMigrationRiskFlags {
 
     .PARAMETER PasswordAgeThresholdDays
     Days since password change to flag as aged. Default is 365.
+
+    .PARAMETER LegacyWorkstationOsRegex
+    Regex pattern to identify legacy workstation OS versions. Default matches Windows XP, Vista, 7, 8, 8.1, 2000.
+
+    .PARAMETER LegacyServerOsRegex
+    Regex pattern to identify legacy server OS versions. Default matches Windows Server 2003, 2008, 2008 R2, 2012, 2012 R2.
 
     .EXAMPLE
     $riskFlags = Get-AdMigrationRiskFlags -AllUsers $users -AllComputers $computers
@@ -75,7 +83,11 @@ function Get-AdMigrationRiskFlags {
 
         [int]$StaleUserThresholdDays = 180,
 
-        [int]$PasswordAgeThresholdDays = 365
+        [int]$PasswordAgeThresholdDays = 365,
+
+        [string]$LegacyWorkstationOsRegex = '(?i)Windows (XP|Vista|7|8|8\.1|2000)',
+
+        [string]$LegacyServerOsRegex = '(?i)Windows Server (2003|2008|2008 R2|2012|2012 R2)'
     )
 
     $results = @()
@@ -149,6 +161,19 @@ function Get-AdMigrationRiskFlags {
         # Enabled status
         if ($c.Enabled -eq $false) {
             $flags += 'Disabled'
+        }
+
+        # Stale logon
+        if ($c.LastLogonDays -and [int]$c.LastLogonDays -gt 90) {
+            $flags += 'StaleLastLogonOver90d'
+        }
+
+        # Legacy OS detection
+        if ($c.IsServer -eq $true -and $c.OperatingSystem -match $LegacyServerOsRegex) {
+            $flags += 'LegacyServerOS'
+        }
+        elseif ($c.IsServer -eq $false -and $c.OperatingSystem -match $LegacyWorkstationOsRegex) {
+            $flags += 'LegacyWorkstationOS'
         }
 
         if ($flags.Count -gt 0) {
