@@ -16,17 +16,30 @@ function Get-AdAdPublishedSharedFolders {
     $server = [string]$DomainContext.Server
     $domainDn = [string]$DomainContext.DomainDn
 
-    $props = @(
-        'name', 'uNCName', 'description', 'volumePath',
+    $propsPreferred = @(
+        'name', 'uNCName', 'description',
         'distinguishedName', 'whenCreated', 'whenChanged'
+    )
+
+    $propsFallback = @(
+        'name', 'distinguishedName', 'whenCreated', 'whenChanged'
     )
 
     $shares = @()
     try {
-        $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Server $server -Properties $props -ErrorAction Stop |
+        $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Server $server -Properties $propsPreferred -ErrorAction Stop |
             Sort-Object Name)
     } catch {
-        throw "Failed to enumerate published shared folders for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+        if ($_.Exception.Message -match 'properties are invalid') {
+            try {
+                $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Server $server -Properties $propsFallback -ErrorAction Stop |
+                    Sort-Object Name)
+            } catch {
+                throw "Failed to enumerate published shared folders for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+            }
+        } else {
+            throw "Failed to enumerate published shared folders for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+        }
     }
 
     foreach ($s in $shares) {

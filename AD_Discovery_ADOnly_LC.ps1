@@ -6,7 +6,9 @@ param(
   [string]$CustomerName = ""
 )
 
-$ModulePsd1 = 'c:\scripts\modules\Migration.Toolkit\Migration.Toolkit.psd1'
+$localModulePsd1 = Join-Path (Split-Path -Parent $PSScriptRoot) 'src\Migration.Toolkit\Migration.Toolkit.psd1'
+$fallbackModulePsd1 = 'c:\scripts\modules\Migration.Toolkit\Migration.Toolkit.psd1'
+$ModulePsd1 = if (Test-Path -LiteralPath $localModulePsd1) { $localModulePsd1 } else { $fallbackModulePsd1 }
 Import-Module (Resolve-Path $ModulePsd1).Path -Force
 
 #requires -Modules Migration.Toolkit

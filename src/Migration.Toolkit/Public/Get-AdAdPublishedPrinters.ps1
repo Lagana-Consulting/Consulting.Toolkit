@@ -16,17 +16,30 @@ function Get-AdAdPublishedPrinters {
     $server = [string]$DomainContext.Server
     $domainDn = [string]$DomainContext.DomainDn
 
-    $props = @(
+    $propsPreferred = @(
         'name', 'displayName', 'serverName', 'uNCName', 'location', 'description',
         'printShareName', 'driverName', 'distinguishedName', 'whenCreated', 'whenChanged'
     )
 
+    $propsFallback = @(
+        'name', 'displayName', 'distinguishedName', 'whenCreated', 'whenChanged'
+    )
+
     $printers = @()
     try {
-        $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Server $server -Properties $props -ErrorAction Stop |
+        $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Server $server -Properties $propsPreferred -ErrorAction Stop |
             Sort-Object Name)
     } catch {
-        throw "Failed to enumerate published printers for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+        if ($_.Exception.Message -match 'properties are invalid') {
+            try {
+                $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Server $server -Properties $propsFallback -ErrorAction Stop |
+                    Sort-Object Name)
+            } catch {
+                throw "Failed to enumerate published printers for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+            }
+        } else {
+            throw "Failed to enumerate published printers for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+        }
     }
 
     foreach ($p in $printers) {
