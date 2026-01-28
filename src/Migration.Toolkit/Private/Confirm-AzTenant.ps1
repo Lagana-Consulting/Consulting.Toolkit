@@ -1,4 +1,4 @@
-function Confirm-AdTenant {
+function Confirm-AzTenant {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
@@ -15,12 +15,13 @@ function Confirm-AdTenant {
     if (Get-Command Get-MgContext -ErrorAction SilentlyContinue) {
       $ctx = Get-MgContext
       if (-not $ctx -or -not $ctx.TenantId) {
-        throw "Microsoft Graph context not found. Run Connect-MgGraph first (or use Connect-AdGraph)."
+        throw "Microsoft Graph context not found. Run Connect-MgGraph first (or use Connect-AzGraph)."
       }
       if ($ctx.TenantId -ne $TenantId) {
         throw "Wrong Graph tenant. Expected: $TenantId  Actual: $($ctx.TenantId)"
       }
-    } else {
+    }
+    else {
       throw "Microsoft.Graph PowerShell SDK not available. Install-Module Microsoft.Graph"
     }
   }
@@ -34,7 +35,8 @@ function Confirm-AdTenant {
       if ($az.Tenant.Id -ne $TenantId) {
         throw "Wrong Azure tenant. Expected: $TenantId  Actual: $($az.Tenant.Id)"
       }
-    } else {
+    }
+    else {
       throw "Az.Accounts not available. Install-Module Az.Accounts"
     }
   }

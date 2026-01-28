@@ -11,13 +11,14 @@ This repository contains two PowerShell modules:
 #### Migration.Toolkit (src/Migration.Toolkit/)
 - **Migration.Toolkit.psm1**: Root module entry point that dot-sources Private/ then Public/ functions
 - **Migration.Toolkit.psd1**: Module manifest (v0.1.1, PowerShell 5.1+)
-- **Public/**: User-facing functions (~62 exported cmdlets). Organized by domain: logging, auth, forest/domain queries, assessment, risk analysis
-- **Private/**: Helper functions. Prefixed `Get-Ad*` or `Convert-Ad*`. Examples: `Get-AdTimestamp`, `Resolve-AdPath`, `Get-AdGroupMembersRecursive`
+- **Public/**: User-facing functions (57 exported cmdlets). Organized by domain: logging, forest/domain queries, assessment, risk analysis, extended analysis
+- **Private/**: Infrastructure helpers (22 functions). Infrastructure: `Export-AdCsv`, `New-AdRunLayout`, `New-AdDomainRunFolder`, `Get-AdAdDomainContext`, `Connect-AzGraph`, `Confirm-AzTenant`. Utilities: `Get-AdTimestamp`, `Resolve-AdPath`, `Get-AdGroupMembersRecursive`, etc.
 - **Focus**: Server-side AD discovery and assessment (compatible with Quest migration tools)
 
 #### Migration.Toolkit.Analysis (src/Migration.Toolkit.Analysis/)
 - **Migration.Toolkit.Analysis.psd1**: Module manifest (PowerShell 7+ required)
-- **Public/**: Client-side analysis and reporting functions
+- **Public/**: Client-side analysis and reporting functions (11 exported: report generation, discovery orchestration, CSV export utilities)
+- **Private/**: Infrastructure helpers (3 functions: schema export orchestration, schema CSV writing, cross-forest duplicate detection)
 - **Focus**: Offline analysis, HTML report generation, cross-forest duplicate detection
 
 ### Function Naming Convention

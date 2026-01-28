@@ -21,18 +21,8 @@ Export-ModuleMember -Function @(
   # Logging / export
   'New-AdLog',
   'Write-AdLog',
-  'Export-AdCsv',
   'Export-AdCsvSafe',
   'Get-AdSchemaDefinitions',
-  'Export-AdSchemas',
-  'Write-AdSchemaCsv',
-
-  # Tenant safety / auth
-  'Confirm-AdTenant',
-  'Connect-AdGraph',
-
-  # Run layout
-  'New-AdRunLayout',
 
   # Forest + domains
   'Get-AdAdForest',
@@ -45,9 +35,6 @@ Export-ModuleMember -Function @(
   'Get-AdAdReplicationSubnets',
   'Get-AdAdReplicationSiteLinks',
   'Get-AdAdForestTrusts',
-
-  'Get-AdAdDomainContext',
-  'New-AdDomainRunFolder',
 
   'Get-AdAdDomainSummary',
   'Get-AdAdDomainControllers',

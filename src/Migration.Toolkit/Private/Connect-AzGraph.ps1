@@ -1,4 +1,4 @@
-function Connect-AdGraph {
+function Connect-AzGraph {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
@@ -24,7 +24,7 @@ function Connect-AdGraph {
   Connect-MgGraph -TenantId $TenantId -Scopes $Scopes | Out-Null
 
   # Verify
-  Confirm-AdTenant -TenantId $TenantId -CheckGraph
+  Confirm-AzTenant -TenantId $TenantId -CheckGraph
 
   if ($LogPath) { Write-AdLog -Path $LogPath -Level INFO -Message "Graph connected and tenant confirmed: $TenantId" }
 

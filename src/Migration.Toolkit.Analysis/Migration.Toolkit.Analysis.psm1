@@ -20,8 +20,6 @@ Export-ModuleMember -Function @(
     # Schema and safe exports
     'Export-AdCsvSafe',
     'Get-AdSchemaDefinitions',
-    'Export-AdSchemas',
-    'Write-AdSchemaCsv',
 
     # Reports
     'New-AdAssessmentReport',
