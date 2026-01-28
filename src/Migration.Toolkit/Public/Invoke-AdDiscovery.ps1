@@ -133,18 +133,17 @@ function Invoke-AdDiscovery {
     # Discover forest early so we can name the run folder with the forest root domain
     Write-Host "Discovering Active Directory forest..." -ForegroundColor Cyan
     $forest = Get-AdAdForest
-    $domains = Get-AdAdDomains -Forest $forest
+    $domains = @(Get-AdAdDomains -Forest $forest)
     $suffixSet = Get-AdKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
 
     Write-Host "  Forest: $($forest.Name)" -ForegroundColor Green
-    Write-Host "  Domains: $($domains.Count)" -ForegroundColor Green
+    Write-Host "  Domains: $(@($domains).Count)" -ForegroundColor Green
 
     # Build a default prefix based on forest root domain when not explicitly provided
     $rootDomainTag = if ([string]::IsNullOrWhiteSpace($forest.RootDomain)) { 'UnknownDomain' } else { $forest.RootDomain.ToLower().Replace(' ', '_') }
     $basePrefix = if ($PSBoundParameters.ContainsKey('Prefix') -and -not [string]::IsNullOrWhiteSpace($Prefix)) {
         $Prefix
-    }
-    else {
+    } else {
         "AD_{0}" -f $rootDomainTag
     }
 
