@@ -68,7 +68,13 @@ function Get-AdAdGroups {
     $groups = @(Get-ADGroup -Filter * -Server $server -Properties mail, groupCategory, groupScope, whenCreated, whenChanged, description -ErrorAction Stop |
       Sort-Object Name)
   } catch {
-    throw "Failed to enumerate groups for $domain via $server. $($_.Exception.Message)"
+    # Try without server parameter as fallback
+    try {
+      $groups = @(Get-ADGroup -Filter * -Properties mail, groupCategory, groupScope, whenCreated, whenChanged, description -ErrorAction Stop |
+        Sort-Object Name)
+    } catch {
+      throw "Failed to enumerate groups for $domain. $($_.Exception.Message)"
+    }
   }
 
   foreach ($g in $groups) {

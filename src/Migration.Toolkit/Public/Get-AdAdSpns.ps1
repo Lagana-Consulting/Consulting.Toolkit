@@ -21,9 +21,16 @@ function Get-AdAdSpns {
 
   $objs = @()
   try {
-    $objs = @(Get-ADObject -LDAPFilter $filter -Server $server -Properties servicePrincipalName,sAMAccountName -ErrorAction Stop)
-  } catch {
-    throw "Failed to enumerate SPN-bearing objects for $domain via $server. $($_.Exception.Message)"
+    $objs = @(Get-ADObject -LDAPFilter $filter -Server $server -Properties servicePrincipalName, sAMAccountName -ErrorAction Stop)
+  }
+  catch {
+    # Try without server parameter as fallback
+    try {
+      $objs = @(Get-ADObject -LDAPFilter $filter -Properties servicePrincipalName, sAMAccountName -ErrorAction Stop)
+    }
+    catch {
+      throw "Failed to enumerate SPN-bearing objects for $domain. $($_.Exception.Message)"
+    }
   }
 
   foreach ($o in $objs) {
@@ -40,7 +47,7 @@ function Get-AdAdSpns {
         ObjectType        = $otype
         SamAccountName    = [string]$o.sAMAccountName
         DistinguishedName = [string]$o.DistinguishedName
-        SPN              = [string]$spn
+        SPN               = [string]$spn
       }
     }
   }

@@ -74,8 +74,16 @@ function Get-AdAdOrganizationalUnits {
   try {
     $ous = @(Get-ADOrganizationalUnit -Filter * -SearchBase $baseDn -SearchScope Subtree -Server $server -Properties whenCreated, whenChanged, description -ErrorAction Stop |
       Sort-Object DistinguishedName)
-  } catch {
-    throw "Failed to enumerate OUs for $domain via $server. $($_.Exception.Message)"
+  }
+  catch {
+    # Try without server parameter as fallback
+    try {
+      $ous = @(Get-ADOrganizationalUnit -Filter * -SearchBase $baseDn -SearchScope Subtree -Properties whenCreated, whenChanged, description -ErrorAction Stop |
+        Sort-Object DistinguishedName)
+    }
+    catch {
+      throw "Failed to enumerate OUs for $domain. $($_.Exception.Message)"
+    }
   }
 
   foreach ($ou in $ous) {

@@ -35,10 +35,22 @@ function Get-AdAdPublishedPrinters {
                 $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Server $server -Properties $propsFallback -ErrorAction Stop |
                     Sort-Object Name)
             } catch {
-                throw "Failed to enumerate published printers for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+                # Try without server parameter as final fallback
+                try {
+                    $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Properties $propsFallback -ErrorAction Stop |
+                        Sort-Object Name)
+                } catch {
+                    throw "Failed to enumerate published printers for $($DomainContext.DomainFqdn). $($_.Exception.Message)"
+                }
             }
         } else {
-            throw "Failed to enumerate published printers for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+            # Try without server parameter as fallback
+            try {
+                $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Properties $propsPreferred -ErrorAction Stop |
+                    Sort-Object Name)
+            } catch {
+                throw "Failed to enumerate published printers for $($DomainContext.DomainFqdn). $($_.Exception.Message)"
+            }
         }
     }
 

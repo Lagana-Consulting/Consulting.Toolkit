@@ -36,10 +36,22 @@ function Get-AdAdPublishedSharedFolders {
                 $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Server $server -Properties $propsFallback -ErrorAction Stop |
                     Sort-Object Name)
             } catch {
-                throw "Failed to enumerate published shared folders for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+                # Try without server parameter as final fallback
+                try {
+                    $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Properties $propsFallback -ErrorAction Stop |
+                        Sort-Object Name)
+                } catch {
+                    throw "Failed to enumerate published shared folders for $($DomainContext.DomainFqdn). $($_.Exception.Message)"
+                }
             }
         } else {
-            throw "Failed to enumerate published shared folders for $($DomainContext.DomainFqdn) via $server. $($_.Exception.Message)"
+            # Try without server parameter as fallback
+            try {
+                $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Properties $propsPreferred -ErrorAction Stop |
+                    Sort-Object Name)
+            } catch {
+                throw "Failed to enumerate published shared folders for $($DomainContext.DomainFqdn). $($_.Exception.Message)"
+            }
         }
     }
 

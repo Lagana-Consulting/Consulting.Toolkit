@@ -17,9 +17,12 @@ function Get-AdWritableDc {
 
   try {
     $candidates = @(Get-ADDomainController -Filter * -Server $DomainFqdn -ErrorAction Stop |
-      Sort-Object -Property IsPdc,IsGlobalCatalog -Descending)
-  } catch {
-    throw "Failed to enumerate domain controllers for $DomainFqdn. $($_.Exception.Message)"
+      Sort-Object -Property IsPdc, IsGlobalCatalog -Descending)
+  }
+  catch {
+    # If we can't enumerate DCs (network issue), just use domain as fallback
+    # The subsequent Get-ADDomain or other cmdlets may still work if called locally
+    return $DomainFqdn
   }
 
   foreach ($dc in $candidates) {
@@ -30,7 +33,8 @@ function Get-AdWritableDc {
     try {
       $ok = Test-NetConnection -ComputerName $hostName -Port 389 -InformationLevel Quiet -WarningAction SilentlyContinue
       if ($ok) { return $hostName }
-    } catch {
+    }
+    catch {
       # ignore and continue
     }
   }

@@ -16,8 +16,15 @@ function Get-AdAdDefaultPasswordPolicy {
   $pol = $null
   try {
     $pol = Get-ADDefaultDomainPasswordPolicy -Server $server -ErrorAction Stop
-  } catch {
-    throw "Failed to get default domain password policy for $domain via $server. $($_.Exception.Message)"
+  }
+  catch {
+    # If specified server failed, try with domain identity without server parameter
+    try {
+      $pol = Get-ADDefaultDomainPasswordPolicy -Identity $domain -ErrorAction Stop
+    }
+    catch {
+      throw "Failed to get default domain password policy for $domain. $($_.Exception.Message)"
+    }
   }
 
   [pscustomobject]@{

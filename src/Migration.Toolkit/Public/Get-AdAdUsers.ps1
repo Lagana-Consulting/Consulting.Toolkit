@@ -95,7 +95,14 @@ function Get-AdAdUsers {
       Sort-Object SamAccountName)
   }
   catch {
-    throw "Failed to enumerate users for $domain via $server. $($_.Exception.Message)"
+    # Try without server parameter as fallback
+    try {
+      $users = @(Get-ADUser -Filter * -Properties $props -ErrorAction Stop |
+        Sort-Object SamAccountName)
+    }
+    catch {
+      throw "Failed to enumerate users for $domain. $($_.Exception.Message)"
+    }
   }
 
   foreach ($u in $users) {

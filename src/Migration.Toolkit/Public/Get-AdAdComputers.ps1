@@ -89,7 +89,13 @@ function Get-AdAdComputers {
       Sort-Object Name)
   }
   catch {
-    throw "Failed to enumerate computers for $domain via $server. $($_.Exception.Message)"
+    # Try without server parameter as fallback
+    try {
+      $computers = @(Get-ADComputer -Filter * -Properties $props -ErrorAction Stop |
+        Sort-Object Name)
+    } catch {
+      throw "Failed to enumerate computers for $domain. $($_.Exception.Message)"
+    }
   }
 
   foreach ($c in $computers) {

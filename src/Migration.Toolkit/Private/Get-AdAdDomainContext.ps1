@@ -32,21 +32,36 @@ function Get-AdAdDomainContext {
   $dobj = $null
   try {
     $dobj = Get-ADDomain -Identity $domain -Server $dc -ErrorAction Stop
-  } catch {
-    throw "Failed to query domain '$domain' using server '$dc'. $($_.Exception.Message)"
+  }
+  catch {
+    # If specified server failed, try without server parameter (use default context)
+    if (-not [string]::IsNullOrWhiteSpace($dc) -and $dc -ne $domain) {
+      try {
+        if ($LogPath) {
+          Write-AdLog -Path $LogPath -Level WARN -Message ("Server '$dc' unreachable. Retrying with default domain context for $domain")
+        }
+        $dobj = Get-ADDomain -Identity $domain -ErrorAction Stop
+      }
+      catch {
+        throw "Failed to query domain '$domain'. $($_.Exception.Message)"
+      }
+    }
+    else {
+      throw "Failed to query domain '$domain' using server '$dc'. $($_.Exception.Message)"
+    }
   }
 
   # Build a reusable context object
   [pscustomobject]@{
-    DomainFqdn      = $domain
-    Server          = $dc
-    DomainDn        = [string]$dobj.DistinguishedName
-    NetBiosName     = [string]$dobj.NetBIOSName
-    DomainMode      = [string]$dobj.DomainMode
-    PdcEmulator     = [string]$dobj.PDCEmulator
-    RidMaster       = [string]$dobj.RIDMaster
+    DomainFqdn           = $domain
+    Server               = $dc
+    DomainDn             = [string]$dobj.DistinguishedName
+    NetBiosName          = [string]$dobj.NetBIOSName
+    DomainMode           = [string]$dobj.DomainMode
+    PdcEmulator          = [string]$dobj.PDCEmulator
+    RidMaster            = [string]$dobj.RIDMaster
     InfrastructureMaster = [string]$dobj.InfrastructureMaster
-    Forest          = [string]$dobj.Forest
-    DnsRoot         = [string]$dobj.DNSRoot
+    Forest               = [string]$dobj.Forest
+    DnsRoot              = [string]$dobj.DNSRoot
   }
 }

@@ -22,9 +22,16 @@ function Get-AdAdFineGrainedPasswordPolicies {
   $pols = @()
   try {
     $pols = @(Get-ADFineGrainedPasswordPolicy -Filter * -Server $server -ErrorAction Stop | Sort-Object Name)
-  } catch {
-    if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Failed to enumerate FGPP for {0}. {1}" -f $domain, $_.Exception.Message) }
-    return @()
+  }
+  catch {
+    # Try without server parameter as fallback
+    try {
+      $pols = @(Get-ADFineGrainedPasswordPolicy -Filter * -ErrorAction Stop | Sort-Object Name)
+    }
+    catch {
+      if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Failed to enumerate FGPP for {0}. {1}" -f $domain, $_.Exception.Message) }
+      return @()
+    }
   }
 
   foreach ($p in $pols) {

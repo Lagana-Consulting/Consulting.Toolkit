@@ -67,7 +67,13 @@ function Get-AdAdDomainControllers {
     $dcs = @(Get-ADDomainController -Filter * -Server $domain -ErrorAction Stop |
       Sort-Object HostName)
   } catch {
-    throw "Failed to enumerate domain controllers for $domain. $($_.Exception.Message)"
+    # Try without server parameter as fallback
+    try {
+      $dcs = @(Get-ADDomainController -Filter * -ErrorAction Stop |
+        Sort-Object HostName)
+    } catch {
+      throw "Failed to enumerate domain controllers for $domain. $($_.Exception.Message)"
+    }
   }
 
   foreach ($dc in $dcs) {
