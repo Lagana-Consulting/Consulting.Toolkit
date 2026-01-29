@@ -31,6 +31,11 @@ function Invoke-AdDiscovery {
   .PARAMETER CustomerName
   Customer or organization name for manifest metadata. Optional.
 
+  .PARAMETER Server
+  Domain controller or global catalog server to query. If not specified, uses
+  automatic DC discovery. Useful when specific DC is unreachable or in locked-down
+  network environments. Optional.
+
   .PARAMETER StaleUserThresholdDays
   Days since last logon to consider a user account stale. Default is 180.
 
@@ -47,6 +52,11 @@ function Invoke-AdDiscovery {
   Invoke-AdDiscovery -Environment "Production" -OutputRoot "D:\ADReports"
 
   Runs discovery labeled as "Production" environment with custom output location.
+
+  .EXAMPLE
+  Invoke-AdDiscovery -Server "dc01.contoso.com"
+
+  Runs discovery using a specific domain controller.
 
   .EXAMPLE
   Invoke-AdDiscovery -Environment "Source" -CustomerName "Contoso Corp" -Prefix "Contoso_PreMigration"
@@ -102,6 +112,9 @@ function Invoke-AdDiscovery {
         [string]$CustomerName = "",
 
         [Parameter()]
+        [string]$Server,
+
+        [Parameter()]
         [int]$StaleUserThresholdDays = 180,
 
         [Parameter()]
@@ -132,7 +145,12 @@ function Invoke-AdDiscovery {
 
     # Discover forest early so we can name the run folder with the forest root domain
     Write-Host "Discovering Active Directory forest..." -ForegroundColor Cyan
-    $forest = Get-AdAdForest
+    $forestParams = @{}
+    if ($Server) {
+        $forestParams['Server'] = $Server
+        Write-Host "  Using server: $Server" -ForegroundColor Yellow
+    }
+    $forest = Get-AdAdForest @forestParams
     $domains = @(Get-AdAdDomains -Forest $forest)
     $suffixSet = Get-AdKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
 
@@ -223,7 +241,9 @@ function Invoke-AdDiscovery {
     foreach ($d in $domains) {
         Write-Host "`nProcessing domain: $d" -ForegroundColor Cyan
 
-        $ctx = Get-AdAdDomainContext -DomainFqdn $d -LogPath $layout.LogPath
+        $ctxParams = @{ DomainFqdn = $d; LogPath = $layout.LogPath }
+        if ($Server) { $ctxParams['Server'] = $Server }
+        $ctx = Get-AdAdDomainContext @ctxParams
         $scopeTag = Get-DomainScopeTag $ctx.DomainFqdn
 
         $domainDir = Join-Path $domainsRoot $scopeTag
