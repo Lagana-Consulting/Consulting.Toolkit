@@ -27,6 +27,7 @@ Export-ModuleMember -Function @(
     'New-AdMigrationPlanningReport',
     'New-AdEnvironmentComparisonReport',
     'New-AdMigrationReadinessChecklist',
+    'New-AdEnvironmentSummaryDocument',
 
     # Discovery orchestration
     'Invoke-AdDiscoveryComparison',

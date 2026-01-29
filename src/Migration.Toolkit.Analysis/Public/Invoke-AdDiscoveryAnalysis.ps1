@@ -39,10 +39,6 @@ function Invoke-AdDiscoveryAnalysis {
     Root directory for analysis outputs. If not specified, creates
     'Analysis_{timestamp}' folder in current directory.
 
-    .PARAMETER ExcludeBuiltIn
-    Exclude built-in users, groups, and computer accounts (e.g., Administrator, Domain Admins)
-    from duplicate analysis.
-
     .PARAMETER GenerateLoeForBoth
     [Deprecated] LOE workbook generation has been removed.
 
@@ -113,9 +109,6 @@ function Invoke-AdDiscoveryAnalysis {
         [Parameter(ParameterSetName = 'Manual')]
         [string]$OutputRoot,
 
-        [Parameter()]
-        [switch]$ExcludeBuiltIn,
-
         [switch]$GenerateLoeForBoth,
         [switch]$IncludeTargetPlanning,
         [switch]$OpenReports
@@ -134,9 +127,11 @@ function Invoke-AdDiscoveryAnalysis {
             # Support both SourceRunRoots (array) and SourceRunRoot (string) for backward compatibility
             if ($config.PSObject.Properties['SourceRunRoots']) {
                 $SourceRunRoot = $config.SourceRunRoots
-            } elseif ($config.PSObject.Properties['SourceRunRoot']) {
+            }
+            elseif ($config.PSObject.Properties['SourceRunRoot']) {
                 $SourceRunRoot = @($config.SourceRunRoot)
-            } else {
+            }
+            else {
                 throw "Config must contain SourceRunRoot or SourceRunRoots"
             }
             $TargetRunRoot = $config.TargetRunRoot
@@ -144,7 +139,8 @@ function Invoke-AdDiscoveryAnalysis {
             $OutputRoot = if ($config.OutputRoot) { $config.OutputRoot } else { $SourceRunRoot[0] }
             if ($config.PSObject.Properties['GenerateLoeForBoth']) { $GenerateLoeForBoth = [bool]$config.GenerateLoeForBoth }
             if ($config.PSObject.Properties['IncludeTargetPlanning']) { $IncludeTargetPlanning = [bool]$config.IncludeTargetPlanning }
-        } catch {
+        }
+        catch {
             throw "Failed to parse config file: $_"
         }
     }
@@ -196,7 +192,8 @@ function Invoke-AdDiscoveryAnalysis {
         }
         try {
             return @(Import-Csv -Path $Path -ErrorAction Stop)
-        } catch {
+        }
+        catch {
             Write-Warning "Failed to import $Path : $_"
             return @()
         }
@@ -233,7 +230,8 @@ function Invoke-AdDiscoveryAnalysis {
             Write-Host "  [OK] Source assessment ($prefix): $srcAssessmentPath" -ForegroundColor Green
             $assessmentSources += @{ Prefix = $prefix; Path = $srcAssessmentPath; Data = $assessment }
             $sourceAssessmentPaths += $srcAssessmentPath
-        } catch {
+        }
+        catch {
             Write-Warning "Source assessment ($prefix) failed: $_"
         }
 
@@ -242,7 +240,8 @@ function Invoke-AdDiscoveryAnalysis {
             $comprehensiveAssessment = New-AdComprehensiveAssessmentReport -DiscoveryOutputPath $srcRoot -OutputPath $srcComprehensivePath -CustomerName $CustomerName
             Write-Host "  [OK] Comprehensive assessment ($prefix): $srcComprehensivePath" -ForegroundColor Green
             $sourceComprehensivePaths += $srcComprehensivePath
-        } catch {
+        }
+        catch {
             Write-Warning "Comprehensive assessment ($prefix) failed: $_"
         }
     }
@@ -255,7 +254,8 @@ function Invoke-AdDiscoveryAnalysis {
     try {
         $assessmentTarget = New-AdAssessmentReport -DiscoveryOutputPath $TargetRunRoot -OutputPath $targetAssessmentPath
         Write-Host "  [OK] Target assessment: $targetAssessmentPath" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Warning "Target assessment failed: $_"
         $assessmentTarget = $null
     }
@@ -264,7 +264,8 @@ function Invoke-AdDiscoveryAnalysis {
     try {
         $comprehensiveTarget = New-AdComprehensiveAssessmentReport -DiscoveryOutputPath $TargetRunRoot -OutputPath $targetComprehensivePath -CustomerName $CustomerName
         Write-Host "  [OK] Comprehensive assessment (target): $targetComprehensivePath" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Warning "Comprehensive target assessment failed: $_"
         $comprehensiveTarget = $null
     }
@@ -277,7 +278,8 @@ function Invoke-AdDiscoveryAnalysis {
     try {
         $comparisonReport = New-AdEnvironmentComparisonReport -SourceRunRoot $SourceRunRoot[0] -TargetRunRoot $TargetRunRoot -OutputPath $comparisonPath -CustomerName $CustomerName
         Write-Host "  [OK] Comparison report: $comparisonPath" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Warning "Comparison report failed: $_"
         $comparisonReport = $null
     }
@@ -351,12 +353,11 @@ function Invoke-AdDiscoveryAnalysis {
         # Run duplicate check only if data exists
         if ($allUsers.Count -gt 0 -or $allGroups.Count -gt 0 -or $allComputers.Count -gt 0) {
             $dupParams = @{
-                AllUsers     = @($allUsers)
-                AllGroups    = @($allGroups)
-                AllComputers = @($allComputers)
+                AllUsers       = @($allUsers)
+                AllGroups      = @($allGroups)
+                AllComputers   = @($allComputers)
+                ExcludeBuiltIn = $true
             }
-
-            if ($ExcludeBuiltIn) { $dupParams['ExcludeBuiltIn'] = $true }
             $duplicates = Get-AdDuplicateObjectsCrossForest @dupParams
 
             # Filter to cross-forest only (where ConflictingDomains contains both source and target)
@@ -371,13 +372,16 @@ function Invoke-AdDiscoveryAnalysis {
                 Select-Object -Property $exportColumns |
                 Export-Csv -Path $duplicatePath -NoTypeInformation -Force
                 Write-Host "  [OK] Cross-forest duplicates: $duplicatePath ($($crossForestDuplicates.Count) conflicts)" -ForegroundColor Yellow
-            } else {
+            }
+            else {
                 Write-Host "  [OK] No cross-forest duplicate objects detected" -ForegroundColor Green
             }
-        } else {
+        }
+        else {
             Write-Host "  [OK] No user/group/computer data found to analyze" -ForegroundColor Yellow
         }
-    } catch {
+    }
+    catch {
         Write-Warning "Duplicate object analysis failed: $($_.Exception.Message) [Stack: $($_.ScriptStackTrace)]"
         $crossForestDuplicates = @()
     }
@@ -390,7 +394,8 @@ function Invoke-AdDiscoveryAnalysis {
     try {
         $planningReport = New-AdMigrationPlanningReport -DiscoveryOutputPath $SourceRunRoot[0] -OutputPath $planningPath
         Write-Host "  [OK] Planning report (source): $planningPath" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Warning "Planning report failed: $_"
         $planningReport = $null
     }
@@ -400,7 +405,8 @@ function Invoke-AdDiscoveryAnalysis {
         try {
             $targetPlanningReport = New-AdMigrationPlanningReport -DiscoveryOutputPath $TargetRunRoot -OutputPath $targetPlanningPath
             Write-Host "  [OK] Planning report (target): $targetPlanningPath" -ForegroundColor Green
-        } catch {
+        }
+        catch {
             Write-Warning "Target planning report failed: $_"
         }
     }
@@ -422,7 +428,8 @@ function Invoke-AdDiscoveryAnalysis {
         foreach ($path in $sourceAssessmentPaths) {
             Write-Host "    - $path" -ForegroundColor Gray
         }
-    } elseif ($sourceAssessmentPaths.Count -eq 1) {
+    }
+    elseif ($sourceAssessmentPaths.Count -eq 1) {
         Write-Host "  - Source: $($sourceAssessmentPaths[0])" -ForegroundColor White
     }
     Write-Host "  - Target: $targetAssessmentPath" -ForegroundColor White
@@ -433,7 +440,8 @@ function Invoke-AdDiscoveryAnalysis {
         foreach ($path in $sourceComprehensivePaths) {
             Write-Host "    - $path" -ForegroundColor Gray
         }
-    } elseif ($sourceComprehensivePaths.Count -eq 1) {
+    }
+    elseif ($sourceComprehensivePaths.Count -eq 1) {
         Write-Host "  - Source: $($sourceComprehensivePaths[0])" -ForegroundColor White
     }
     Write-Host "  - Target: $targetComprehensivePath" -ForegroundColor White

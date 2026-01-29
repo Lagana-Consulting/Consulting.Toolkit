@@ -22,21 +22,6 @@ function Invoke-AdCrossForestDuplicateCheck {
     Directory where cross-forest duplicate report will be saved.
     If not provided, defaults to current directory with timestamp.
 
-    .PARAMETER ExcludeBuiltIn
-    Exclude built-in users, groups, and computer accounts (default: all built-in Microsoft AD objects).
-
-    Excluded accounts include:
-    - Users: Administrator, Guest, krbtgt, DefaultAccount, WDAGUtilityAccount
-    - Admin groups: Domain Admins, Enterprise Admins, Schema Admins, Administrators
-    - Service groups: DnsAdmins, DnsUpdateProxy, RAS and IAS Servers, Certificate Publishers
-    - DC groups: Domain Controllers, Read-only Domain Controllers, Enterprise RODCs
-    - Operational groups: Account Operators, Backup Operators, Print Operators, Server Operators
-    - Infrastructure: Pre-Windows 2000 Compatible Access, Incoming Forest Trust Builders
-    - Security: Protected Users, Key Admins, Enterprise Key Admins
-    - Special: All other standard AD system groups
-
-    Use this flag to focus on user-created duplicates rather than infrastructure noise.
-
     .PARAMETER PassThru
     Return the duplicate objects instead of only writing to CSV.
 
@@ -50,11 +35,8 @@ function Invoke-AdCrossForestDuplicateCheck {
       -TargetRunRoot 'C:\Reports\Target' `
       -OutputRoot 'C:\Reports\Analysis'
 
-    # Exclude built-in accounts from analysis
-    Invoke-AdCrossForestDuplicateCheck -ExcludeBuiltIn
-
-    # Get duplicates for further processing (excluding built-in)
-    $duplicates = Invoke-AdCrossForestDuplicateCheck -PassThru -ExcludeBuiltIn
+    # Get duplicates for further processing (built-in accounts automatically excluded)
+    $duplicates = Invoke-AdCrossForestDuplicateCheck -PassThru
     $duplicates | Where-Object { $_.Severity -eq 'High' } | Export-Csv conflicted.csv
 
     .OUTPUTS
@@ -82,9 +64,6 @@ function Invoke-AdCrossForestDuplicateCheck {
 
         [Parameter(Mandatory = $false)]
         [string]$OutputRoot,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$ExcludeBuiltIn,
 
         [Parameter(Mandatory = $false)]
         [switch]$PassThru
@@ -261,12 +240,11 @@ function Invoke-AdCrossForestDuplicateCheck {
 
     if ($allUsers.Count -gt 0 -or $allGroups.Count -gt 0 -or $allComputers.Count -gt 0) {
         $dupParams = @{
-            AllUsers     = @($allUsers)
-            AllGroups    = @($allGroups)
-            AllComputers = @($allComputers)
+            AllUsers       = @($allUsers)
+            AllGroups      = @($allGroups)
+            AllComputers   = @($allComputers)
+            ExcludeBuiltIn = $true
         }
-
-        if ($ExcludeBuiltIn) { $dupParams['ExcludeBuiltIn'] = $true }
         $duplicates = Get-AdDuplicateObjectsCrossForest @dupParams
 
         # Filter to cross-forest only (where ConflictingDomains contains multiple entries)
