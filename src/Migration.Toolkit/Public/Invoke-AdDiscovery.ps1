@@ -122,13 +122,29 @@ function Invoke-AdDiscovery {
     )
 
     Set-StrictMode -Version Latest
-    $ErrorActionPreference = 'Stop'
+    $ErrorActionPreference = 'Continue'
 
     $Now = Get-Date
     $EnvironmentSafeTag = $Environment.ToLower().Replace(' ', '_')
 
     $LegacyWorkstationOsRegex = '(?i)Windows (XP|Vista|7|8|8\.1|2000)'
     $LegacyServerOsRegex = '(?i)Windows Server (2003|2008|2008 R2|2012|2012 R2)'
+
+    # Track execution status
+    $executionLog = @()
+
+    function Log-ExecutionStatus {
+        param([string]$Operation, [string]$Status, [string]$Message = "")
+        $executionLog += [pscustomobject]@{
+            Operation = $Operation
+            Status    = $Status
+            Message   = $Message
+            Time      = Get-Date
+        }
+        if ($Message) {
+            Write-Host "    [$Status] $Operation : $Message" -ForegroundColor $(if ($Status -eq 'OK') { 'Green' } else { 'Yellow' })
+        }
+    }
 
     # Verify required functions are available
     if (-not (Get-Command Export-AdCsvSafe -ErrorAction SilentlyContinue)) {
@@ -150,9 +166,17 @@ function Invoke-AdDiscovery {
         $forestParams['Server'] = $Server
         Write-Host "  Using server: $Server" -ForegroundColor Yellow
     }
-    $forest = Get-AdAdForest @forestParams
-    $domains = @(Get-AdAdDomains -Forest $forest)
-    $suffixSet = Get-AdKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
+
+    try {
+        $forest = Get-AdAdForest @forestParams
+        $domains = @(Get-AdAdDomains -Forest $forest)
+        $suffixSet = Get-AdKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
+        Log-ExecutionStatus "Forest Discovery" "OK"
+    }
+    catch {
+        Log-ExecutionStatus "Forest Discovery" "FAIL" $_.Exception.Message
+        throw "Forest discovery failed. Cannot continue. $_"
+    }
 
     Write-Host "  Forest: $($forest.Name)" -ForegroundColor Green
     Write-Host "  Domains: $(@($domains).Count)" -ForegroundColor Green
@@ -188,21 +212,33 @@ function Invoke-AdDiscovery {
     # Schemas
     # -------------------------
     Write-Host "`nExporting CSV schemas..." -ForegroundColor Cyan
-    Export-AdSchemas -SchemasDir $schemasDir | Out-Null
+    try {
+        Export-AdSchemas -SchemasDir $schemasDir | Out-Null
+        Log-ExecutionStatus "CSV Schemas Export" "OK"
+    }
+    catch {
+        Log-ExecutionStatus "CSV Schemas Export" "FAIL" $_.Exception.Message
+    }
 
     # -------------------------
     # Forest exports
     # -------------------------
     Write-Host "Exporting forest-level data..." -ForegroundColor Cyan
 
-    (Get-AdAdForestSummary -Forest $forest) |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Summary__Forest.csv') -Force -AllowEmpty
+    try {
+        (Get-AdAdForestSummary -Forest $forest) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Summary__Forest.csv') -Force -AllowEmpty
+    }
+    catch { Log-ExecutionStatus "Forest Summary" "FAIL" $_.Exception.Message }
 
-    (Get-AdAdForestUpnSuffixes -Forest $forest -Domains $domains) |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Identity__UpnSuffixes__Forest.csv') -Force -AllowEmpty
+    try {
+        (Get-AdAdForestUpnSuffixes -Forest $forest -Domains $domains) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Identity__UpnSuffixes__Forest.csv') -Force -AllowEmpty
+    }
+    catch { Log-ExecutionStatus "Forest UPN Suffixes" "FAIL" $_.Exception.Message }
 
-    (Get-AdAdReplicationSites) |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Sites__Forest.csv') -Force -AllowEmpty
+    try {
+        (Get-AdAdReplicationSites) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Sites__Forest.csv') -Force -AllowEmpty
+    }
+    catch { Log-ExecutionStatus "Replication Sites" "FAIL" $_.Exception.Message }
 
     (Get-AdAdReplicationSubnets) |
     Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Subnets__Forest.csv') -Force -AllowEmpty
@@ -241,53 +277,94 @@ function Invoke-AdDiscovery {
     foreach ($d in $domains) {
         Write-Host "`nProcessing domain: $d" -ForegroundColor Cyan
 
-        $ctxParams = @{ DomainFqdn = $d; LogPath = $layout.LogPath }
-        if ($Server) { $ctxParams['Server'] = $Server }
-        $ctx = Get-AdAdDomainContext @ctxParams
-        $scopeTag = Get-DomainScopeTag $ctx.DomainFqdn
+        try {
+            $ctxParams = @{ DomainFqdn = $d; LogPath = $layout.LogPath }
+            if ($Server) { $ctxParams['Server'] = $Server }
+            $ctx = Get-AdAdDomainContext @ctxParams
+            $scopeTag = Get-DomainScopeTag $ctx.DomainFqdn
 
-        $domainDir = Join-Path $domainsRoot $scopeTag
-        if (-not (Test-Path -LiteralPath $domainDir)) { New-Item -ItemType Directory -Path $domainDir -Force | Out-Null }
+            $domainDir = Join-Path $domainsRoot $scopeTag
+            if (-not (Test-Path -LiteralPath $domainDir)) { New-Item -ItemType Directory -Path $domainDir -Force | Out-Null }
 
-        # Domain summaries / infra
-        Write-Host "  - Domain summary and infrastructure" -ForegroundColor Gray
-        (Get-AdAdDomainSummary -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Summary__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            # Domain summaries / infra
+            Write-Host "  - Domain summary and infrastructure" -ForegroundColor Gray
+            try {
+                (Get-AdAdDomainSummary -DomainContext $ctx) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Summary__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            }
+            catch { Log-ExecutionStatus "Domain Summary ($d)" "FAIL" $_.Exception.Message }
 
-        (Get-AdAdDomainControllers -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Infrastructure__DomainControllers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            try {
+                (Get-AdAdDomainControllers -DomainContext $ctx) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Infrastructure__DomainControllers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            }
+            catch { Log-ExecutionStatus "Domain Controllers ($d)" "FAIL" $_.Exception.Message }
 
-        # Password policy
-        Write-Host "  - Password policies" -ForegroundColor Gray
-        (Get-AdAdDefaultPasswordPolicy -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyDefault__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            # Password policy
+            Write-Host "  - Password policies" -ForegroundColor Gray
+            try {
+                (Get-AdAdDefaultPasswordPolicy -DomainContext $ctx) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyDefault__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            }
+            catch { Log-ExecutionStatus "Default Password Policy ($d)" "FAIL" $_.Exception.Message }
 
-        (Get-AdAdFineGrainedPasswordPolicies -DomainContext $ctx -LogPath $layout.LogPath) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyFgpp__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            try {
+                (Get-AdAdFineGrainedPasswordPolicies -DomainContext $ctx -LogPath $layout.LogPath) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyFgpp__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            }
+            catch { Log-ExecutionStatus "Fine-Grained Password Policies ($d)" "FAIL" $_.Exception.Message }
 
-        (Get-AdAdFineGrainedPasswordPolicyAssignments -DomainContext $ctx -LogPath $layout.LogPath) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyFgppAssignments__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            try {
+                (Get-AdAdFineGrainedPasswordPolicyAssignments -DomainContext $ctx -LogPath $layout.LogPath) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyFgppAssignments__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            }
+            catch { Log-ExecutionStatus "FGPP Assignments ($d)" "FAIL" $_.Exception.Message }
 
-        # Structure / delegation
-        Write-Host "  - Organizational units and delegation" -ForegroundColor Gray
-        (Get-AdAdOrganizationalUnits -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Structure__OrganizationalUnits__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            # Structure / delegation
+            Write-Host "  - Organizational units and delegation" -ForegroundColor Gray
+            try {
+                (Get-AdAdOrganizationalUnits -DomainContext $ctx) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Structure__OrganizationalUnits__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            }
+            catch { Log-ExecutionStatus "Organizational Units ($d)" "FAIL" $_.Exception.Message }
 
-        (Get-AdAdOuDelegationAcls -DomainContext $ctx -Scope OneLevel) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__OuDelegationAcls__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            try {
+                (Get-AdAdOuDelegationAcls -DomainContext $ctx -Scope OneLevel) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__OuDelegationAcls__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            }
+            catch { Log-ExecutionStatus "OU Delegation ACLs ($d)" "FAIL" $_.Exception.Message }
 
-        # Identity objects (keep materialized arrays if you reuse them)
-        Write-Host "  - Identity objects (users, groups, computers)" -ForegroundColor Gray
-        $groups = @(Get-AdAdGroups -DomainContext $ctx)
-        $users = @(Get-AdAdUsers -DomainContext $ctx -Now $Now -KnownUpnSuffixSet $suffixSet)
-        $comps = @(Get-AdAdComputers -DomainContext $ctx -Now $Now)
-        $ous = @(Get-AdAdOrganizationalUnits -DomainContext $ctx)
+            # Identity objects (keep materialized arrays if you reuse them)
+            Write-Host "  - Identity objects (users, groups, computers)" -ForegroundColor Gray
+            $groups = @()
+            $users = @()
+            $comps = @()
+            $ous = @()
 
-        # Collect for forest-level assessment
-        $allUsers += $users
-        $allComputers += $comps
-        $allGroups += $groups
-        $allOus += $ous
+            try {
+                $groups = @(Get-AdAdGroups -DomainContext $ctx)
+            }
+            catch { Log-ExecutionStatus "Groups enumeration ($d)" "FAIL" $_.Exception.Message }
+
+            try {
+                $users = @(Get-AdAdUsers -DomainContext $ctx -Now $Now -KnownUpnSuffixSet $suffixSet)
+            }
+            catch { Log-ExecutionStatus "Users enumeration ($d)" "FAIL" $_.Exception.Message }
+
+            try {
+                $comps = @(Get-AdAdComputers -DomainContext $ctx -Now $Now)
+            }
+            catch { Log-ExecutionStatus "Computers enumeration ($d)" "FAIL" $_.Exception.Message }
+
+            try {
+                $ous = @(Get-AdAdOrganizationalUnits -DomainContext $ctx)
+            }
+            catch { Log-ExecutionStatus "OUs enumeration ($d)" "FAIL" $_.Exception.Message }
+
+            # Collect for forest-level assessment
+            $allUsers += $users
+            $allComputers += $comps
+            $allGroups += $groups
+            $allOus += $ous
+        }
+        catch {
+            Log-ExecutionStatus "Domain Processing ($d)" "FAIL" $_.Exception.Message
+            Write-Host "  Skipping domain due to error: $_" -ForegroundColor Red
+            continue
+        }
 
         $groups |
         Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Groups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
@@ -562,6 +639,21 @@ function Invoke-AdDiscovery {
     Write-Host "Groups: $($allGroups.Count)" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Outputs in: $($layout.RunRoot)" -ForegroundColor Yellow
+
+    # Show execution summary
+    if ($executionLog) {
+        Write-Host ""
+        Write-Host "Execution Summary:" -ForegroundColor Cyan
+        $failures = $executionLog | Where-Object { $_.Status -eq 'FAIL' }
+        $successes = $executionLog | Where-Object { $_.Status -eq 'OK' }
+        Write-Host "  Successful operations: $($successes.Count)" -ForegroundColor Green
+        Write-Host "  Failed operations: $($failures.Count)" -ForegroundColor $(if ($failures.Count -gt 0) { 'Yellow' } else { 'Green' })
+        if ($failures) {
+            Write-Host "  Failed items:" -ForegroundColor Yellow
+            $failures | ForEach-Object { Write-Host "    - $($_.Operation): $($_.Message)" -ForegroundColor Yellow }
+        }
+    }
+
     Write-Host ""
     Write-Host "To generate reports, run:" -ForegroundColor Cyan
     Write-Host "  New-AdAssessmentReport -DiscoveryOutputPath '$($layout.RunRoot)'" -ForegroundColor White

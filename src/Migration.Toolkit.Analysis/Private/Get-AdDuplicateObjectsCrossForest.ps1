@@ -15,23 +15,51 @@ function Get-AdDuplicateObjectsCrossForest {
     )
 
     $builtInNames = @(
+        # User accounts
         'administrator', 'guest', 'krbtgt', 'defaultaccount', 'wdagutilityaccount',
+
+        # Core administrative groups
         'domain admins', 'enterprise admins', 'schema admins', 'administrators',
-        'domain users', 'domain computers', 'domain guests', 'group policy creator owners',
-        'account operators', 'backup operators', 'print operators', 'server operators',
-        'replicator', 'read-only domain controllers', 'enterprise read-only domain controllers',
-        'allowed rodc password replication group', 'denied rodc password replication group',
-        'incoming forest trust builders', 'pre-windows 2000 compatible access',
-        'users', 'guests', 'remote desktop users', 'remote management users',
-        'dnsadmins', 'dnsupdateproxy', 'cert publishers', 'protected users',
-        'certificate service dcom access', 'cloneable domain controllers',
-        'cryptographic operators', 'distributed com users', 'domain controllers',
-        'enterprise key admins', 'event log readers', 'hyper-v administrators',
-        'iis_iusrs', 'key admins', 'network configuration operators',
-        'performance log users', 'performance monitor users', 'ras and ias servers',
+        'group policy creator owners',
+
+        # Common domain groups
+        'domain users', 'domain computers', 'domain guests', 'authenticated users', 'everyone',
+
+        # DNS-related
+        'dnsadmins', 'dnsupdateproxy',
+
+        # Infrastructure services
+        'ras and ias servers', 'allowed rodc password replication group', 'denied rodc password replication group',
+        'read-only domain controllers', 'enterprise read-only domain controllers',
+
+        # Operational groups
+        'account operators', 'server operators', 'backup operators', 'print operators',
+        'network configuration operators', 'replicator',
+
+        # Legacy and compatibility
+        'pre-windows 2000 compatible access', 'incoming forest trust builders',
+        'performance monitor users', 'performance log users', 'event log readers',
+        'distributed com users',
+
+        # RODC and credential groups
+        'key admins', 'enterprise key admins',
+
+        # Hardened accounts and controllers
+        'protected users', 'domain controllers', 'cloneable domain controllers',
+
+        # Certificate and security
+        'cert publishers', 'certificate service dcom access',
+
+        # Remote and terminal services
+        'remote desktop users', 'remote management users', 'terminal server license servers',
         'rds endpoint servers', 'rds management servers', 'rds remote access servers',
-        'storage replica administrators', 'terminal server license servers',
-        'windows authorization access group'
+
+        # Storage and specialized
+        'storage replica administrators', 'cryptographic operators',
+        'hyper-v administrators', 'iis_iusrs',
+
+        # Access groups
+        'users', 'guests', 'windows authorization access group'
     )
 
     $builtInSet = @{}

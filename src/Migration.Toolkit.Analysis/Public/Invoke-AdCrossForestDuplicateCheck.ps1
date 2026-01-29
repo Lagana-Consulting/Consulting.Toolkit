@@ -23,8 +23,19 @@ function Invoke-AdCrossForestDuplicateCheck {
     If not provided, defaults to current directory with timestamp.
 
     .PARAMETER ExcludeBuiltIn
-    Exclude built-in users, groups, and computer accounts (e.g., Administrator, Domain Admins)
-    from duplicate analysis.
+    Exclude built-in users, groups, and computer accounts (default: all built-in Microsoft AD objects).
+
+    Excluded accounts include:
+    - Users: Administrator, Guest, krbtgt, DefaultAccount, WDAGUtilityAccount
+    - Admin groups: Domain Admins, Enterprise Admins, Schema Admins, Administrators
+    - Service groups: DnsAdmins, DnsUpdateProxy, RAS and IAS Servers, Certificate Publishers
+    - DC groups: Domain Controllers, Read-only Domain Controllers, Enterprise RODCs
+    - Operational groups: Account Operators, Backup Operators, Print Operators, Server Operators
+    - Infrastructure: Pre-Windows 2000 Compatible Access, Incoming Forest Trust Builders
+    - Security: Protected Users, Key Admins, Enterprise Key Admins
+    - Special: All other standard AD system groups
+
+    Use this flag to focus on user-created duplicates rather than infrastructure noise.
 
     .PARAMETER PassThru
     Return the duplicate objects instead of only writing to CSV.
@@ -39,8 +50,11 @@ function Invoke-AdCrossForestDuplicateCheck {
       -TargetRunRoot 'C:\Reports\Target' `
       -OutputRoot 'C:\Reports\Analysis'
 
-    # Get duplicates for further processing
-    $duplicates = Invoke-AdCrossForestDuplicateCheck -PassThru
+    # Exclude built-in accounts from analysis
+    Invoke-AdCrossForestDuplicateCheck -ExcludeBuiltIn
+
+    # Get duplicates for further processing (excluding built-in)
+    $duplicates = Invoke-AdCrossForestDuplicateCheck -PassThru -ExcludeBuiltIn
     $duplicates | Where-Object { $_.Severity -eq 'High' } | Export-Csv conflicted.csv
 
     .OUTPUTS
@@ -91,11 +105,13 @@ function Invoke-AdCrossForestDuplicateCheck {
         try {
             $config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
             Write-Verbose "Loaded config from: $ConfigPath"
-        } catch {
+        }
+        catch {
             Write-Warning "Failed to parse config file: $($_.Exception.Message)"
             $config = $null
         }
-    } else {
+    }
+    else {
         Write-Verbose "Config file not found: $ConfigPath (will use parameters)"
     }
 
@@ -103,20 +119,23 @@ function Invoke-AdCrossForestDuplicateCheck {
     if ($PSBoundParameters.ContainsKey('SourceRunRoots') -and $SourceRunRoots.Count -gt 0) {
         $SourceRunRoot = $SourceRunRoots
         Write-Verbose "Using parameter SourceRunRoots (overriding config)"
-    } else {
+    }
+    else {
         $SourceRunRoot = $config.SourceRunRoots
     }
 
     if ($PSBoundParameters.ContainsKey('TargetRunRoot')) {
         # Already set
         Write-Verbose "Using parameter TargetRunRoot (overriding config)"
-    } else {
+    }
+    else {
         $TargetRunRoot = $config.TargetRunRoot
     }
 
     if ($PSBoundParameters.ContainsKey('OutputRoot')) {
         # Already set
-    } else {
+    }
+    else {
         $OutputRoot = $config.OutputRoot
     }
 
@@ -266,11 +285,13 @@ function Invoke-AdCrossForestDuplicateCheck {
                 Select-Object -Property $exportColumns |
                 Export-Csv -Path $reportPath -NoTypeInformation -Force
                 Write-Host "Cross-forest duplicates exported: $reportPath ($($crossForestDuplicates.Count) conflicts)" -ForegroundColor Yellow
-            } else {
+            }
+            else {
                 Write-Host "No cross-forest duplicate objects detected" -ForegroundColor Green
             }
         }
-    } else {
+    }
+    else {
         Write-Warning "No user/group/computer data found to analyze"
     }
 
@@ -279,7 +300,8 @@ function Invoke-AdCrossForestDuplicateCheck {
     # ========================================
     if ($PassThru) {
         return $crossForestDuplicates
-    } else {
+    }
+    else {
         return @{
             ReportPath     = if ($crossForestDuplicates.Count -gt 0) { $reportPath } else { $null }
             ConflictCount  = $crossForestDuplicates.Count
