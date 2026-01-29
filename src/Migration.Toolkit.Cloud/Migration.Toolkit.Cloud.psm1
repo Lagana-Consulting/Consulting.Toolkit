@@ -5,55 +5,58 @@ $PrivatePath = Join-Path $PSScriptRoot 'Private'
 
 # Dot-source Private first
 Get-ChildItem -Path $PrivatePath -Filter *.ps1 -File -ErrorAction SilentlyContinue | ForEach-Object {
-  . $_.FullName
+    . $_.FullName
 }
 
 # Dot-source Public
 Get-ChildItem -Path $PublicPath -Filter *.ps1 -File -ErrorAction SilentlyContinue | ForEach-Object {
-  . $_.FullName
+    . $_.FullName
 }
 
 # Export only public functions (defined in psd1)
 Export-ModuleMember -Function @(
-  # Authentication
-  'Connect-AdCloudTenant',
-  'Disconnect-AdCloudTenant',
-  'Get-AdCloudAuthContext',
+    # Authentication
+    'Connect-AzCloudTenant',
+    'Disconnect-AzCloudTenant',
+    'Get-AzCloudAuthContext',
 
-  # Entra ID Discovery
-  'Get-AdCloudUsers',
-  'Get-AdCloudGroups',
-  'Get-AdCloudDevices',
-  'Get-AdCloudApplications',
-  'Get-AdCloudServicePrincipals',
-  'Get-AdCloudRoleAssignments',
+    # Entra ID Discovery
+    'Get-AzCloudUsers',
+    'Get-AzCloudGroups',
+    'Get-AzCloudDevices',
+    'Get-AzCloudApplications',
+    'Get-AzCloudServicePrincipals',
+    'Get-AzCloudRoleAssignments',
 
-  # Exchange Online Discovery
-  'Get-AdCloudMailboxes',
-  'Get-AdCloudDistributionGroups',
-  'Get-AdCloudResourceMailboxes',
-  'Get-AdCloudMailboxPermissions',
+    # Exchange Online Discovery
+    'Get-AzCloudMailboxes',
+    'Get-AzCloudDistributionGroups',
+    'Get-AzCloudResourceMailboxes',
+    'Get-AzCloudMailboxPermissions',
 
-  # SharePoint & OneDrive Discovery
-  'Get-AdCloudSharePointSites',
-  'Get-AdCloudOneDriveUsage',
-  'Get-AdCloudSitePermissions',
+    # SharePoint & OneDrive Discovery
+    'Get-AzCloudSharePointSites',
+    'Get-AzCloudOneDriveUsage',
+    'Get-AzCloudSitePermissions',
 
-  # Teams Discovery
-  'Get-AdCloudTeams',
-  'Get-AdCloudTeamChannels',
-  'Get-AdCloudTeamMembers',
+    # Teams Discovery
+    'Get-AzCloudTeams',
+    'Get-AzCloudTeamChannels',
+    'Get-AzCloudTeamMembers',
 
-  # M365 Groups
-  'Get-AdCloudM365Groups',
-  'Get-AdCloudGroupMembers',
+    # M365 Groups
+    'Get-AzCloudM365Groups',
+    'Get-AzCloudGroupMembers',
 
-  # Orchestration
-  'Invoke-AdCloudDiscovery',
+    # Data Governance & Security
+    'Get-AzCloudSensitivityLabels',
 
-  # Utilities
-  'Export-AdCloudCsv',
-  'New-AdCloudLog',
-  'Write-AdCloudLog',
-  'Get-AdCloudTenantInfo'
+    # Orchestration
+    'Invoke-AzCloudDiscovery',
+
+    # Utilities
+    'Export-AzCloudCsv',
+    'New-AzCloudLog',
+    'Write-AzCloudLog',
+    'Get-AzCloudTenantInfo'
 )

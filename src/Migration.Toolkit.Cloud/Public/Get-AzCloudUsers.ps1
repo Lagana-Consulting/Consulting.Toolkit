@@ -1,4 +1,4 @@
-function Get-AdCloudUsers {
+function Get-AzCloudUsers {
   <#
   .SYNOPSIS
   Discovers all users in the connected Entra ID tenant.
@@ -37,22 +37,22 @@ function Get-AdCloudUsers {
   Default $false for performance.
 
   .EXAMPLE
-  $users = Get-AdCloudUsers
+  $users = Get-AzCloudUsers
 
   Gets all users in tenant with default properties.
 
   .EXAMPLE
-  $activeUsers = Get-AdCloudUsers -Filter "accountEnabled eq true"
+  $activeUsers = Get-AzCloudUsers -Filter "accountEnabled eq true"
 
   Gets only enabled users.
 
   .EXAMPLE
-  $members = Get-AdCloudUsers -IncludeGuests $false
+  $members = Get-AzCloudUsers -IncludeGuests $false
 
   Gets only member users (excludes B2B guests).
 
   .EXAMPLE
-  $guestUsers = Get-AdCloudUsers -Filter "userType eq 'Guest'"
+  $guestUsers = Get-AzCloudUsers -Filter "userType eq 'Guest'"
 
   Gets only guest accounts.
 
@@ -73,9 +73,9 @@ function Get-AdCloudUsers {
   Risk data requires additional premium scopes; may be empty if not licensed.
 
   .LINK
-  Get-AdCloudGroups
-  Get-AdCloudDevices
-  Export-AdCloudCsv
+  Get-AzCloudGroups
+  Get-AzCloudDevices
+  Export-AzCloudCsv
   #>
   [CmdletBinding()]
   param(
@@ -94,7 +94,8 @@ function Get-AdCloudUsers {
       'mailNickname',
       'proxyAddresses',
       'objectType',
-      'licenseAssignmentStates'
+      'licenseAssignmentStates',
+      'onPremisesSyncEnabled'
     ),
     [int]$Top = 999,
     [switch]$IncludeGuests,
@@ -102,19 +103,28 @@ function Get-AdCloudUsers {
     [switch]$IncludeLicenseInfo
   )
 
-  if (-not (Get-AdCloudAuthContext)) {
-    throw "Not connected to cloud tenant. Call Connect-AdCloudTenant first."
+  if (-not (Get-AzCloudAuthContext)) {
+    throw "Not connected to cloud tenant. Call Connect-AzCloudTenant first."
   }
 
+  # Validate module is available (may already be loaded from Connect)
+  $usersModule = Get-Module Microsoft.Graph.Users -ListAvailable -ErrorAction SilentlyContinue | Select-Object -First 1
+  if (-not $usersModule) {
+    throw "Microsoft.Graph.Users module not installed. Run: .\Install-CloudDiscoveryPrerequisites.ps1"
+  }
+
+  # Try to load if not already loaded
   try {
-    Import-Module Microsoft.Graph.Users -ErrorAction Stop
+    if (-not (Get-Module Microsoft.Graph.Users -ErrorAction SilentlyContinue)) {
+      Import-Module Microsoft.Graph.Users -ErrorAction Stop -SkipEditionCheck
+    }
   }
   catch {
-    throw "Microsoft.Graph.Users module required. Install via: Install-Module Microsoft.Graph.Users"
+    Write-Warning "Could not import Microsoft.Graph.Users module (may already be loaded). Proceeding..."
   }
 
   $params = @{
-    All = $true
+    All         = $true
     ErrorAction = 'Stop'
   }
 

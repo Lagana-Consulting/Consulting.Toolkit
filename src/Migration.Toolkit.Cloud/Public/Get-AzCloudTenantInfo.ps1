@@ -1,4 +1,4 @@
-function Get-AdCloudTenantInfo {
+function Get-AzCloudTenantInfo {
   <#
   .SYNOPSIS
   Retrieves basic tenant information for the connected cloud tenant.
@@ -8,7 +8,7 @@ function Get-AdCloudTenantInfo {
   for discovery context and reporting.
 
   .EXAMPLE
-  $tenantInfo = Get-AdCloudTenantInfo
+  $tenantInfo = Get-AzCloudTenantInfo
 
   Gets tenant information.
 
@@ -21,25 +21,20 @@ function Get-AdCloudTenantInfo {
     - CreatedDateTime, LicenseCount
 
   .NOTES
-  Requires connection via Connect-AdCloudTenant.
+  Requires connection via Connect-AzCloudTenant.
 
   .LINK
-  Connect-AdCloudTenant
-  Get-AdCloudAuthContext
+  Connect-AzCloudTenant
+  Get-AzCloudAuthContext
   #>
   [CmdletBinding()]
   param()
 
-  if (-not (Get-AdCloudAuthContext)) {
-    throw "Not connected to cloud tenant. Call Connect-AdCloudTenant first."
+  if (-not (Get-AzCloudAuthContext)) {
+    throw "Not connected to cloud tenant. Call Connect-AzCloudTenant first."
   }
 
-  try {
-    Import-Module Microsoft.Graph.Organization -ErrorAction Stop
-  }
-  catch {
-    throw "Microsoft.Graph.Organization module required. Install via: Install-Module Microsoft.Graph.Organization"
-  }
+  try { if (-not (Get-Module Microsoft.Graph.Organization -ErrorAction SilentlyContinue)) { Import-Module Microsoft.Graph.Organization -ErrorAction Stop -SkipEditionCheck } } catch { Write-Warning "Could not import Microsoft.Graph.Organization module (may already be loaded). Proceeding..." }
 
   try {
     $org = Get-MgOrganization -ErrorAction Stop

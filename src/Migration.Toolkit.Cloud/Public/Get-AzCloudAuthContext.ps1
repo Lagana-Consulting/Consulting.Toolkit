@@ -1,14 +1,14 @@
-function Get-AdCloudAuthContext {
+function Get-AzCloudAuthContext {
   <#
   .SYNOPSIS
   Retrieves the current cloud authentication context.
 
   .DESCRIPTION
-  Returns the stored authentication context created by Connect-AdCloudTenant.
+  Returns the stored authentication context created by Connect-AzCloudTenant.
   Useful for validating connection state or retrieving connection details for logging.
 
   .EXAMPLE
-  $ctx = Get-AdCloudAuthContext
+  $ctx = Get-AzCloudAuthContext
   if ($ctx) { Write-Host "Connected to tenant: $($ctx.TenantId)" }
 
   Retrieves current auth context.
@@ -20,14 +20,14 @@ function Get-AdCloudAuthContext {
   [PSObject] Authentication context or $null if not connected.
 
   .NOTES
-  Returns $null if Connect-AdCloudTenant has not been called.
+  Returns $null if Connect-AzCloudTenant has not been called.
 
   .LINK
-  Connect-AdCloudTenant
-  Disconnect-AdCloudTenant
+  Connect-AzCloudTenant
+  DisConnect-AzCloudTenant
   #>
   [CmdletBinding()]
   param()
 
-  return $script:AdCloudAuthContext
+  return $script:AzCloudAuthContext
 }

@@ -1,4 +1,4 @@
-function Get-AdCloudDistributionGroups {
+function Get-AzCloudDistributionGroups {
   <#
   .SYNOPSIS
   Discovers distribution groups and mail-enabled security groups in Exchange Online.
@@ -27,12 +27,12 @@ function Get-AdCloudDistributionGroups {
   Number of results. Default 999.
 
   .EXAMPLE
-  $distGroups = Get-AdCloudDistributionGroups
+  $distGroups = Get-AzCloudDistributionGroups
 
   Gets all distribution groups.
 
   .EXAMPLE
-  $secGroups = Get-AdCloudDistributionGroups -GroupType SecurityGroup
+  $secGroups = Get-AzCloudDistributionGroups -GroupType SecurityGroup
 
   Gets mail-enabled security groups.
 
@@ -50,10 +50,10 @@ function Get-AdCloudDistributionGroups {
   Dynamic distribution groups are mail-enabled but do not store explicit members.
 
   .LINK
-  Get-AdCloudMailboxes
-  Get-AdCloudResourceMailboxes
-  Get-AdCloudM365Groups
-  Export-AdCloudCsv
+  Get-AzCloudMailboxes
+  Get-AzCloudResourceMailboxes
+  Get-AzCloudM365Groups
+  Export-AzCloudCsv
   #>
   [CmdletBinding()]
   param(
@@ -72,8 +72,8 @@ function Get-AdCloudDistributionGroups {
     [int]$Top = 999
   )
 
-  if (-not (Get-AdCloudAuthContext)) {
-    throw "Not connected to cloud tenant. Call Connect-AdCloudTenant first."
+  if (-not (Get-AzCloudAuthContext)) {
+    throw "Not connected to cloud tenant. Call Connect-AzCloudTenant first."
   }
 
   try {
@@ -93,24 +93,29 @@ function Get-AdCloudDistributionGroups {
     $filterParams['Filter'] = $Filter
   }
 
-  Write-Verbose "Querying distribution groups with type filter: $GroupType"
+  Write-Verbose "Querying distribution groups..."
+
+  # Check if Exchange Online is connected
+  if (-not (Get-Command Get-ConnectionInformation -ErrorAction SilentlyContinue)) {
+    Write-Warning "Exchange Online Management module not available. Run: Install-Module ExchangeOnlineManagement"
+    return @()
+  }
+
+  $exoConnections = Get-ConnectionInformation -ErrorAction SilentlyContinue
+  if (-not $exoConnections) {
+    Write-Warning "Not connected to Exchange Online. Use Connect-AzCloudTenant -IncludeExchangeOnline to enable this feature."
+    return @()
+  }
 
   try {
-    $distGroups = Get-DistributionGroup @filterParams -ResultSize $Top -ErrorAction Stop
-
-    if ($IncludeMemberCount) {
-      Write-Verbose "Retrieving member counts for $($distGroups.Count) groups..."
-      $distGroups = $distGroups | ForEach-Object {
-        $memberCount = (Get-DistributionGroupMember -Identity $_.Identity -ResultSize $Top -ErrorAction SilentlyContinue | Measure-Object).Count
-        $_ | Add-Member -MemberType NoteProperty -Name 'MemberCount' -Value $memberCount -Force
-        $_
-      }
-    }
-
-    Write-Verbose "Retrieved $($distGroups.Count) distribution groups"
-    return $distGroups
+    Write-Verbose "Retrieving distribution groups from Exchange Online..."
+    $groups = Get-DistributionGroup -ResultSize Unlimited -ErrorAction Stop
+    $groupCount = if ($groups) { ($groups | Measure-Object).Count } else { 0 }
+    Write-Verbose "Retrieved $groupCount distribution groups"
+    return $groups
   }
   catch {
-    throw "Failed to retrieve distribution groups. $($_.Exception.Message)"
+    Write-Warning "Failed to retrieve distribution groups. Error: $($_.Exception.Message)"
+    return @()
   }
 }

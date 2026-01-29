@@ -1,10 +1,10 @@
-function New-AdCloudLog {
+function New-AzCloudLog {
   <#
   .SYNOPSIS
   Creates a new cloud discovery log file.
 
   .DESCRIPTION
-  Initializes a timestamped log file for discovery output. Returns the path for use with Write-AdCloudLog.
+  Initializes a timestamped log file for discovery output. Returns the path for use with Write-AzCloudLog.
 
   .PARAMETER Folder
   Folder path for log file. Will be created if missing.
@@ -13,7 +13,7 @@ function New-AdCloudLog {
   Log file name prefix. Default 'cloud-discovery'.
 
   .EXAMPLE
-  $logPath = New-AdCloudLog -Folder "C:\Reports" -Prefix "entra"
+  $logPath = New-AzCloudLog -Folder "C:\Reports" -Prefix "entra"
 
   Creates timestamped log file like "C:\Reports\entra__20260128-120000.log"
 
@@ -24,7 +24,7 @@ function New-AdCloudLog {
   [String] Path to created log file.
 
   .LINK
-  Write-AdCloudLog
+  Write-AzCloudLog
   #>
   [CmdletBinding()]
   param(

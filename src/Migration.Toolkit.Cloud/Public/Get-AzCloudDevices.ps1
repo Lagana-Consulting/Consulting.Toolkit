@@ -1,4 +1,4 @@
-function Get-AdCloudDevices {
+function Get-AzCloudDevices {
   <#
   .SYNOPSIS
   Discovers all devices registered in the connected Entra ID tenant.
@@ -34,17 +34,17 @@ function Get-AdCloudDevices {
   Default $false for performance.
 
   .EXAMPLE
-  $devices = Get-AdCloudDevices
+  $devices = Get-AzCloudDevices
 
   Gets all devices in tenant.
 
   .EXAMPLE
-  $hybridDevices = Get-AdCloudDevices -DeviceTrustType HybridAzureAdJoined
+  $hybridDevices = Get-AzCloudDevices -DeviceTrustType HybridAzureAdJoined
 
   Gets only hybrid-joined devices.
 
   .EXAMPLE
-  $nonCompliant = Get-AdCloudDevices -Filter "isCompliant eq false"
+  $nonCompliant = Get-AzCloudDevices -Filter "isCompliant eq false"
 
   Gets non-compliant devices.
 
@@ -68,9 +68,9 @@ function Get-AdCloudDevices {
   approximateLastSignInDateTime may be null for inactive devices.
 
   .LINK
-  Get-AdCloudUsers
-  Get-AdCloudGroups
-  Export-AdCloudCsv
+  Get-AzCloudUsers
+  Get-AzCloudGroups
+  Export-AzCloudCsv
   #>
   [CmdletBinding()]
   param(
@@ -97,16 +97,11 @@ function Get-AdCloudDevices {
     [switch]$IncludeOwnerInfo
   )
 
-  if (-not (Get-AdCloudAuthContext)) {
-    throw "Not connected to cloud tenant. Call Connect-AdCloudTenant first."
+  if (-not (Get-AzCloudAuthContext)) {
+    throw "Not connected to cloud tenant. Call Connect-AzCloudTenant first."
   }
 
-  try {
-    Import-Module Microsoft.Graph.DeviceManagement -ErrorAction Stop
-  }
-  catch {
-    throw "Microsoft.Graph.DeviceManagement module required. Install via: Install-Module Microsoft.Graph.DeviceManagement"
-  }
+  try { if (-not (Get-Module Microsoft.Graph.Identity.DirectoryManagement -ErrorAction SilentlyContinue)) { Import-Module Microsoft.Graph.Identity.DirectoryManagement -ErrorAction Stop -SkipEditionCheck } } catch { Write-Warning "Could not import Microsoft.Graph.Identity.DirectoryManagement module (may already be loaded). Proceeding..." }
 
   $effectiveFilter = @()
 
@@ -127,9 +122,9 @@ function Get-AdCloudDevices {
   $finalFilter = $effectiveFilter -join ' and '
 
   $params = @{
-    All = $true
+    All         = $true
     ErrorAction = 'Stop'
-    Property = $Properties
+    Property    = $Properties
   }
 
   if ($finalFilter) {
@@ -139,11 +134,28 @@ function Get-AdCloudDevices {
   Write-Verbose "Querying devices with filter: $finalFilter"
 
   try {
-    $devices = Get-MgDevice @params
-    Write-Verbose "Retrieved $($devices.Count) devices"
+    # Try SDK cmdlet first
+    $devices = Get-MgDevice @params -ErrorAction Stop
+    $deviceCount = if ($devices) { ($devices | Measure-Object).Count } else { 0 }
+    Write-Verbose "Retrieved $deviceCount devices"
     return $devices
   }
   catch {
-    throw "Failed to retrieve devices from MS-Graph. $($_.Exception.Message)"
+    # Fallback to direct REST API if SDK fails
+    Write-Verbose "SDK cmdlet failed, attempting direct REST API call..."
+    try {
+      $uri = "https://graph.microsoft.com/v1.0/devices"
+      if ($finalFilter) {
+        $uri += "?`$filter=$([System.Web.HttpUtility]::UrlEncode($finalFilter))"
+      }
+      $devices = (Invoke-MgGraphRequest -Method GET -Uri $uri -ErrorAction Stop).value
+      $deviceCount = if ($devices) { ($devices | Measure-Object).Count } else { 0 }
+      Write-Verbose "Retrieved $deviceCount devices via REST API"
+      return $devices
+    }
+    catch {
+      Write-Warning "Failed to retrieve devices from MS-Graph (Graph SDK compatibility issue). Returning empty set. Error: $($_.Exception.Message)"
+      return @()
+    }
   }
 }

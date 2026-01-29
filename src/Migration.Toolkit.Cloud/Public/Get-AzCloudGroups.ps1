@@ -1,4 +1,4 @@
-function Get-AdCloudGroups {
+function Get-AzCloudGroups {
   <#
   .SYNOPSIS
   Discovers all groups in the connected Entra ID tenant.
@@ -36,26 +36,26 @@ function Get-AdCloudGroups {
 
   .PARAMETER IncludeMembers
   If $true, expands group members inline. Use with caution on large groups; consider
-  using Get-AdCloudGroupMembers for large membership queries.
+  using Get-AzCloudGroupMembers for large membership queries.
   Default $false.
 
   .EXAMPLE
-  $groups = Get-AdCloudGroups
+  $groups = Get-AzCloudGroups
 
   Gets all groups in tenant.
 
   .EXAMPLE
-  $m365Groups = Get-AdCloudGroups -GroupType M365
+  $m365Groups = Get-AzCloudGroups -GroupType M365
 
   Gets only Microsoft 365 (Unified) groups.
 
   .EXAMPLE
-  $secGroups = Get-AdCloudGroups -GroupType Security
+  $secGroups = Get-AzCloudGroups -GroupType Security
 
   Gets only security groups.
 
   .EXAMPLE
-  $distGroups = Get-AdCloudGroups -Filter "mailEnabled eq true" -IncludeMemberCount
+  $distGroups = Get-AzCloudGroups -Filter "mailEnabled eq true" -IncludeMemberCount
 
   Gets mail-enabled groups with member counts.
 
@@ -74,13 +74,13 @@ function Get-AdCloudGroups {
   Requires Graph scope: Group.Read.All
   Large tenants with many groups may take time; consider Filter to scope query.
   IncludeMemberCount requires additional API calls (1 per group); use sparingly on 1000+ group estates.
-  For large group membership analysis, use Get-AdCloudGroupMembers separately.
+  For large group membership analysis, use Get-AzCloudGroupMembers separately.
 
   .LINK
-  Get-AdCloudGroupMembers
-  Get-AdCloudUsers
-  Get-AdCloudM365Groups
-  Export-AdCloudCsv
+  Get-AzCloudGroupMembers
+  Get-AzCloudUsers
+  Get-AzCloudM365Groups
+  Export-AzCloudCsv
   #>
   [CmdletBinding()]
   param(
@@ -106,16 +106,11 @@ function Get-AdCloudGroups {
     [switch]$IncludeMembers
   )
 
-  if (-not (Get-AdCloudAuthContext)) {
-    throw "Not connected to cloud tenant. Call Connect-AdCloudTenant first."
+  if (-not (Get-AzCloudAuthContext)) {
+    throw "Not connected to cloud tenant. Call Connect-AzCloudTenant first."
   }
 
-  try {
-    Import-Module Microsoft.Graph.Groups -ErrorAction Stop
-  }
-  catch {
-    throw "Microsoft.Graph.Groups module required. Install via: Install-Module Microsoft.Graph.Groups"
-  }
+  try { if (-not (Get-Module Microsoft.Graph.Groups -ErrorAction SilentlyContinue)) { Import-Module Microsoft.Graph.Groups -ErrorAction Stop -SkipEditionCheck } } catch { Write-Warning "Could not import Microsoft.Graph.Groups module (may already be loaded). Proceeding..." }
 
   # Build filter based on GroupType
   $effectiveFilter = @()

@@ -1,4 +1,4 @@
-function Connect-AdCloudTenant {
+function Connect-AzCloudTenant {
   <#
   .SYNOPSIS
   Establishes authenticated connection to Microsoft cloud services using MS-Graph.
@@ -43,19 +43,24 @@ function Connect-AdCloudTenant {
   If $true, validates connection but does not store context globally.
   Useful for testing credentials before use.
 
+  .PARAMETER IncludeExchangeOnline
+  If $true, also connects to Exchange Online using the same credentials.
+  Enables distribution groups and resource mailbox discovery.
+  Requires ExchangeOnlineManagement module. Default $false.
+
   .EXAMPLE
-  $ctx = Connect-AdCloudTenant -TenantId "contoso.onmicrosoft.com" -ClientId "12345678-1234-1234-1234-123456789012" `
+  $ctx = Connect-AzCloudTenant -TenantId "contoso.onmicrosoft.com" -ClientId "12345678-1234-1234-1234-123456789012" `
     -CertificatePath "C:\certs\cloud-app.pfx" -CertificatePassword (ConvertTo-SecureString "password" -AsPlainText -Force)
 
   Connects using certificate-based service principal auth (recommended for production).
 
   .EXAMPLE
-  $ctx = Connect-AdCloudTenant -TenantId "contoso.onmicrosoft.com" -AuthType Interactive
+  $ctx = Connect-AzCloudTenant -TenantId "contoso.onmicrosoft.com" -AuthType Interactive
 
   Connects interactively (prompts for credentials). User must have appropriate permissions.
 
   .EXAMPLE
-  $ctx = Connect-AdCloudTenant -TenantId "contoso.onmicrosoft.com" -ClientId "12345678-1234-1234-1234-123456789012" `
+  $ctx = Connect-AzCloudTenant -TenantId "contoso.onmicrosoft.com" -ClientId "12345678-1234-1234-1234-123456789012" `
     -CertificateThumbprint "1234567890ABCDEF1234567890ABCDEF12345678"
 
   Connects using certificate already installed in cert store (identified by thumbprint).
@@ -78,12 +83,12 @@ function Connect-AdCloudTenant {
   - Certificate must have key usage for client authentication.
   - If using .pfx, recommended: openssl pkcs12 -export -in cert.cer -inkey key.pem -out cert.pfx
   - Access tokens are cached by MS-Graph SDK; subsequent calls in same session reuse token.
-  - Use Disconnect-AdCloudTenant to clear context.
+  - Use DisConnect-AzCloudTenant to clear context.
 
   .LINK
-  Disconnect-AdCloudTenant
-  Get-AdCloudAuthContext
-  Get-AdCloudTenantInfo
+  DisConnect-AzCloudTenant
+  Get-AzCloudAuthContext
+  Get-AzCloudTenantInfo
   #>
   [CmdletBinding(DefaultParameterSetName = 'Interactive')]
   param(
@@ -113,23 +118,31 @@ function Connect-AdCloudTenant {
       'Device.Read.All',
       'Application.Read.All',
       'Directory.Read.All',
-      'Mail.Read',
-      'Calendar.Read.All',
-      'Team.ReadBasic.All',
-      'TeamSettings.Read.All',
       'Sites.Read.All',
-      'SharePointTenantSettings.Read.All'
+      'Files.Read.All',
+      'Team.ReadBasic.All',
+      'TeamSettings.Read.All'
     ),
 
-    [switch]$ValidateOnly
+    [switch]$ValidateOnly,
+
+    [switch]$IncludeExchangeOnline
   )
 
-  # Validate MS-Graph module availability
+  # Validate MS-Graph module availability - check if installed
+  $authModule = Get-Module Microsoft.Graph.Authentication -ListAvailable -ErrorAction SilentlyContinue | Select-Object -First 1
+  if (-not $authModule) {
+    throw "Microsoft.Graph.Authentication module not installed. Run: .\Install-CloudDiscoveryPrerequisites.ps1"
+  }
+
+  # Try to load the module (it may already be loaded, which is fine)
   try {
-    Import-Module Microsoft.Graph.Authentication -ErrorAction Stop
+    if (-not (Get-Module Microsoft.Graph.Authentication -ErrorAction SilentlyContinue)) {
+      Import-Module Microsoft.Graph.Authentication -ErrorAction Stop -SkipEditionCheck
+    }
   }
   catch {
-    throw "Microsoft.Graph.Authentication module not available. Install via: Install-Module Microsoft.Graph.Authentication -AllowPrerelease"
+    Write-Warning "Could not import Microsoft.Graph.Authentication module (may already be loaded). Proceeding..."
   }
 
   # Determine effective auth type
@@ -139,8 +152,7 @@ function Connect-AdCloudTenant {
   }
 
   $connectParams = @{
-    TenantId = $TenantId
-    NoWelcome = $true
+    TenantId    = $TenantId
     ErrorAction = 'Stop'
   }
 
@@ -196,22 +208,59 @@ function Connect-AdCloudTenant {
 
     # Establish connection
     $connection = Connect-MgGraph @connectParams
-    Write-Verbose "Successfully connected to tenant: $($connection.TenantId)"
+    Write-Verbose "Successfully connected to Microsoft Graph"
+
+    # Optionally connect to Exchange Online
+    if ($IncludeExchangeOnline) {
+      Write-Verbose "Connecting to Exchange Online..."
+      try {
+        # Import EXO module if available
+        if (-not (Get-Module ExchangeOnlineManagement -ErrorAction SilentlyContinue)) {
+          Import-Module ExchangeOnlineManagement -ErrorAction Stop -SkipEditionCheck
+        }
+
+        # Connect to EXO using same credentials
+        if ($effectiveAuthType -eq 'Certificate') {
+          # Certificate auth for EXO
+          $exoParams = @{
+            Organization        = $TenantId
+            AppId               = $ClientId
+            CertificateFilePath = $CertificatePath
+            ErrorAction         = 'Stop'
+          }
+          if ($CertificatePassword) {
+            $exoParams['CertificatePassword'] = $CertificatePassword
+          }
+          Connect-ExchangeOnline @exoParams | Out-Null
+        }
+        else {
+          # Interactive/DeviceCode auth for EXO - just use interactive without specifying account
+          $exoParams = @{
+            ShowBanner  = $false
+            ErrorAction = 'Stop'
+          }
+          Connect-ExchangeOnline @exoParams
+        }
+        Write-Host "✓ Connected to Exchange Online" -ForegroundColor Green
+      }
+      catch {
+        Write-Warning "Failed to connect to Exchange Online: $($_.Exception.Message). Exchange-dependent functions will return empty results."
+      }
+    }
 
     # Build auth context object
     $context = @{
-      TenantId = $TenantId
-      ClientId = $ClientId
-      AuthType = $effectiveAuthType
+      TenantId    = $TenantId
+      ClientId    = $ClientId
+      AuthType    = $effectiveAuthType
       ConnectTime = Get-Date -AsUTC
-      Scopes = if ($effectiveAuthType -eq 'Certificate') { 'https://graph.microsoft.com/.default' } else { $Scopes }
-      Account = $connection.Account
-      PSTypeName = 'Lagana.Consulting.CloudAuthContext'
+      Scopes      = if ($effectiveAuthType -eq 'Certificate') { 'https://graph.microsoft.com/.default' } else { $Scopes }
+      PSTypeName  = 'Lagana.Consulting.CloudAuthContext'
     }
 
     # Store context in script scope for use by discovery functions
     if (-not $ValidateOnly) {
-      $script:AdCloudAuthContext = $context
+      $script:AzCloudAuthContext = $context
       Write-Verbose "Authentication context stored for discovery functions"
     }
 

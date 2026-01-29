@@ -1,14 +1,14 @@
-function Write-AdCloudLog {
+function Write-AzCloudLog {
   <#
   .SYNOPSIS
   Writes timestamped log entry to cloud discovery log file.
 
   .DESCRIPTION
-  Appends a timestamped message to the log file created by New-AdCloudLog.
+  Appends a timestamped message to the log file created by New-AzCloudLog.
   Also writes to verbose stream for real-time feedback.
 
   .PARAMETER Path
-  Path to log file (from New-AdCloudLog).
+  Path to log file (from New-AzCloudLog).
 
   .PARAMETER Message
   Message text to log.
@@ -17,12 +17,12 @@ function Write-AdCloudLog {
   Log level: 'Info', 'Warning', 'Error'. Default 'Info'.
 
   .EXAMPLE
-  Write-AdCloudLog -Path $logPath -Message "Completed user discovery" -Level Info
+  Write-AzCloudLog -Path $logPath -Message "Completed user discovery" -Level Info
 
   Logs an info message.
 
   .EXAMPLE
-  Write-AdCloudLog -Path $logPath -Message "Connection failed" -Level Error
+  Write-AzCloudLog -Path $logPath -Message "Connection failed" -Level Error
 
   Logs an error message.
 
@@ -33,7 +33,7 @@ function Write-AdCloudLog {
   None.
 
   .LINK
-  New-AdCloudLog
+  New-AzCloudLog
   #>
   [CmdletBinding()]
   param(
