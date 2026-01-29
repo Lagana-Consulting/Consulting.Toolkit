@@ -1,8 +1,9 @@
 function Get-AdGpoPerformanceAnalysis {
   [CmdletBinding()]
   param(
-    [Parameter(Mandatory)]
-    [array]$AllGpos,
+    [Parameter()]
+    [AllowEmptyCollection()]
+    [array]$AllGpos = @(),
 
     [int]$WarningSizeKB = 5120,
     [int]$CriticalSizeKB = 10240
@@ -39,7 +40,8 @@ function Get-AdGpoPerformanceAnalysis {
     if ($complexityScore -ge 6) {
       $status = 'High Complexity'
       $severity = 'High'
-    } elseif ($complexityScore -ge 4) {
+    }
+    elseif ($complexityScore -ge 4) {
       $status = 'Medium Complexity'
       $severity = 'Medium'
     }
@@ -52,21 +54,21 @@ function Get-AdGpoPerformanceAnalysis {
       if ($hasWmiFilter) { $performanceNotes += 'WMI filter applied' }
 
       $results += [pscustomobject]@{
-        GpoName            = $gpo.DisplayName
-        DomainFqdn         = $gpo.DomainFqdn
-        GpoId              = $gpo.GpoId
-        UserVersion        = $userVersion
-        ComputerVersion    = $computerVersion
-        TotalVersions      = $totalVersions
-        LinkCount          = $linkCount
-        HasWmiFilter       = $hasWmiFilter
-        ComplexityScore    = $complexityScore
-        Status             = $status
-        Severity           = $severity
-        PerformanceNotes   = ($performanceNotes -join '; ')
-        Recommendation     = if ($status -eq 'High Complexity') { 'Review for consolidation or simplification to improve GPO processing time' }
-                            elseif ($status -eq 'Medium Complexity') { 'Monitor GPO application time in production' }
-                            else { 'No action needed' }
+        GpoName          = $gpo.DisplayName
+        DomainFqdn       = $gpo.DomainFqdn
+        GpoId            = $gpo.GpoId
+        UserVersion      = $userVersion
+        ComputerVersion  = $computerVersion
+        TotalVersions    = $totalVersions
+        LinkCount        = $linkCount
+        HasWmiFilter     = $hasWmiFilter
+        ComplexityScore  = $complexityScore
+        Status           = $status
+        Severity         = $severity
+        PerformanceNotes = ($performanceNotes -join '; ')
+        Recommendation   = if ($status -eq 'High Complexity') { 'Review for consolidation or simplification to improve GPO processing time' }
+        elseif ($status -eq 'Medium Complexity') { 'Monitor GPO application time in production' }
+        else { 'No action needed' }
       }
     }
   }
