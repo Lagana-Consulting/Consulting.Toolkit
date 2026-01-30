@@ -17,9 +17,9 @@ function Get-AdWordTableStyle {
         [Parameter(Mandatory)][string] $TableStyleName
     )
 
-    # Table styles are in the TableStyles collection, not Styles
+    # Get table style from Styles collection (matches old working script pattern)
     try {
-        $style = $Document.TableStyles.Item($TableStyleName)
+        $style = $Document.Styles.Item($TableStyleName)
     }
     catch {
         $style = $null
