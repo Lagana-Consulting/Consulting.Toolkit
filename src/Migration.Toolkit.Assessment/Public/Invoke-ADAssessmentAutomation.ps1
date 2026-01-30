@@ -18,7 +18,8 @@ function Invoke-ADAssessmentAutomation {
   Path where final assessment document will be saved.
 
   .PARAMETER TableStyleName
-  Word table style to apply throughout. Default: "Light Grid Accent 1"
+  Word table style to apply throughout. If not specified, uses value from config file.
+  Falls back to "Light Grid Accent 1" if config value not found.
 
   .PARAMETER HeaderFontColor
   RGB color for table headers. Default: auto-detected.
@@ -73,7 +74,7 @@ function Invoke-ADAssessmentAutomation {
         [Parameter(Mandatory)]
         [string]$OutputPath,
 
-        [string]$TableStyleName = "Light Grid Accent 1",
+        [string]$TableStyleName,
         [string]$HeaderFontColor,
         [switch]$Visible,
         [string]$ConfigPath,
