@@ -365,6 +365,11 @@ function Invoke-ADAssessmentAutomation {
         }
 
         # Save document to output path (NOT to template location)
+        # Convert to absolute path if relative
+        if (-not [System.IO.Path]::IsPathRooted($OutputPath)) {
+            $OutputPath = Join-Path (Get-Location) $OutputPath
+        }
+
         # Ensure output directory exists
         $OutputDir = Split-Path -Parent $OutputPath
         if (-not (Test-Path $OutputDir)) {

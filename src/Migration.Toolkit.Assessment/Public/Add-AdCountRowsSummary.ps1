@@ -86,12 +86,12 @@ function Add-AdCountRowsSummary {
     }
     else {
         $range = $Document.Content
-        $range.Collapse([Microsoft.Office.Interop.Word.WdCollapseDirection]::wdCollapseEnd)
+        $range.Collapse(1)
     }
 
     # Add caption paragraph
     $range.InsertAfter("`r`n")
-    $range.Collapse([Microsoft.Office.Interop.Word.WdCollapseDirection]::wdCollapseEnd)
+    $range.Collapse(1)
     $caption = $range.Paragraphs.Add($range)
     $caption.Range.Text = $Title
     $caption.Style = "Caption"
@@ -101,7 +101,7 @@ function Add-AdCountRowsSummary {
     $numRows = 2
     $numCols = 2
     $tableRange = $caption.Range.Next()
-    $tableRange.Collapse([Microsoft.Office.Interop.Word.WdCollapseDirection]::wdCollapseEnd)
+    $tableRange.Collapse(1)
     $table = $Document.Tables.Add($tableRange, $numRows, $numCols)
 
     # Header row
@@ -121,7 +121,7 @@ function Add-AdCountRowsSummary {
         }
     }
 
-    $table.AutoFitBehavior([Microsoft.Office.Interop.Word.WdAutoFitBehavior]::wdAutoFitContent)
+    $table.AutoFitBehavior(1)
 
     # Apply header color
     if ($HeaderFontColor) {

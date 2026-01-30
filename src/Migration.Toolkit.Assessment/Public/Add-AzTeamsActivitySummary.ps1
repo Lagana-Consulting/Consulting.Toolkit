@@ -145,12 +145,12 @@ function Add-AzTeamsActivitySummary {
     }
     else {
         $range = $Document.Content
-        $range.Collapse([Microsoft.Office.Interop.Word.WdCollapseDirection]::wdCollapseEnd)
+        $range.Collapse(1)  # wdCollapseEnd = 1
     }
 
     # ========== PRIMARY SUMMARY TABLE ==========
     $range.InsertAfter("`r`n")
-    $range.Collapse([Microsoft.Office.Interop.Word.WdCollapseDirection]::wdCollapseEnd)
+    $range.Collapse(1)
     $caption = $range.Paragraphs.Add($range)
     $caption.Range.Text = $Title
     $caption.Style = "Caption"
@@ -159,7 +159,7 @@ function Add-AzTeamsActivitySummary {
     $numRows = $metrics.Count + 1
     $numCols = 2
     $tableRange = $caption.Range.Next()
-    $tableRange.Collapse([Microsoft.Office.Interop.Word.WdCollapseDirection]::wdCollapseEnd)
+    $tableRange.Collapse(1)
     $table = $Document.Tables.Add($tableRange, $numRows, $numCols)
 
     # Header
@@ -180,7 +180,7 @@ function Add-AzTeamsActivitySummary {
         if ($style) { $table.Style = $style }
     }
 
-    $table.AutoFitBehavior([Microsoft.Office.Interop.Word.WdAutoFitBehavior]::wdAutoFitContent)
+    $table.AutoFitBehavior(1)
 
     if ($HeaderFontColor) {
         Set-AdHeaderFontColor -Table $table -Color $HeaderFontColor
@@ -190,7 +190,7 @@ function Add-AzTeamsActivitySummary {
     if ($top10.Count -gt 0) {
         $nextRange = $Document.Range($table.Range.End, $table.Range.End)
         $nextRange.InsertAfter("`r`n")
-        $nextRange.Collapse([Microsoft.Office.Interop.Word.WdCollapseDirection]::wdCollapseEnd)
+        $nextRange.Collapse(1)
 
         $caption2 = $nextRange.Paragraphs.Add($nextRange)
         $caption2.Range.Text = "Top 10 Most Active Teams"
@@ -200,7 +200,7 @@ function Add-AzTeamsActivitySummary {
         $numRows2 = $top10.Count + 1
         $numCols2 = 5
         $tableRange2 = $caption2.Range.Next()
-        $tableRange2.Collapse([Microsoft.Office.Interop.Word.WdCollapseDirection]::wdCollapseEnd)
+        $tableRange2.Collapse(1)
         $table2 = $Document.Tables.Add($tableRange2, $numRows2, $numCols2)
 
         # Header
@@ -227,7 +227,7 @@ function Add-AzTeamsActivitySummary {
             if ($style2) { $table2.Style = $style2 }
         }
 
-        $table2.AutoFitBehavior([Microsoft.Office.Interop.Word.WdAutoFitBehavior]::wdAutoFitContent)
+        $table2.AutoFitBehavior(1)
 
         if ($HeaderFontColor) {
             Set-AdHeaderFontColor -Table $table2 -Color $HeaderFontColor
