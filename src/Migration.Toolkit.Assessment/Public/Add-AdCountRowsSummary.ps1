@@ -115,7 +115,7 @@ function Add-AdCountRowsSummary {
 
     # Apply table style
     if ($TableStyleName) {
-        $style = Get-AdWordTableStyle -Document $Document -StyleName $TableStyleName
+        $style = Get-AdWordTableStyle -Document $Document -TableStyleName $TableStyleName
         if ($style) {
             $table.Style = $style
         }

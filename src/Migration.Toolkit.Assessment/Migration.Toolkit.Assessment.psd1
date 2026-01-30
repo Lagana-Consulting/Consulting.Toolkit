@@ -10,12 +10,26 @@
 
     FunctionsToExport = @(
         'Invoke-AdAssessment',
-        'Add-AdSimpleSummaryTable',
+        'Invoke-ADOnlyAssessment',
+        'Invoke-AZOnlyAssessment',
+        'Invoke-FullAssessment',
+        'Invoke-ADAssessmentAutomation',
         'Add-AdRawTableFromCsv',
         'Add-AdPivotTableFromCsv',
         'Add-AdUserStatsSummary',
         'Add-AdDeviceSummary',
         'Add-AdOuStructureSummary',
+        'Add-AdForestSummary',
+        'Add-AdTrustInformation',
+        'Add-AdDomainInformation',
+        'Add-AdDomainControllers',
+        'Add-AdPasswordPolicies',
+        'Add-AdFineGrainPasswordPolicies',
+        'Add-AdGPOSummary',
+        'Add-AdGroupStatsSummary',
+        'Add-AdContactsStatsSummary',
+        'Add-AdPublishedPrinters',
+        'Add-AdOUDepthSummary',
         'Add-AzEntraUserSummary',
         'Add-AzM365GroupSummary',
         'Add-AzMailboxSummary',
@@ -25,7 +39,11 @@
         'Add-AdSingleRowSummaryFromCsv',
         'Add-AdCountRowsSummary',
         'Add-AzEntraGuestDomainSummary',
-        'Add-AdDomainDiscoveryTable'
+        'Add-AdDomainDiscoveryTable',
+        'Add-AdEmptyGroupsTable',
+        'Add-AdServiceAccountsTable',
+        'Add-AdSpnsTable',
+        'Add-AdPrivilegedAccountsTable'
     )
 
     CmdletsToExport   = @()

@@ -17,7 +17,19 @@ function Get-AdWordTableStyle {
         [Parameter(Mandatory)][string] $TableStyleName
     )
 
-    try { return $Document.Styles.Item($TableStyleName) } catch { return $null }
+    # Table styles are in the TableStyles collection, not Styles
+    try {
+        $style = $Document.TableStyles.Item($TableStyleName)
+    }
+    catch {
+        $style = $null
+    }
+
+    if (-not $style) {
+        Write-Warning "Table style '$TableStyleName' not found in template."
+    }
+
+    return $style
 }
 
 function Get-AdBookmarkRange {
@@ -37,16 +49,41 @@ function Get-AdBookmarkRange {
 function Set-AdHeaderFontColor {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)] $Range,
-        [string] $HeaderFontColor
+        [Parameter(Mandatory, ParameterSetName = 'Range')] $Range,
+        [Parameter(Mandatory, ParameterSetName = 'Table')] $Table,
+        [string] $HeaderFontColor,
+        [string] $Color  # Alias for backward compatibility
     )
+
+    # Support both parameter names for backward compatibility
+    if ($Color -and -not $HeaderFontColor) {
+        $HeaderFontColor = $Color
+    }
 
     if (-not $HeaderFontColor) { return }
 
+    # Handle table parameter - apply to all cells in first row
+    if ($Table) {
+        $headerRowCellCount = $Table.Rows.Item(1).Cells.Count
+        for ($i = 1; $i -le $headerRowCellCount; $i++) {
+            $cellRange = $Table.Cell(1, $i).Range
+            if ($HeaderFontColor -match '^#?[0-9A-Fa-f]{6}$') {
+                $hex = $HeaderFontColor.TrimStart('#')
+                $rgb = [Convert]::ToInt32($hex, 16)
+                $cellRange.Font.Color = $rgb
+            }
+            else {
+                $cellRange.Font.Color = [int]$HeaderFontColor
+            }
+        }
+        return
+    }
+
+    # Handle range parameter - apply to single range
     if ($HeaderFontColor -match '^#?[0-9A-Fa-f]{6}$') {
         $hex = $HeaderFontColor.TrimStart('#')
         $rgb = [Convert]::ToInt32($hex, 16)
-        $Range.Font.TextColor.RGB = $rgb
+        $Range.Font.Color = $rgb
     }
     else {
         $Range.Font.Color = [int]$HeaderFontColor

@@ -390,6 +390,11 @@ function Invoke-AdDiscovery {
         (Get-AdAdPublishedSharedFolders -DomainContext $ctx) |
         Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Inventory__PublishedSharedFolders__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
+        # Contacts
+        Write-Host "  - AD Contacts" -ForegroundColor Gray
+        (Get-AdAdContacts -DomainName $ctx.DomainName -Server $ctx.DomainController) |
+        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Contacts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
         # Stale objects
         Write-Host "  - Stale accounts analysis" -ForegroundColor Gray
         @($users | Where-Object { $_.LastLogonDays -and [int]$_.LastLogonDays -gt $StaleUserThresholdDays }) |

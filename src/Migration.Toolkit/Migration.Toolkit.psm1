@@ -45,6 +45,7 @@ Export-ModuleMember -Function @(
 
   'Get-AdAdPublishedPrinters',
   'Get-AdAdPublishedSharedFolders',
+  'Get-AdAdContacts',
 
   'Get-AdAdGroups',
   'Get-AdAdUsers',

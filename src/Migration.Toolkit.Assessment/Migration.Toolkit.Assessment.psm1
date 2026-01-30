@@ -17,6 +17,10 @@ Get-ChildItem -Path $PublicPath -Filter *.ps1 -File -ErrorAction SilentlyContinu
 Export-ModuleMember -Function @(
     # Main orchestration
     'Invoke-AdAssessment',
+    'Invoke-ADOnlyAssessment',
+    'Invoke-AZOnlyAssessment',
+    'Invoke-FullAssessment',
+    'Invoke-ADAssessmentAutomation',
 
     # Base table builders
     'Add-AdSimpleSummaryTable',
@@ -27,6 +31,17 @@ Export-ModuleMember -Function @(
     'Add-AdUserStatsSummary',
     'Add-AdDeviceSummary',
     'Add-AdOuStructureSummary',
+    'Add-AdForestSummary',
+    'Add-AdTrustInformation',
+    'Add-AdDomainInformation',
+    'Add-AdDomainControllers',
+    'Add-AdPasswordPolicies',
+    'Add-AdFineGrainPasswordPolicies',
+    'Add-AdGPOSummary',
+    'Add-AdGroupStatsSummary',
+    'Add-AdContactsStatsSummary',
+    'Add-AdPublishedPrinters',
+    'Add-AdOUDepthSummary',
     'Add-AdDomainDiscoveryTable',
 
     # Entra-specific tables
