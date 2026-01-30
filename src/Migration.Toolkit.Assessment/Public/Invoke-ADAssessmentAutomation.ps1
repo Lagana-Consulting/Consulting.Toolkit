@@ -34,9 +34,7 @@ function Invoke-ADAssessmentAutomation {
   Optional array of section IDs to include. If omitted, all sections processed.
 
   .EXAMPLE
-  Invoke-ADAssessmentAutomation -DiscoveryOutputPath "C:\Discovery\FOREST__20260129-120000" `
-    -TemplatePath "C:\Templates\AD_Assessment.dotx" `
-    -OutputPath "C:\Reports\Assessment_Final.docx"
+  Invoke-ADAssessmentAutomation -DiscoveryOutputPath "C:\Discovery\FOREST__20260129-120000" -TemplatePath "C:\Templates\AD_Assessment.dotx" -OutputPath "C:\Reports\Assessment_Final.docx"
 
   .INPUTS
   None. This function does not accept pipeline input.
@@ -45,23 +43,7 @@ function Invoke-ADAssessmentAutomation {
   System.String - Path to generated assessment document.
 
   .NOTES
-  Requires:
-  - Discovery Toolkit output with 10_forest/, 20_domains/, 00_schemas/ structure
-  - ADAssessmentMap.json configuration file
-  - Word.Application COM object
-  - Migration.Toolkit.Assessment module functions
-
-  Discovery output structure:
-    Root/
-      10_forest/          - Forest-level CSVs (trusts, sites, subnets, UPN suffixes)
-      20_domains/         - Per-domain directories with domain-specific CSVs
-        Domain-name.com/  - Users, Computers, Groups, GPOs, Policies, OUs, etc.
-      00_schemas/         - Column definition CSVs for validation
-      99_manifest/        - Execution metadata
-
-  .LINK
-  Invoke-ADOnlyAssessment
-  Invoke-FullAssessment
+  Requires: Discovery Toolkit output with proper structure, ADAssessmentMap.json, Word.Application COM object.
   #>
     [CmdletBinding()]
     param(
@@ -90,8 +72,10 @@ function Invoke-ADAssessmentAutomation {
         throw "Template not found: $TemplatePath"
     }
 
-    # Convert OutputPath to absolute path (Word COM requires absolute paths)
-    $OutputPath = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $OutputPath))
+    # Convert OutputPath to absolute path
+    if (-not [System.IO.Path]::IsPathRooted($OutputPath)) {
+        $OutputPath = Join-Path (Get-Location) $OutputPath
+    }
 
     # Determine config file location
     if (-not $ConfigPath) {
@@ -118,59 +102,40 @@ function Invoke-ADAssessmentAutomation {
 
     # Helper: discover forest-level CSV files
     function Find-ForestCsv {
-        param(
-            [string]$Pattern,
-            [string]$RootPath
-        )
+        param([string]$Pattern, [string]$RootPath)
         $forestPath = Join-Path $RootPath "10_forest"
         if (-not (Test-Path $forestPath)) { return $null }
-
-        $found = Get-ChildItem -Path $forestPath -Filter $Pattern -File -ErrorAction SilentlyContinue
-        if ($found) { return $found[0].FullName } else { return $null }
+        $found = @(Get-ChildItem -Path $forestPath -Filter $Pattern -File -ErrorAction SilentlyContinue)
+        if ($found.Count -gt 0) { return $found[0].FullName }
+        return $null
     }
 
     # Helper: discover domain directories
     function Find-DomainDirectories {
         param([string]$RootPath)
-
         $domainsPath = Join-Path $RootPath "20_domains"
         if (-not (Test-Path $domainsPath)) { return @() }
-
-        $domains = Get-ChildItem -Path $domainsPath -Directory -Filter "Domain-*" |
-        Sort-Object Name
-
+        $domains = @(Get-ChildItem -Path $domainsPath -Directory -Filter "Domain-*" | Sort-Object Name)
         return $domains
     }
 
-    # Helper: find domain CSV file with flexible pattern matching
+    # Helper: find domain CSV file
     function Find-DomainCsv {
-        param(
-            [string]$Pattern,
-            [string]$DomainPath,
-            [string]$DomainName
-        )
-
-        $found = Get-ChildItem -Path $DomainPath -Filter $Pattern -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -match [regex]::Escape($DomainName) } |
-        Select-Object -First 1
-
-        if ($found) { return $found.FullName } else { return $null }
+        param([string]$Pattern, [string]$DomainPath, [string]$DomainName)
+        $found = @(Get-ChildItem -Path $DomainPath -Filter $Pattern -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match [regex]::Escape($DomainName) })
+        if ($found.Count -gt 0) { return $found[0].FullName }
+        return $null
     }
 
-    # Helper: normalize domain name from directory
+    # Helper: get domain name from directory
     function Get-DomainNameFromPath {
         param([string]$DomainDirName)
-        # "Domain-sourcelab.com" -> "sourcelab.com"
         return $DomainDirName -replace '^Domain-', ''
     }
 
     # Helper: create section context
     function New-SectionContext {
-        param(
-            [object]$SectionDef,
-            [string]$DomainName = $null
-        )
-
+        param([object]$SectionDef, [string]$DomainName = $null)
         $ctx = [ordered]@{
             Id        = $SectionDef.Id
             Title     = $SectionDef.Title
@@ -179,50 +144,37 @@ function Invoke-ADAssessmentAutomation {
             Mode      = $SectionDef.Mode
             DataFiles = @{}
             Domain    = $DomainName
+            Single    = if ($SectionDef.DataSource.Single) { $true } else { $false }
         }
-
-        if ($SectionDef.DataSource.Single) {
-            $ctx.Single = $true
-        }
-        else {
-            $ctx.Single = $false
-        }
-
         if ($SectionDef.PSObject.Properties['Parameters'] -and $SectionDef.Parameters) {
             $ctx.Parameters = $SectionDef.Parameters
         }
-
         return $ctx
     }
 
     Write-Host "Starting AD Assessment Automation..." -ForegroundColor Cyan
     Write-Host "Discovery Path: $DiscoveryOutputPath" -ForegroundColor Gray
-    Write-Host "Template: $TemplatePath" -ForegroundColor Gray
 
-    # Discover data files
+    # Discover section data files
     $sectionContexts = @()
     $domainDirectories = @()
 
+    # Forest-level sections
     foreach ($sectionDef in $config.Sections) {
-        # Skip if specific sections requested and this isn't one
         if ($Sections -and $Sections -notcontains $sectionDef.Id) { continue }
-
-        # Skip per-domain sections (handled separately below)
         $isPerDomain = $sectionDef.DataSource.PSObject.Properties['PerDomain'] -and $sectionDef.DataSource.PerDomain
         if ($isPerDomain) { continue }
 
         $ctx = New-SectionContext -SectionDef $sectionDef
-
-        # Forest-level section
         if ($sectionDef.DataSource.PSObject.Properties.Name -contains "Pattern") {
             $csvPath = Find-ForestCsv -Pattern $sectionDef.DataSource.Pattern -RootPath $DiscoveryOutputPath
             if ($csvPath) {
                 $ctx.DataFiles.CsvPath = $csvPath
                 $sectionContexts += $ctx
-                Write-Host "  Found: $($sectionDef.Title) -> $(Split-Path $csvPath -Leaf)" -ForegroundColor Green
+                Write-Host "  Found: $($sectionDef.Title)" -ForegroundColor Green
             }
             else {
-                Write-Warning "CSV not found for section: $($sectionDef.Id) (Pattern: $($sectionDef.DataSource.Pattern))"
+                Write-Warning "CSV not found for: $($sectionDef.Id) - Pattern: $($sectionDef.DataSource.Pattern)"
             }
         }
     }
@@ -237,16 +189,12 @@ function Invoke-ADAssessmentAutomation {
 
         foreach ($sectionDef in $config.Sections) {
             if ($Sections -and $Sections -notcontains $sectionDef.Id) { continue }
-
-            # Only process per-domain sections in this loop
             $isPerDomain = $sectionDef.DataSource.PSObject.Properties['PerDomain'] -and $sectionDef.DataSource.PerDomain
             if (-not $isPerDomain) { continue }
 
-            # Handle different data source patterns
             $csvPath = $null
-
             if ($sectionDef.DataSource.PSObject.Properties.Name -contains "Servers") {
-                # Multi-file case (e.g., Computers: Servers + Workstations)
+                # Multi-file (Servers + Workstations)
                 $serversFile = Find-DomainCsv -Pattern $sectionDef.DataSource.Servers -DomainPath $domainDir.FullName -DomainName $domainName
                 $workstationsFile = Find-DomainCsv -Pattern $sectionDef.DataSource.Workstations -DomainPath $domainDir.FullName -DomainName $domainName
 
@@ -255,18 +203,17 @@ function Invoke-ADAssessmentAutomation {
                     $ctx.DataFiles.Servers = $serversFile
                     $ctx.DataFiles.Workstations = $workstationsFile
                     $sectionContexts += $ctx
-                    Write-Host "    ✓ $($sectionDef.Title)" -ForegroundColor Green
+                    Write-Host "    + $($sectionDef.Title)" -ForegroundColor Green
                 }
             }
             else {
-                # Single pattern case
+                # Single pattern
                 $csvPath = Find-DomainCsv -Pattern $sectionDef.DataSource.Pattern -DomainPath $domainDir.FullName -DomainName $domainName
-
                 if ($csvPath) {
                     $ctx = New-SectionContext -SectionDef $sectionDef -DomainName $domainName
                     $ctx.DataFiles.CsvPath = $csvPath
                     $sectionContexts += $ctx
-                    Write-Host "    ✓ $($sectionDef.Title)" -ForegroundColor Green
+                    Write-Host "    + $($sectionDef.Title)" -ForegroundColor Green
                 }
             }
         }
@@ -284,13 +231,13 @@ function Invoke-ADAssessmentAutomation {
     try {
         $word = New-AdWordInstance -Visible:$Visible
 
-        # Open template READ-ONLY (FileName, ConfirmConversions, ReadOnly, AddToRecentFiles)
+        # Open template READ-ONLY
         $template = $word.Documents.Open($TemplatePath, $false, $true, $false)
 
-        # Create NEW document based on template (preserves styles and formatting)
+        # Create NEW document based on template
         $doc = $word.Documents.Add($template.FullName)
 
-        # Close template (no longer needed)
+        # Close template
         $template.Close($false)
         Remove-AdComObject -ComObject $template
         $template = $null
@@ -308,16 +255,14 @@ function Invoke-ADAssessmentAutomation {
                 if ($ctx.Bookmark) {
                     $insertRange = Get-AdBookmarkRange -Document $doc -BookmarkName $ctx.Bookmark
                     if (-not $insertRange) {
-                        Write-Warning "Bookmark '$($ctx.Bookmark)' not found in template. Skipping section: $($ctx.Title)"
+                        Write-Warning "Bookmark '$($ctx.Bookmark)' not found. Skipping: $($ctx.Title)"
                         $failureCount++
                         continue
                     }
                 }
 
-                # Route to appropriate builder function
+                # Build parameters
                 $builderFunc = $ctx.Builder
-
-                # Build parameters based on section type
                 $builderParams = @{
                     Document       = $doc
                     Title          = $ctx.Title
@@ -328,12 +273,11 @@ function Invoke-ADAssessmentAutomation {
                     $builderParams.HeaderFontColor = $HeaderFontColor
                 }
 
-                # Add InsertRange if bookmark found
                 if ($insertRange) {
                     $builderParams.InsertRange = $insertRange
                 }
 
-                # Multi-file builders (e.g., devices with Servers + Workstations)
+                # Multi-file builders
                 if ($ctx.DataFiles.ContainsKey("Servers")) {
                     $builderParams.ServersCsvPath = $ctx.DataFiles.Servers
                     $builderParams.WorkstationsCsvPath = $ctx.DataFiles.Workstations
@@ -343,8 +287,8 @@ function Invoke-ADAssessmentAutomation {
                         }
                     }
                 }
-                # Single-file builders
                 else {
+                    # Single-file builders
                     $builderParams.CsvPath = $ctx.DataFiles.CsvPath
                 }
 
@@ -352,7 +296,7 @@ function Invoke-ADAssessmentAutomation {
                 if (Get-Command $builderFunc -ErrorAction SilentlyContinue) {
                     & $builderFunc @builderParams | Out-Null
                     $successCount++
-                    Write-Host "    ✓ Added" -ForegroundColor Green
+                    Write-Host "    OK" -ForegroundColor Green
                 }
                 else {
                     Write-Warning "Builder function not found: $builderFunc"
@@ -360,28 +304,20 @@ function Invoke-ADAssessmentAutomation {
                 }
             }
             catch {
-                Write-Warning "Error processing section '$($ctx.Title)': $($_.Exception.Message)"
+                Write-Warning "Error in '$($ctx.Title)': $($_.Exception.Message)"
                 $failureCount++
             }
         }
 
-        # Save document to output path (NOT to template location)
-        # Convert to absolute path if relative
-        if (-not [System.IO.Path]::IsPathRooted($OutputPath)) {
-            $OutputPath = Join-Path (Get-Location) $OutputPath
-        }
-
-        # Ensure output directory exists
+        # Save document
         $OutputDir = Split-Path -Parent $OutputPath
         if (-not (Test-Path $OutputDir)) {
             New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
         }
 
-        # SaveAs requires absolute path and proper format parameter
-        # Format: 16 = wdFormatDocx (.docx), 12 = wdFormatDocument (.doc)
         $doc.SaveAs($OutputPath, 16)
         Write-Host "Document saved: $OutputPath" -ForegroundColor Green
-        Write-Host "Success: $successCount | Failed: $failureCount" -ForegroundColor Cyan
+        Write-Host "Results: Success=$successCount Failed=$failureCount" -ForegroundColor Cyan
 
         return $OutputPath
     }
