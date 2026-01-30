@@ -301,7 +301,13 @@
         "PerDomain": true,
         "Description": "Per-domain metadata: DomainName, FunctionalLevel, FSMO roles"
       },
-      "Columns": ["DomainName", "FunctionalLevel", "PDCEmulator", "RIDMaster", "InfrastructureMaster"],
+      "Columns": {
+        "DomainFqdn": "Domain Name",
+        "DomainMode": "Functional Level",
+        "PdcEmulator": "PDC Emulator",
+        "RidMaster": "RID Master",
+        "InfrastructureMaster": "Infrastructure Master"
+      },
       "Mode": "Table"
     },
     {

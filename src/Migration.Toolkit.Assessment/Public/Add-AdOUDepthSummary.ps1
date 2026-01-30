@@ -85,8 +85,8 @@ function Add-AdOUDepthSummary {
     # Define default columns if not specified
     if ($null -eq $Columns) {
         $Columns = [ordered]@{
-            "OUDepthLevel" = "OU Depth Level"
-            "OUs"          = "OUs"
+            "Depth" = "Depth Level"
+            "Name"  = "OU Name"
         }
     }
 
@@ -149,7 +149,7 @@ function Add-AdOUDepthSummary {
     $tableRange = $caption.Range.Next()
     $tableRange.Collapse(1)
     $table = $Document.Tables.Add($tableRange, $numRows, $numCols)
-    
+
     # Set table content style to Normal before applying table style
     $table.Range.Style = "Normal"
 

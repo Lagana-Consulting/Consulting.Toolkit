@@ -146,9 +146,13 @@ function Invoke-ADAssessmentAutomation {
             DataFiles = @{}
             Domain    = $DomainName
             Single    = if ($SectionDef.DataSource.Single) { $true } else { $false }
+            Columns   = $null
         }
-        if ($SectionDef.PSObject.Properties['Parameters'] -and $SectionDef.Parameters) {
+        if ($SectionDef.PSObject.Properties.Name -contains 'Parameters' -and $SectionDef.Parameters) {
             $ctx.Parameters = $SectionDef.Parameters
+        }
+        if ($SectionDef.PSObject.Properties.Name -contains 'Columns' -and $SectionDef.Columns) {
+            $ctx.Columns = $SectionDef.Columns
         }
         return $ctx
     }
@@ -286,6 +290,11 @@ function Invoke-ADAssessmentAutomation {
                 else {
                     # Single-file builders
                     $builderParams.CsvPath = $ctx.DataFiles.CsvPath
+                }
+
+                # Add Columns if present
+                if ($ctx.Columns) {
+                    $builderParams.Columns = $ctx.Columns
                 }
 
                 # Call builder function

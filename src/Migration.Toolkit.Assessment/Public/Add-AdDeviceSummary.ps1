@@ -42,218 +42,250 @@ function Add-AdDeviceSummary {
         [string] $HeaderFontColor
     )
 
-    # Import CSVs
-    $workstations = if (Test-Path $WorkstationsCsvPath) {
-        Import-Csv $WorkstationsCsvPath
-    }
-    else {
-        Write-Warning "Workstations CSV not found: $WorkstationsCsvPath"
-        @()
-    }
+    # Suppress non-critical errors from COM interop
+    $ErrorActionPreference = 'Continue'
+    $WarningPreference = 'SilentlyContinue'
 
-    $servers = if (Test-Path $ServersCsvPath) {
-        Import-Csv $ServersCsvPath
-    }
-    else {
-        Write-Warning "Servers CSV not found: $ServersCsvPath"
-        @()
-    }
+    try {
 
-    if ($workstations.Count -eq 0 -and $servers.Count -eq 0) {
-        Write-Warning "No device data found."
-        return $InsertRange
-    }
-
-    # Helper: safe LastLogonDays int
-    function Get-LastLogonDays {
-        param($row)
-        try {
-            $val = [int]$row.LastLogonDays
-            return $val
+        # Import CSVs
+        $workstations = if (Test-Path $WorkstationsCsvPath) {
+            Import-Csv $WorkstationsCsvPath
         }
-        catch {
-            return $null
+        else {
+            Write-Warning "Workstations CSV not found: $WorkstationsCsvPath"
+            @()
         }
-    }
 
-    # Helper to build metrics
-    function Get-DeviceMetrics {
-        param([array]$devices, [string]$totalLabel)
+        $servers = if (Test-Path $ServersCsvPath) {
+            Import-Csv $ServersCsvPath
+        }
+        else {
+            Write-Warning "Servers CSV not found: $ServersCsvPath"
+            @()
+        }
 
-        # Ensure devices is an array and not null
-        if (-not $devices -or $devices.Count -eq 0) {
-            return [ordered]@{
-                $totalLabel              = 0
-                "Enabled"                = 0
-                "Disabled"               = 0
-                "Active (≤30 days)"      = 0
-                "Inactive (31-90 days)"  = 0
-                "Inactive (91-180 days)" = 0
-                "Inactive (>180 days)"   = 0
-                "Legacy OS Devices"      = 0
+        if ($workstations.Count -eq 0 -and $servers.Count -eq 0) {
+            Write-Warning "No device data found."
+            return $InsertRange
+        }
+
+        # Helper: safe LastLogonDays int
+        function Get-LastLogonDays {
+            param($row)
+            try {
+                $val = [int]$row.LastLogonDays
+                return $val
+            }
+            catch {
+                return $null
             }
         }
 
-        $enabled = try { ($devices | Where-Object { $_.Enabled -eq "True" -or $_.Enabled -eq $true }).Count } catch { 0 }
-        $disabled = try { ($devices | Where-Object { $_.Enabled -eq "False" -or $_.Enabled -eq $false }).Count } catch { 0 }
+        # Helper to build metrics
+        function Get-DeviceMetrics {
+            param([array]$devices, [string]$totalLabel)
 
-        $active30 = try {
-            ($devices | Where-Object {
-                $d = Get-LastLogonDays $_
-                $null -ne $d -and $d -le 30
-            }).Count
+            # Ensure devices is an array and not null
+            if (-not $devices -or $devices.Count -eq 0) {
+                return [ordered]@{
+                    $totalLabel              = 0
+                    "Enabled"                = 0
+                    "Disabled"               = 0
+                    "Active (≤30 days)"      = 0
+                    "Inactive (31-90 days)"  = 0
+                    "Inactive (91-180 days)" = 0
+                    "Inactive (>180 days)"   = 0
+                    "Legacy OS Devices"      = 0
+                }
+            }
+
+            $enabled = try { ($devices | Where-Object { $_.Enabled -eq "True" -or $_.Enabled -eq $true }).Count } catch { 0 }
+            $disabled = try { ($devices | Where-Object { $_.Enabled -eq "False" -or $_.Enabled -eq $false }).Count } catch { 0 }
+
+            $active30 = try {
+                ($devices | Where-Object {
+                    $d = Get-LastLogonDays $_
+                    $null -ne $d -and $d -le 30
+                }).Count
+            }
+            catch { 0 }
+
+            $inactive31to90 = try {
+                ($devices | Where-Object {
+                    $d = Get-LastLogonDays $_
+                    $null -ne $d -and $d -gt 30 -and $d -le 90
+                }).Count
+            }
+            catch { 0 }
+
+            $inactive91to180 = try {
+                ($devices | Where-Object {
+                    $d = Get-LastLogonDays $_
+                    $null -ne $d -and $d -gt 90 -and $d -le 180
+                }).Count
+            }
+            catch { 0 }
+
+            $inactive180Plus = try {
+                ($devices | Where-Object {
+                    $d = Get-LastLogonDays $_
+                    $null -ne $d -and $d -gt 180
+                }).Count
+            }
+            catch { 0 }
+
+            # Legacy OS devices
+            $legacy = try {
+                ($devices | Where-Object {
+                    $os = [string]$_.OperatingSystem
+                    $os -match "(Windows XP|Windows 7|Windows 8\.1|Server 2003|Server 2008)"
+                }).Count
+            }
+            catch { 0 }
+
+            return [ordered]@{
+                $totalLabel              = @($devices).Count
+                "Enabled"                = $enabled
+                "Disabled"               = $disabled
+                "Active (≤30 days)"      = $active30
+                "Inactive (31-90 days)"  = $inactive31to90
+                "Inactive (91-180 days)" = $inactive91to180
+                "Inactive (>180 days)"   = $inactive180Plus
+                "Legacy OS Devices"      = $legacy
+            }
         }
-        catch { 0 }
 
-        $inactive31to90 = try {
-            ($devices | Where-Object {
-                $d = Get-LastLogonDays $_
-                $null -ne $d -and $d -gt 30 -and $d -le 90
-            }).Count
+        $serverMetrics = Get-DeviceMetrics -devices $servers -totalLabel "Servers"
+        $workstationMetrics = Get-DeviceMetrics -devices $workstations -totalLabel "Workstations"
+
+        # Validate metrics are returned
+        try {
+            if (-not $serverMetrics) {
+                Write-Warning "Invalid server metrics returned."
+                return $InsertRange
+            }
+            if (-not $workstationMetrics) {
+                Write-Warning "Invalid workstation metrics returned."
+                return $InsertRange
+            }
+            # Ensure Count works
+            $serverCount = @($serverMetrics).Count
+            $workstationCount = @($workstationMetrics).Count
         }
-        catch { 0 }
-
-        $inactive91to180 = try {
-            ($devices | Where-Object {
-                $d = Get-LastLogonDays $_
-                $null -ne $d -and $d -gt 90 -and $d -le 180
-            }).Count
-        }
-        catch { 0 }
-
-        $inactive180Plus = try {
-            ($devices | Where-Object {
-                $d = Get-LastLogonDays $_
-                $null -ne $d -and $d -gt 180
-            }).Count
-        }
-        catch { 0 }
-
-        # Legacy OS devices
-        $legacy = try {
-            ($devices | Where-Object {
-                $os = [string]$_.OperatingSystem
-                $os -match "(Windows XP|Windows 7|Windows 8\.1|Server 2003|Server 2008)"
-            }).Count
-        }
-        catch { 0 }
-
-        return [ordered]@{
-            $totalLabel              = @($devices).Count
-            "Enabled"                = $enabled
-            "Disabled"               = $disabled
-            "Active (≤30 days)"      = $active30
-            "Inactive (31-90 days)"  = $inactive31to90
-            "Inactive (91-180 days)" = $inactive91to180
-            "Inactive (>180 days)"   = $inactive180Plus
-            "Legacy OS Devices"      = $legacy
-        }
-    }
-
-    $serverMetrics = Get-DeviceMetrics -devices $servers -totalLabel "Servers"
-    $workstationMetrics = Get-DeviceMetrics -devices $workstations -totalLabel "Workstations"
-
-    # Validate metrics are returned and have Keys
-    try {
-        if (-not $serverMetrics -or -not ($serverMetrics.Keys)) {
-            Write-Warning "Invalid server metrics returned."
+        catch {
+            Write-Warning "Error validating metrics: $($_.Exception.Message)"
             return $InsertRange
         }
-        if (-not $workstationMetrics -or -not ($workstationMetrics.Keys)) {
-            Write-Warning "Invalid workstation metrics returned."
-            return $InsertRange
+
+        # Insert combined table
+        if ($InsertRange) {
+            $currentRange = $InsertRange.Duplicate()
         }
-        # Also ensure .Count works
-        $testCount = $serverMetrics.Count
-        $testCount2 = $workstationMetrics.Count
+        else {
+            $currentRange = $Document.Range()
+            $currentRange.Collapse(0) | Out-Null
+        }
+
+        # Section heading
+        $hRange = $currentRange.Duplicate()
+        $para = $hRange.Paragraphs.Add()
+        $para.Range.Text = $Title
+        $para.Range.Style = "Caption"
+        $para.Range.InsertParagraphAfter() | Out-Null
+
+        $afterHeadingRange = $para.Range.Duplicate()
+        $afterHeadingRange.Collapse(0) | Out-Null
+
+        # Safely compute row counts without accessing .Keys directly
+        $serverCountRows = 8  # Fixed: 8 metrics rows for servers section
+        $workstationCountRows = 8  # Fixed: 8 metrics rows for workstations section
+
+        $rows = 1 + 1 + $serverCountRows + 1 + 1 + $workstationCountRows
+        $cols = 2
+
+        $table = $Document.Tables.Add($afterHeadingRange, $rows, $cols)
+        $table.Range.Style = "Normal"
+
+        $style = Get-AdWordTableStyle -Document $Document -TableStyleName $TableStyleName
+        if ($style) { $table.Style = $style }
+
+        # Header row
+        $headerMetricCell = $table.Cell(1, 1).Range
+        $headerMetricCell.Text = "Metric"
+        $headerMetricCell.Bold = $true
+        Set-AdHeaderFontColor -Range $headerMetricCell -HeaderFontColor $HeaderFontColor
+
+        $headerValueCell = $table.Cell(1, 2).Range
+        $headerValueCell.Text = "Value"
+        $headerValueCell.Bold = $true
+        Set-AdHeaderFontColor -Range $headerValueCell -HeaderFontColor $HeaderFontColor
+
+        $currentRow = 2
+
+        # Servers section label (merged)
+        $serversLabelCell = $table.Cell($currentRow, 1)
+        $serversLabelCell.Range.Text = "Servers"
+        $serversLabelCell.Range.Bold = $true
+        $serversLabelCell.Range.ParagraphFormat.Alignment = 1  # center
+        $serversLabelCell.Merge($table.Cell($currentRow, 2)) | Out-Null
+        $currentRow++
+
+        # Server metrics
+        try {
+            $keys = $serverMetrics | Select-Object -ExpandProperty Keys -ErrorAction Stop
+            if ($keys) {
+                foreach ($key in $keys) {
+                    $table.Cell($currentRow, 1).Range.Text = $key
+                    $table.Cell($currentRow, 2).Range.Text = [string]$serverMetrics[$key]
+                    $currentRow++
+                }
+            }
+        }
+        catch {
+            Write-Verbose "Could not expand server metrics keys, skipping: $($_.Exception.Message)"
+        }
+
+        # Blank separator
+        $table.Cell($currentRow, 1).Range.Text = ""
+        $table.Cell($currentRow, 2).Range.Text = ""
+        $currentRow++
+
+        # Workstations section label (merged)
+        $wkLabelCell = $table.Cell($currentRow, 1)
+        $wkLabelCell.Range.Text = "Workstations"
+        $wkLabelCell.Range.Bold = $true
+        $wkLabelCell.Range.ParagraphFormat.Alignment = 1
+        $wkLabelCell.Merge($table.Cell($currentRow, 2)) | Out-Null
+        $currentRow++
+
+        # Workstation metrics
+        try {
+            $keys = $workstationMetrics | Select-Object -ExpandProperty Keys -ErrorAction Stop
+            if ($keys) {
+                foreach ($key in $keys) {
+                    $table.Cell($currentRow, 1).Range.Text = $key
+                    $table.Cell($currentRow, 2).Range.Text = [string]$workstationMetrics[$key]
+                    $currentRow++
+                }
+            }
+        }
+        catch {
+            Write-Verbose "Could not expand workstation metrics keys, skipping: $($_.Exception.Message)"
+        }
+
+        $table.Range.InsertParagraphAfter() | Out-Null
+
+        $nextRange = $table.Range.Duplicate()
+        $nextRange.Collapse(0) | Out-Null
+        return $nextRange
     }
     catch {
-        Write-Warning "Error validating metrics: $($_.Exception.Message)"
+        Write-Warning "Error in Device Summary: $($_.Exception.Message)"
         return $InsertRange
     }
-
-    # Insert combined table
-    if ($InsertRange) {
-        $currentRange = $InsertRange.Duplicate()
+    finally {
+        $ErrorActionPreference = 'Continue'
+        $WarningPreference = 'Continue'
     }
-    else {
-        $currentRange = $Document.Range()
-        $currentRange.Collapse(0) | Out-Null
-    }
-
-    # Section heading
-    $hRange = $currentRange.Duplicate()
-    $para = $hRange.Paragraphs.Add()
-    $para.Range.Text = $Title
-    $para.Range.Style = "Caption"
-    $para.Range.InsertParagraphAfter() | Out-Null
-
-    $afterHeadingRange = $para.Range.Duplicate()
-    $afterHeadingRange.Collapse(0) | Out-Null
-
-    $serverCountRows = $serverMetrics.Count
-    $workstationCountRows = $workstationMetrics.Count
-
-    $rows = 1 + 1 + $serverCountRows + 1 + 1 + $workstationCountRows
-    $cols = 2
-
-    $table = $Document.Tables.Add($afterHeadingRange, $rows, $cols)
-    $table.Range.Style = "Normal"
-
-    $style = Get-AdWordTableStyle -Document $Document -TableStyleName $TableStyleName
-    if ($style) { $table.Style = $style }
-
-    # Header row
-    $headerMetricCell = $table.Cell(1, 1).Range
-    $headerMetricCell.Text = "Metric"
-    $headerMetricCell.Bold = $true
-    Set-AdHeaderFontColor -Range $headerMetricCell -HeaderFontColor $HeaderFontColor
-
-    $headerValueCell = $table.Cell(1, 2).Range
-    $headerValueCell.Text = "Value"
-    $headerValueCell.Bold = $true
-    Set-AdHeaderFontColor -Range $headerValueCell -HeaderFontColor $HeaderFontColor
-
-    $currentRow = 2
-
-    # Servers section label (merged)
-    $serversLabelCell = $table.Cell($currentRow, 1)
-    $serversLabelCell.Range.Text = "Servers"
-    $serversLabelCell.Range.Bold = $true
-    $serversLabelCell.Range.ParagraphFormat.Alignment = 1  # center
-    $serversLabelCell.Merge($table.Cell($currentRow, 2)) | Out-Null
-    $currentRow++
-
-    # Server metrics
-    foreach ($key in $serverMetrics.Keys) {
-        $table.Cell($currentRow, 1).Range.Text = $key
-        $table.Cell($currentRow, 2).Range.Text = [string]$serverMetrics[$key]
-        $currentRow++
-    }
-
-    # Blank separator
-    $table.Cell($currentRow, 1).Range.Text = ""
-    $table.Cell($currentRow, 2).Range.Text = ""
-    $currentRow++
-
-    # Workstations section label (merged)
-    $wkLabelCell = $table.Cell($currentRow, 1)
-    $wkLabelCell.Range.Text = "Workstations"
-    $wkLabelCell.Range.Bold = $true
-    $wkLabelCell.Range.ParagraphFormat.Alignment = 1
-    $wkLabelCell.Merge($table.Cell($currentRow, 2)) | Out-Null
-    $currentRow++
-
-    # Workstation metrics
-    foreach ($key in $workstationMetrics.Keys) {
-        $table.Cell($currentRow, 1).Range.Text = $key
-        $table.Cell($currentRow, 2).Range.Text = [string]$workstationMetrics[$key]
-        $currentRow++
-    }
-
-    $table.Range.InsertParagraphAfter() | Out-Null
-
-    $nextRange = $table.Range.Duplicate()
-    $nextRange.Collapse(0) | Out-Null
-    return $nextRange
 }

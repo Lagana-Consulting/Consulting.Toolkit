@@ -44,7 +44,7 @@ function Add-AdOuStructureSummary {
   }
 
   $ouData = Import-Csv $CsvPath
-  if ($ouData.Count -eq 0) {
+  if (@($ouData).Count -eq 0) {
     Write-Warning "OU CSV '$CsvPath' is empty."
     return $InsertRange
   }
@@ -53,7 +53,8 @@ function Add-AdOuStructureSummary {
   if (-not ($ouData[0].PSObject.Properties.Name -contains 'Depth')) {
     Write-Verbose "Depth column not found; deriving from DistinguishedName."
     foreach ($row in $ouData) {
-      $ouCount = ([regex]::Matches($row.DistinguishedName, 'OU=')).Count
+      $ouCount = @([regex]::Matches($row.DistinguishedName, 'OU=')).Count
+      if ($ouCount -eq 0) { $ouCount = 0 }
       $row | Add-Member -NotePropertyName 'Depth' -NotePropertyValue $ouCount -Force
     }
   }
@@ -63,7 +64,7 @@ function Add-AdOuStructureSummary {
     try { $row.Depth = [int]$row.Depth } catch { $row.Depth = 0 }
   }
 
-  $totalOUs = $ouData.Count
+  $totalOUs = @($ouData).Count
   $maxDepth = ($ouData.Depth | Measure-Object -Maximum).Maximum
   $avgDepthRaw = ($ouData.Depth | Measure-Object -Average).Average
 
@@ -71,7 +72,7 @@ function Add-AdOuStructureSummary {
   $maxLevel = $maxDepth + 1
   $avgLevel = "{0:N1}" -f ($avgDepthRaw + 1)
 
-  $topLevelCount = ($ouData | Where-Object { $_.Depth -eq 0 }).Count
+  $topLevelCount = @($ouData | Where-Object { $_.Depth -eq 0 }).Count
 
   # Leaf OUs (not parents of any other OU)
   $allDns = $ouData.DistinguishedName
