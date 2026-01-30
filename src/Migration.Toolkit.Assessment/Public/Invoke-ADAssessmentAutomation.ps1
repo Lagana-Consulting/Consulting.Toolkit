@@ -152,7 +152,17 @@ function Invoke-ADAssessmentAutomation {
             $ctx.Parameters = $SectionDef.Parameters
         }
         if ($SectionDef.PSObject.Properties.Name -contains 'Columns' -and $SectionDef.Columns) {
-            $ctx.Columns = $SectionDef.Columns
+            # Convert PSCustomObject to hashtable if needed
+            if ($SectionDef.Columns -is [PSCustomObject]) {
+                $colHash = @{}
+                $SectionDef.Columns.PSObject.Properties | ForEach-Object {
+                    $colHash[$_.Name] = $_.Value
+                }
+                $ctx.Columns = $colHash
+            }
+            else {
+                $ctx.Columns = $SectionDef.Columns
+            }
         }
         return $ctx
     }

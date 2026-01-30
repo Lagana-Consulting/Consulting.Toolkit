@@ -45,6 +45,10 @@ Export-ModuleMember -Function @(
     'Add-AdPublishedPrinters',
     'Add-AdOUDepthSummary',
     'Add-AdDomainDiscoveryTable',
+    'Add-AdForestRiskSummary',
+    'Add-AdForestRiskFlags',
+    'Add-AdDomainRiskSummary',
+    'Add-AdDomainRiskFlags',
 
     # Entra-specific tables
     'Add-AzEntraUserSummary',

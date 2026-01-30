@@ -45,7 +45,11 @@
         'Add-AdEmptyGroupsTable',
         'Add-AdServiceAccountsTable',
         'Add-AdSpnsTable',
-        'Add-AdPrivilegedAccountsTable'
+        'Add-AdPrivilegedAccountsTable',
+        'Add-AdForestRiskSummary',
+        'Add-AdForestRiskFlags',
+        'Add-AdDomainRiskSummary',
+        'Add-AdDomainRiskFlags'
     )
 
     CmdletsToExport   = @()

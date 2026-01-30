@@ -92,6 +92,21 @@
       "Mode": "Table"
     },
     {
+      "Id": "Forest_RiskSummary",
+      "Title": "Forest Risk Summary",
+      "Bookmark": "BK_AD_Forest_Risk_Summary",
+      "Category": "Risk",
+      "Builder": "Add-AdForestRiskSummary",
+      "DataSource": {
+        "Path": "",
+        "Pattern": "AD__Migration__RiskFlagsSummary__Forest.csv",
+        "Single": true,
+        "Description": "Forest-level migration risk flag counts by object type"
+      },
+      "Columns": null,
+      "Mode": "Table"
+    },
+    {
       "Id": "Domain_Summary",
       "Title": "Domain Summary",
       "Bookmark": "BK_AD_Domain_Information_Table",
@@ -311,6 +326,22 @@
         "PerDomain": true,
         "Description": "Calculated domain metrics from multiple CSVs"
       },
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_RiskSummary",
+      "Title": "Domain Risk Summary",
+      "Bookmark": "BK_AD_Domain_Risk_Summary",
+      "Category": "Risk",
+      "Builder": "Add-AdDomainRiskSummary",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Pattern": "*__Analysis__MigrationRiskFlagsSummary__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Domain-level migration risk flag counts by object type"
+      },
+      "Columns": null,
       "Mode": "Table"
     },
     {
