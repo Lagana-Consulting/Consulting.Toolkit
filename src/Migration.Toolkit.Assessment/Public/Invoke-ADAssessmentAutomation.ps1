@@ -299,7 +299,7 @@ function Invoke-ADAssessmentAutomation {
 
                 # Call builder function
                 if (Get-Command $builderFunc -ErrorAction SilentlyContinue) {
-                    & $builderFunc @builderParams | Out-Null
+                    & $builderFunc @builderParams 2>$null | Out-Null
                     $successCount++
                     Write-Host "    Added OK" -ForegroundColor Green
                 }

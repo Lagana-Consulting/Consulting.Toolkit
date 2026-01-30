@@ -47,6 +47,8 @@ function Add-AdDeviceSummary {
     $WarningPreference = 'SilentlyContinue'
 
     try {
+        # Use SilentlyContinue to suppress any .NET/.COM property errors
+        $ErrorActionPreference = 'SilentlyContinue'
 
         # Import CSVs
         $workstations = if (Test-Path $WorkstationsCsvPath) {
@@ -156,8 +158,8 @@ function Add-AdDeviceSummary {
             }
         }
 
-        $serverMetrics = Get-DeviceMetrics -devices $servers -totalLabel "Servers"
-        $workstationMetrics = Get-DeviceMetrics -devices $workstations -totalLabel "Workstations"
+        $serverMetrics = Get-DeviceMetrics -devices $servers -totalLabel "Servers" 2>$null
+        $workstationMetrics = Get-DeviceMetrics -devices $workstations -totalLabel "Workstations" 2>$null
 
         # Validate metrics are returned
         try {
@@ -231,19 +233,16 @@ function Add-AdDeviceSummary {
         $serversLabelCell.Merge($table.Cell($currentRow, 2)) | Out-Null
         $currentRow++
 
-        # Server metrics
-        try {
-            $keys = $serverMetrics | Select-Object -ExpandProperty Keys -ErrorAction Stop
-            if ($keys) {
-                foreach ($key in $keys) {
-                    $table.Cell($currentRow, 1).Range.Text = $key
-                    $table.Cell($currentRow, 2).Range.Text = [string]$serverMetrics[$key]
-                    $currentRow++
-                }
-            }
-        }
-        catch {
-            Write-Verbose "Could not expand server metrics keys, skipping: $($_.Exception.Message)"
+        # Server metrics - hardcoded labels to avoid .Keys property access issues
+        $metricLabels = @("Servers", "Enabled", "Disabled", "Active (≤30 days)", "Inactive (31-90 days)", "Inactive (91-180 days)", "Inactive (>180 days)", "Legacy OS Devices")
+        $metricKeys = @("Servers", "Enabled", "Disabled", "Active (≤30 days)", "Inactive (31-90 days)", "Inactive (91-180 days)", "Inactive (>180 days)", "Legacy OS Devices")
+
+        foreach ($i in 0..($metricKeys.Count - 1)) {
+            $key = $metricKeys[$i]
+            $label = $metricLabels[$i]
+            $table.Cell($currentRow, 1).Range.Text = $label
+            $table.Cell($currentRow, 2).Range.Text = [string]$serverMetrics[$key]
+            $currentRow++
         }
 
         # Blank separator
@@ -259,19 +258,15 @@ function Add-AdDeviceSummary {
         $wkLabelCell.Merge($table.Cell($currentRow, 2)) | Out-Null
         $currentRow++
 
-        # Workstation metrics
-        try {
-            $keys = $workstationMetrics | Select-Object -ExpandProperty Keys -ErrorAction Stop
-            if ($keys) {
-                foreach ($key in $keys) {
-                    $table.Cell($currentRow, 1).Range.Text = $key
-                    $table.Cell($currentRow, 2).Range.Text = [string]$workstationMetrics[$key]
-                    $currentRow++
-                }
-            }
-        }
-        catch {
-            Write-Verbose "Could not expand workstation metrics keys, skipping: $($_.Exception.Message)"
+        # Workstation metrics - hardcoded labels to avoid .Keys property access issues
+        foreach ($i in 0..($metricKeys.Count - 1)) {
+            $key = $metricKeys[$i]
+            $label = $metricLabels[$i]
+            # Replace "Servers" with "Workstations" for first metric row
+            if ($i -eq 0) { $label = "Workstations" }
+            $table.Cell($currentRow, 1).Range.Text = $label
+            $table.Cell($currentRow, 2).Range.Text = [string]$workstationMetrics[$key]
+            $currentRow++
         }
 
         $table.Range.InsertParagraphAfter() | Out-Null
