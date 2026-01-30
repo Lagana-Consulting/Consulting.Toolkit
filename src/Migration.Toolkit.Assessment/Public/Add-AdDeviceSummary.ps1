@@ -153,13 +153,19 @@ function Add-AdDeviceSummary {
     $serverMetrics = Get-DeviceMetrics -devices $servers -totalLabel "Servers"
     $workstationMetrics = Get-DeviceMetrics -devices $workstations -totalLabel "Workstations"
 
-    # Validate metrics
-    if (-not $serverMetrics -or $null -eq ($serverMetrics.Keys)) {
-        Write-Warning "Failed to create valid server metrics."
-        return $InsertRange
+    # Validate metrics are returned and have Keys
+    try {
+        if (-not $serverMetrics -or -not ($serverMetrics.Keys)) {
+            Write-Warning "Invalid server metrics returned."
+            return $InsertRange
+        }
+        if (-not $workstationMetrics -or -not ($workstationMetrics.Keys)) {
+            Write-Warning "Invalid workstation metrics returned."
+            return $InsertRange
+        }
     }
-    if (-not $workstationMetrics -or $null -eq ($workstationMetrics.Keys)) {
-        Write-Warning "Failed to create valid workstation metrics."
+    catch {
+        Write-Warning "Error validating metrics: $_"
         return $InsertRange
     }
 

@@ -92,7 +92,12 @@ function Add-AdOuStructureSummary {
     }
   }
 
-  # Summary table
+  # Ensure depthRows is an array
+  if (-not $depthRows) {
+    Write-Warning "No OU depth data found for distribution table."
+    if ($InsertRange) { return $InsertRange.Duplicate() } else { return $null }
+  }
+
   $summary = [ordered]@{
     "Total Organizational Units" = $totalOUs
     "Maximum OU Depth (levels)"  = $maxLevel
