@@ -30,6 +30,8 @@ Export-ModuleMember -Function @(
     # AD-specific tables
     'Add-AdUserStatsSummary',
     'Add-AdDeviceSummary',
+    'Add-AdWorkstationSummary',
+    'Add-AdServerSummary',
     'Add-AdOuStructureSummary',
     'Add-AdForestSummary',
     'Add-AdTrustInformation',
