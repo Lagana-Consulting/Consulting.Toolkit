@@ -154,12 +154,12 @@ function Add-AdDeviceSummary {
     $workstationMetrics = Get-DeviceMetrics -devices $workstations -totalLabel "Workstations"
 
     # Validate metrics
-    if (-not $serverMetrics -or -not ($serverMetrics -is [hashtable] -or $serverMetrics -is [System.Collections.Specialized.OrderedDictionary])) {
-        Write-Warning "Failed to create server metrics or metrics is invalid type."
+    if (-not $serverMetrics -or $null -eq ($serverMetrics.Keys)) {
+        Write-Warning "Failed to create valid server metrics."
         return $InsertRange
     }
-    if (-not $workstationMetrics -or -not ($workstationMetrics -is [hashtable] -or $workstationMetrics -is [System.Collections.Specialized.OrderedDictionary])) {
-        Write-Warning "Failed to create workstation metrics or metrics is invalid type."
+    if (-not $workstationMetrics -or $null -eq ($workstationMetrics.Keys)) {
+        Write-Warning "Failed to create valid workstation metrics."
         return $InsertRange
     }
 

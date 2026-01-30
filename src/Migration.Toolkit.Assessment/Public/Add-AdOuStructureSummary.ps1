@@ -149,7 +149,7 @@ function Add-AdOuStructureSummary {
   # Data rows
   $r = 2
   foreach ($row in $depthRows) {
-    $table2.Cell($r, 1).Range.Text = $row.Level
+    $table2.Cell($r, 1).Range.Text = [string]$row.Level
     $table2.Cell($r, 2).Range.Text = [string]$row.OUs
     $r++
   }

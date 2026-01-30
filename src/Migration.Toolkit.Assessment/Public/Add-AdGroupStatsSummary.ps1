@@ -195,7 +195,7 @@ function Add-AdGroupStatsSummary {
         foreach ($oldName in $validColumns.Keys) {
             $value = $row.$oldName
             if ($null -eq $value) { $value = "" }
-            $table.Cell($rowIndex, $colIndex).Range.Text = $value
+            $table.Cell($rowIndex, $colIndex).Range.Text = [string]$value
             $colIndex++
         }
         $rowIndex++
