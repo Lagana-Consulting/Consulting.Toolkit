@@ -103,10 +103,18 @@ function Invoke-ADAssessmentAutomation {
 
     # Helper: discover forest-level CSV files
     function Find-ForestCsv {
-        param([string]$Pattern, [string]$RootPath)
-        $forestPath = Join-Path $RootPath "10_forest"
-        if (-not (Test-Path $forestPath)) { return $null }
-        $found = @(Get-ChildItem -Path $forestPath -Filter $Pattern -File -ErrorAction SilentlyContinue)
+        param([string]$Pattern, [string]$RootPath, [string]$SubPath = "10_forest")
+
+        # If SubPath is empty or root, search in root directory
+        if ([string]::IsNullOrEmpty($SubPath) -or $SubPath -eq "") {
+            $searchPath = $RootPath
+        }
+        else {
+            $searchPath = Join-Path $RootPath $SubPath
+        }
+
+        if (-not (Test-Path $searchPath)) { return $null }
+        $found = @(Get-ChildItem -Path $searchPath -Filter $Pattern -File -ErrorAction SilentlyContinue)
         if ($found.Count -gt 0) { return $found[0].FullName }
         return $null
     }
@@ -182,7 +190,8 @@ function Invoke-ADAssessmentAutomation {
 
         $ctx = New-SectionContext -SectionDef $sectionDef
         if ($sectionDef.DataSource.PSObject.Properties.Name -contains "Pattern") {
-            $csvPath = Find-ForestCsv -Pattern $sectionDef.DataSource.Pattern -RootPath $DiscoveryOutputPath
+            $subPath = if ($sectionDef.DataSource.Path) { $sectionDef.DataSource.Path } else { "" }
+            $csvPath = Find-ForestCsv -Pattern $sectionDef.DataSource.Pattern -RootPath $DiscoveryOutputPath -SubPath $subPath
             if ($csvPath) {
                 $ctx.DataFiles.CsvPath = $csvPath
                 $sectionContexts += $ctx
