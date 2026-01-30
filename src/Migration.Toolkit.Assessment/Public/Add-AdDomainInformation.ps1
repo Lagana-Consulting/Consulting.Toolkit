@@ -11,6 +11,7 @@ function Add-AdDomainInformation {
   - Disabled Users
   - Discovery Date
   - Domain Controller Count
+  - Domain Count
   - Empty Groups
   - Enabled Users
   - Site Count
@@ -26,7 +27,7 @@ function Add-AdDomainInformation {
   - Total Workstations
   - Trust Count
 
-  Expects CSV file with columns matching the metrics above.
+  Calculates metrics by aggregating data from multiple CSV files in the domain folder.
 
   .PARAMETER Document
   The Word document object where the table will be inserted.
@@ -34,8 +35,11 @@ function Add-AdDomainInformation {
   .PARAMETER Title
   The caption/title for the table.
 
-  .PARAMETER CsvPath
-  Path to the CSV file containing domain information data. First row will be extracted.
+  .PARAMETER DomainFolderPath
+  Path to the domain folder containing discovery CSV files (e.g., 20_domains/Domain-contoso.com).
+
+  .PARAMETER ForestFolderPath
+  Path to the forest-level folder (10_forest) for forest-wide metrics like site count, trust count, etc.
 
   .PARAMETER TableStyleName
   The Word table style to apply (e.g., "Grid Table 4 - Accent 1"). Optional.
@@ -50,17 +54,11 @@ function Add-AdDomainInformation {
   .EXAMPLE
   Add-AdDomainInformation -Document $word.ActiveDocument `
     -Title "Domain Information Summary" `
-    -CsvPath "C:\data\Domain_Summary.csv" `
+    -DomainFolderPath "C:\discovery\20_domains\Domain-contoso.com" `
+    -ForestFolderPath "C:\discovery\10_forest" `
     -TableStyleName "Grid Table 4 - Accent 1"
 
-  Creates domain information table from CSV data.
-
-  .EXAMPLE
-  $range = Get-AdBookmarkRange -Document $doc -BookmarkName "DomainMetadata"
-  Add-AdDomainInformation -Document $doc -Title "Domain Details" `
-    -CsvPath "Domain.csv" -InsertRange $range -HeaderFontColor "#003087"
-
-  Inserts domain information at a specific bookmark location with custom color.
+  Creates domain information table by calculating metrics from discovery CSVs.
 
   .OUTPUTS
   Microsoft.Office.Interop.Word.Range
@@ -75,8 +73,11 @@ function Add-AdDomainInformation {
         [string]$Title,
 
         [Parameter(Mandatory)]
-        [ValidateScript({ Test-Path $_ -PathType Leaf })]
-        [string]$CsvPath,
+        [ValidateScript({ Test-Path $_ -PathType Container })]
+        [string]$DomainFolderPath,
+
+        [ValidateScript({ Test-Path $_ -PathType Container })]
+        [string]$ForestFolderPath,
 
         [string]$TableStyleName,
 
@@ -85,32 +86,185 @@ function Add-AdDomainInformation {
         $HeaderFontColor
     )
 
-    # Import CSV (take first row only)
-    $rawRow = Import-Csv -Path $CsvPath -ErrorAction Stop | Select-Object -First 1
-    if (-not $rawRow) {
-        Write-Warning "CSV file $CsvPath is empty or has no data rows."
-        return $InsertRange
-    }
-
-    # Define domain metrics in display order (map actual CSV columns)
-    # CSV columns: DomainFqdn, DomainDn, NetBIOSName, DomainMode, PdcEmulator, RidMaster, InfrastructureMaster, ServerUsed
-    $domainColumns = [ordered]@{
-        "DomainFqdn"           = "Domain FQDN"
-        "NetBIOSName"          = "NetBIOS Name"
-        "DomainMode"           = "Domain Mode"
-        "PdcEmulator"          = "PDC Emulator"
-        "RidMaster"            = "RID Master"
-        "InfrastructureMaster" = "Infrastructure Master"
-    }
-
-    # Build metric/value pairs from CSV row
+    # Calculate metrics from various CSV files
     $metrics = [ordered]@{}
-    foreach ($oldName in $domainColumns.Keys) {
-        $newName = $domainColumns[$oldName]
-        $value = $rawRow.$oldName
-        if ($null -eq $value) { $value = "" }
-        $metrics[$newName] = $value
+
+    # Get domain name from Domain Summary CSV
+    $domainSummaryCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Domain__Summary__Domain-*.csv" | Select-Object -First 1
+    if ($domainSummaryCsv) {
+        $domainInfo = Import-Csv -Path $domainSummaryCsv.FullName | Select-Object -First 1
+        $metrics["DomainName"] = $domainInfo.DomainFqdn
     }
+    else {
+        $metrics["DomainName"] = "Unknown"
+    }
+
+    # Users metrics
+    $usersCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__Users__Domain-*.csv" | Select-Object -First 1
+    if ($usersCsv) {
+        $users = Import-Csv -Path $usersCsv.FullName
+        $metrics["TotalUsers"] = $users.Count
+        $metrics["EnabledUsers"] = @($users | Where-Object { $_.Enabled -eq 'True' }).Count
+        $metrics["DisabledUsers"] = @($users | Where-Object { $_.Enabled -eq 'False' }).Count
+
+        # Stale users (inactive > 90 days)
+        $cutoffDate = (Get-Date).AddDays(-90)
+        $metrics["StaleUsers"] = @($users | Where-Object {
+                $_.LastLogonDate -and
+                ([datetime]::Parse($_.LastLogonDate) -lt $cutoffDate)
+            }).Count
+    }
+    else {
+        $metrics["TotalUsers"] = 0
+        $metrics["EnabledUsers"] = 0
+        $metrics["DisabledUsers"] = 0
+        $metrics["StaleUsers"] = 0
+    }
+
+    # Workstations metrics
+    $workstationsCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__ComputersWorkstations__Domain-*.csv" | Select-Object -First 1
+    if ($workstationsCsv) {
+        $workstations = Import-Csv -Path $workstationsCsv.FullName
+        $metrics["TotalWorkstations"] = $workstations.Count
+
+        # Active workstations (logged on in last 30 days)
+        $activeCutoff = (Get-Date).AddDays(-30)
+        $metrics["ActiveWorkstations"] = @($workstations | Where-Object {
+                $_.LastLogonDate -and
+                ([datetime]::Parse($_.LastLogonDate) -gt $activeCutoff)
+            }).Count
+    }
+    else {
+        $metrics["TotalWorkstations"] = 0
+        $metrics["ActiveWorkstations"] = 0
+    }
+
+    # Servers metrics
+    $serversCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__ComputersServers__Domain-*.csv" | Select-Object -First 1
+    if ($serversCsv) {
+        $servers = Import-Csv -Path $serversCsv.FullName
+        $metrics["TotalServers"] = $servers.Count
+    }
+    else {
+        $metrics["TotalServers"] = 0
+    }
+
+    # Groups metrics
+    $groupsCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__Groups__Domain-*.csv" | Select-Object -First 1
+    if ($groupsCsv) {
+        $groups = Import-Csv -Path $groupsCsv.FullName
+        $metrics["TotalGroups"] = $groups.Count
+        $metrics["EmptyGroups"] = @($groups | Where-Object { -not $_.Members -or $_.Members -eq '' }).Count
+    }
+    else {
+        $metrics["TotalGroups"] = 0
+        $metrics["EmptyGroups"] = 0
+    }
+
+    # Contacts
+    $contactsCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__Contacts__Domain-*.csv" | Select-Object -First 1
+    if ($contactsCsv) {
+        $contacts = Import-Csv -Path $contactsCsv.FullName
+        $metrics["TotalContacts"] = $contacts.Count
+    }
+    else {
+        $metrics["TotalContacts"] = 0
+    }
+
+    # GPOs
+    $gposCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Config__GPOInventory__Domain-*.csv" | Select-Object -First 1
+    if ($gposCsv) {
+        $gpos = Import-Csv -Path $gposCsv.FullName
+        $metrics["TotalGPOs"] = $gpos.Count
+    }
+    else {
+        $metrics["TotalGPOs"] = 0
+    }
+
+    # OUs
+    $ousCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__OrganizationalUnits__Domain-*.csv" | Select-Object -First 1
+    if ($ousCsv) {
+        $ous = Import-Csv -Path $ousCsv.FullName
+        $metrics["TotalOUs"] = $ous.Count
+    }
+    else {
+        $metrics["TotalOUs"] = 0
+    }
+
+    # Printers
+    $printersCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__Printers__Domain-*.csv" | Select-Object -First 1
+    if ($printersCsv) {
+        $printers = Import-Csv -Path $printersCsv.FullName
+        $metrics["TotalPrinters"] = $printers.Count
+    }
+    else {
+        $metrics["TotalPrinters"] = 0
+    }
+
+    # Domain Controllers
+    $dcsCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Infrastructure__DomainControllers__Domain-*.csv" | Select-Object -First 1
+    if ($dcsCsv) {
+        $dcs = Import-Csv -Path $dcsCsv.FullName
+        $metrics["DomainControllerCount"] = $dcs.Count
+    }
+    else {
+        $metrics["DomainControllerCount"] = 0
+    }
+
+    # Forest-level metrics (if ForestFolderPath provided)
+    if ($ForestFolderPath) {
+        # Sites
+        $sitesCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Infrastructure__Sites__Forest.csv" | Select-Object -First 1
+        if ($sitesCsv) {
+            $sites = Import-Csv -Path $sitesCsv.FullName
+            $metrics["SiteCount"] = $sites.Count
+        }
+        else {
+            $metrics["SiteCount"] = 0
+        }
+
+        # Subnets
+        $subnetsCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Infrastructure__Subnets__Forest.csv" | Select-Object -First 1
+        if ($subnetsCsv) {
+            $subnets = Import-Csv -Path $subnetsCsv.FullName
+            $metrics["SubnetCount"] = $subnets.Count
+        }
+        else {
+            $metrics["SubnetCount"] = 0
+        }
+
+        # Trusts
+        $trustsCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Infrastructure__Trusts__Forest.csv" | Select-Object -First 1
+        if ($trustsCsv) {
+            $trusts = Import-Csv -Path $trustsCsv.FullName
+            $metrics["TrustCount"] = $trusts.Count
+        }
+        else {
+            $metrics["TrustCount"] = 0
+        }
+
+        # Domain Count (from forest summary)
+        $forestSummaryCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Forest__Summary__Forest.csv" | Select-Object -First 1
+        if ($forestSummaryCsv) {
+            $forestInfo = Import-Csv -Path $forestSummaryCsv.FullName | Select-Object -First 1
+            $metrics["DomainCount"] = $forestInfo.DomainCount
+        }
+        else {
+            $metrics["DomainCount"] = 1
+        }
+    }
+    else {
+        $metrics["SiteCount"] = "N/A"
+        $metrics["SubnetCount"] = "N/A"
+        $metrics["TrustCount"] = "N/A"
+        $metrics["DomainCount"] = 1
+    }
+
+    # AD Recycle Bin status (from forest config)
+    $metrics["ADRecycleBinEnabled"] = "Unknown"
+
+    # Discovery Date
+    $metrics["DiscoveryDate"] = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
     # Determine insert position
     if ($InsertRange) {
@@ -135,7 +289,7 @@ function Add-AdDomainInformation {
     $tableRange = $caption.Range.Next()
     $tableRange.Collapse(1)
     $table = $Document.Tables.Add($tableRange, $numRows, $numCols)
-    
+
     # Set table content style to Normal before applying table style
     $table.Range.Style = "Normal"
 

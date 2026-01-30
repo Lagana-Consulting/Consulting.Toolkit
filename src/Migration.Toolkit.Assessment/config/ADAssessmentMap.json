@@ -140,25 +140,36 @@
       "Mode": "MetricValue"
     },
     {
-      "Id": "Domain_Computers",
-      "Title": "Device Summary",
-      "Bookmark": "BK_AD_Devices_Table",
+      "Id": "Domain_Workstations",
+      "Title": "Workstation Summary",
+      "Bookmark": "BK_AD_Workstation_Summary_Table",
       "Category": "PerDomain",
-      "Builder": "Add-AdDeviceSummary",
+      "Builder": "Add-AdWorkstationSummary",
       "DataSource": {
         "Path": "20_domains/{Domain}",
-        "Servers": "*__Identity__ComputersServers__Domain-*.csv",
-        "Workstations": "*__Identity__ComputersWorkstations__Domain-*.csv",
+        "Pattern": "*__Identity__ComputersWorkstations__Domain-*.csv",
         "Single": false,
         "PerDomain": true,
-        "Description": "Servers and workstations with activity and legacy OS"
+        "Description": "Workstation devices with activity and legacy OS metrics"
       },
       "Columns": null,
-      "Mode": "MetricValue",
-      "Parameters": {
-        "Mode": "Rollup",
-        "ActiveThresholdDays": 90
-      }
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_Servers",
+      "Title": "Server Summary",
+      "Bookmark": "BK_AD_Server_Summary_Table",
+      "Category": "PerDomain",
+      "Builder": "Add-AdServerSummary",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Identity__ComputersServers__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Server devices with activity and legacy OS metrics"
+      },
+      "Columns": null,
+      "Mode": "Table"
     },
     {
       "Id": "Domain_Groups",
@@ -293,20 +304,12 @@
       "Title": "Domain Discovery Summary",
       "Bookmark": "BK_Domain_Discovery_Table",
       "Category": "Infrastructure",
-      "Builder": "Add-AdDomainDiscoveryTable",
+      "Builder": "Add-AdDomainInformation",
       "DataSource": {
         "Path": "20_domains/{DomainName}",
-        "Pattern": "*__Domain__Summary__Domain-*.csv",
-        "Single": false,
+        "Type": "Folder",
         "PerDomain": true,
-        "Description": "Per-domain metadata: DomainName, FunctionalLevel, FSMO roles"
-      },
-      "Columns": {
-        "DomainFqdn": "Domain Name",
-        "DomainMode": "Functional Level",
-        "PdcEmulator": "PDC Emulator",
-        "RidMaster": "RID Master",
-        "InfrastructureMaster": "Infrastructure Master"
+        "Description": "Calculated domain metrics from multiple CSVs"
       },
       "Mode": "Table"
     },

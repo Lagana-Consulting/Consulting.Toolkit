@@ -195,7 +195,16 @@ function Invoke-ADAssessmentAutomation {
             if (-not $isPerDomain) { continue }
 
             $csvPath = $null
-            if ($sectionDef.DataSource.PSObject.Properties.Name -contains "Servers") {
+
+            # Check if this is a folder-based data source
+            if ($sectionDef.DataSource.PSObject.Properties.Name -contains "Type" -and $sectionDef.DataSource.Type -eq "Folder") {
+                # Folder-based: pass the domain folder path directly
+                $ctx = New-SectionContext -SectionDef $sectionDef -DomainName $domainName
+                $ctx.DataFiles.DomainFolderPath = $domainDir.FullName
+                $ctx.DataFiles.ForestFolderPath = Join-Path $DiscoveryOutputPath "10_forest"
+                $sectionContexts += $ctx
+            }
+            elseif ($sectionDef.DataSource.PSObject.Properties.Name -contains "Servers") {
                 # Multi-file (Servers + Workstations)
                 $serversFile = Find-DomainCsv -Pattern $sectionDef.DataSource.Servers -DomainPath $domainDir.FullName -DomainName $domainName
                 $workstationsFile = Find-DomainCsv -Pattern $sectionDef.DataSource.Workstations -DomainPath $domainDir.FullName -DomainName $domainName
@@ -277,8 +286,15 @@ function Invoke-ADAssessmentAutomation {
                     $builderParams.InsertRange = $insertRange
                 }
 
+                # Folder-based builders
+                if ($ctx.DataFiles.ContainsKey("DomainFolderPath")) {
+                    $builderParams.DomainFolderPath = $ctx.DataFiles.DomainFolderPath
+                    if ($ctx.DataFiles.ContainsKey("ForestFolderPath")) {
+                        $builderParams.ForestFolderPath = $ctx.DataFiles.ForestFolderPath
+                    }
+                }
                 # Multi-file builders
-                if ($ctx.DataFiles.ContainsKey("Servers")) {
+                elseif ($ctx.DataFiles.ContainsKey("Servers")) {
                     $builderParams.ServersCsvPath = $ctx.DataFiles.Servers
                     $builderParams.WorkstationsCsvPath = $ctx.DataFiles.Workstations
                     if ($ctx.Parameters) {
