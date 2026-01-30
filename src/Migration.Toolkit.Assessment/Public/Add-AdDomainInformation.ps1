@@ -89,11 +89,16 @@ function Add-AdDomainInformation {
     # Calculate metrics from various CSV files
     $metrics = [ordered]@{}
 
+    Write-Verbose "Domain Folder Path: $DomainFolderPath"
+    Write-Verbose "Forest Folder Path: $ForestFolderPath"
+
     # Get domain name from Domain Summary CSV
     $domainSummaryCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Domain__Summary__Domain-*.csv" | Select-Object -First 1
+    Write-Verbose "Domain Summary CSV: $($domainSummaryCsv.Name)"
     if ($domainSummaryCsv) {
         $domainInfo = Import-Csv -Path $domainSummaryCsv.FullName | Select-Object -First 1
         $metrics["DomainName"] = $domainInfo.DomainFqdn
+        Write-Verbose "Domain Name: $($metrics['DomainName'])"
     }
     else {
         $metrics["DomainName"] = "Unknown"
@@ -101,9 +106,11 @@ function Add-AdDomainInformation {
 
     # Users metrics
     $usersCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__Users__Domain-*.csv" | Select-Object -First 1
+    Write-Verbose "Users CSV: $($usersCsv.Name)"
     if ($usersCsv) {
         $users = Import-Csv -Path $usersCsv.FullName
         $metrics["TotalUsers"] = $users.Count
+        Write-Verbose "Total Users: $($metrics['TotalUsers'])"
         $metrics["EnabledUsers"] = @($users | Where-Object { $_.Enabled -eq 'True' }).Count
         $metrics["DisabledUsers"] = @($users | Where-Object { $_.Enabled -eq 'False' }).Count
 
@@ -317,6 +324,7 @@ function Add-AdDomainInformation {
     foreach ($key in $stringMetrics.Keys) {
         $table.Cell($rowIndex, 1).Range.Text = $key
         $table.Cell($rowIndex, 2).Range.Text = $stringMetrics[$key]
+        $rowIndex++
     }
 
     # Apply table style
