@@ -163,9 +163,12 @@ function Add-AdDeviceSummary {
             Write-Warning "Invalid workstation metrics returned."
             return $InsertRange
         }
+        # Also ensure .Count works
+        $testCount = $serverMetrics.Count
+        $testCount2 = $workstationMetrics.Count
     }
     catch {
-        Write-Warning "Error validating metrics: $_"
+        Write-Warning "Error validating metrics: $($_.Exception.Message)"
         return $InsertRange
     }
 
