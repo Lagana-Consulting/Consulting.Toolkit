@@ -273,6 +273,12 @@ function Add-AdDomainInformation {
     # Discovery Date
     $metrics["DiscoveryDate"] = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
+    # Convert all values to strings for Word table compatibility
+    $stringMetrics = [ordered]@{}
+    foreach ($key in $metrics.Keys) {
+        $stringMetrics[$key] = [string]$metrics[$key]
+    }
+
     # Determine insert position
     if ($InsertRange) {
         $range = $InsertRange
@@ -291,7 +297,7 @@ function Add-AdDomainInformation {
     $caption.Range.InsertParagraphAfter()
 
     # Create table
-    $numRows = $metrics.Count + 1  # +1 for header
+    $numRows = $stringMetrics.Count + 1  # +1 for header
     $numCols = 2
     $tableRange = $caption.Range.Next()
     $tableRange.Collapse(1)
@@ -308,10 +314,9 @@ function Add-AdDomainInformation {
 
     # Data rows
     $rowIndex = 2
-    foreach ($key in $metrics.Keys) {
+    foreach ($key in $stringMetrics.Keys) {
         $table.Cell($rowIndex, 1).Range.Text = $key
-        $table.Cell($rowIndex, 2).Range.Text = $metrics[$key]
-        $rowIndex++
+        $table.Cell($rowIndex, 2).Range.Text = $stringMetrics[$key]
     }
 
     # Apply table style
