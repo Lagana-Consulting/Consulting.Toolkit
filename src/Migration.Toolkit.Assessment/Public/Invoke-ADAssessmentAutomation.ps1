@@ -79,7 +79,8 @@ function Invoke-ADAssessmentAutomation {
 
     # Determine config file location
     if (-not $ConfigPath) {
-        $ConfigPath = Join-Path $PSScriptRoot ".." "config" "ADAssessmentMap.json"
+        $configDir = Split-Path -Parent $PSScriptRoot
+        $ConfigPath = Join-Path $configDir "config" "ADAssessmentMap.json"
     }
 
     if (-not (Test-Path $ConfigPath)) {
@@ -171,10 +172,7 @@ function Invoke-ADAssessmentAutomation {
             if ($csvPath) {
                 $ctx.DataFiles.CsvPath = $csvPath
                 $sectionContexts += $ctx
-                Write-Host "  Found: $($sectionDef.Title)" -ForegroundColor Green
-            }
-            else {
-                Write-Warning "CSV not found for: $($sectionDef.Id) - Pattern: $($sectionDef.DataSource.Pattern)"
+                Write-Host "  Forest: $($sectionDef.Title)" -ForegroundColor Green
             }
         }
     }
@@ -185,7 +183,7 @@ function Invoke-ADAssessmentAutomation {
 
     foreach ($domainDir in $domainDirectories) {
         $domainName = Get-DomainNameFromPath -DomainDirName $domainDir.Name
-        Write-Host "  Processing domain: $domainName" -ForegroundColor Gray
+        Write-Host "  Domain: $domainName" -ForegroundColor Gray
 
         foreach ($sectionDef in $config.Sections) {
             if ($Sections -and $Sections -notcontains $sectionDef.Id) { continue }
@@ -203,7 +201,6 @@ function Invoke-ADAssessmentAutomation {
                     $ctx.DataFiles.Servers = $serversFile
                     $ctx.DataFiles.Workstations = $workstationsFile
                     $sectionContexts += $ctx
-                    Write-Host "    + $($sectionDef.Title)" -ForegroundColor Green
                 }
             }
             else {
@@ -213,7 +210,6 @@ function Invoke-ADAssessmentAutomation {
                     $ctx = New-SectionContext -SectionDef $sectionDef -DomainName $domainName
                     $ctx.DataFiles.CsvPath = $csvPath
                     $sectionContexts += $ctx
-                    Write-Host "    + $($sectionDef.Title)" -ForegroundColor Green
                 }
             }
         }
@@ -247,7 +243,7 @@ function Invoke-ADAssessmentAutomation {
         $failureCount = 0
 
         foreach ($ctx in $sectionContexts) {
-            Write-Host "  Processing: $($ctx.Title)" -ForegroundColor Cyan
+            Write-Host "  Section: $($ctx.Title)" -ForegroundColor Cyan
 
             try {
                 # Get bookmark range if available
@@ -255,7 +251,7 @@ function Invoke-ADAssessmentAutomation {
                 if ($ctx.Bookmark) {
                     $insertRange = Get-AdBookmarkRange -Document $doc -BookmarkName $ctx.Bookmark
                     if (-not $insertRange) {
-                        Write-Warning "Bookmark '$($ctx.Bookmark)' not found. Skipping: $($ctx.Title)"
+                        Write-Warning "Bookmark not found: $($ctx.Bookmark)"
                         $failureCount++
                         continue
                     }
@@ -296,15 +292,15 @@ function Invoke-ADAssessmentAutomation {
                 if (Get-Command $builderFunc -ErrorAction SilentlyContinue) {
                     & $builderFunc @builderParams | Out-Null
                     $successCount++
-                    Write-Host "    OK" -ForegroundColor Green
+                    Write-Host "    Added OK" -ForegroundColor Green
                 }
                 else {
-                    Write-Warning "Builder function not found: $builderFunc"
+                    Write-Warning "Builder not found: $builderFunc"
                     $failureCount++
                 }
             }
             catch {
-                Write-Warning "Error in '$($ctx.Title)': $($_.Exception.Message)"
+                Write-Warning "Error: $($_.Exception.Message)"
                 $failureCount++
             }
         }
@@ -316,8 +312,8 @@ function Invoke-ADAssessmentAutomation {
         }
 
         $doc.SaveAs($OutputPath, 16)
-        Write-Host "Document saved: $OutputPath" -ForegroundColor Green
-        Write-Host "Results: Success=$successCount Failed=$failureCount" -ForegroundColor Cyan
+        Write-Host "`nDocument saved: $OutputPath" -ForegroundColor Green
+        Write-Host "Results: $successCount success, $failureCount failed" -ForegroundColor Cyan
 
         return $OutputPath
     }

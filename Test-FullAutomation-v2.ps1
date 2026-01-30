@@ -21,8 +21,16 @@ Import-Module ".\src\Migration.Toolkit.Assessment" -Force
 Write-Host "Running Invoke-ADAssessmentAutomation..." -ForegroundColor Yellow
 
 try {
-    $result = Invoke-ADAssessmentAutomation `
-        -DiscoveryOutputPath $DiscoveryPath `
+    # Get template path
+    $templatePath = (Get-ChildItem -Path ".\src\Migration.Toolkit.Assessment\config" -Filter "*.docx" -File | Select-Object -First 1).FullName
+
+    if (-not $templatePath) {
+        throw "No template found in config folder"
+    }
+
+    Write-Host "Using template: $templatePath" -ForegroundColor Yellow
+
+    $result = & (Get-Command Invoke-ADAssessmentAutomation) `
         -OutputPath $outputPath `
         -Verbose 4>&1
 
