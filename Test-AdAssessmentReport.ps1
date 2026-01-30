@@ -22,7 +22,8 @@ Write-Host "Discovery Path: $DiscoveryPath"
 Write-Host ""
 
 # Load module from source
-$ModulePath = "C:\Users\paull\OneDrive - Paul Lagana\Documents\GitHub\lc-toolkit\src\Lagana.Consulting.Toolkit"
+$scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ModulePath = Join-Path $scriptRoot "src\Migration.Toolkit"
 Write-Host "Loading module from: $ModulePath" -ForegroundColor Yellow
 
 if (-not (Test-Path $ModulePath)) {
@@ -30,7 +31,7 @@ if (-not (Test-Path $ModulePath)) {
     exit 1
 }
 
-Import-Module "$ModulePath\Lagana.Consulting.Toolkit.psd1" -Force
+Import-Module "$ModulePath\Migration.Toolkit.psd1" -Force
 
 # Test the function
 Write-Host "Generating HTML report..." -ForegroundColor Yellow
@@ -47,7 +48,8 @@ try {
     Write-Host ""
     Write-Host "Opening report in browser..." -ForegroundColor Yellow
     Invoke-Item $result.ReportPath
-} catch {
+}
+catch {
     Write-Error "Error generating report: $_"
     Write-Error $_.ScriptStackTrace
     exit 1

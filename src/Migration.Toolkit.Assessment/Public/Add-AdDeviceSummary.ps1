@@ -80,37 +80,66 @@ function Add-AdDeviceSummary {
     function Get-DeviceMetrics {
         param([array]$devices, [string]$totalLabel)
 
-        $enabled = ($devices | Where-Object { $_.Enabled -eq "True" }).Count
-        $disabled = ($devices | Where-Object { $_.Enabled -eq "False" }).Count
+        # Ensure devices is an array and not null
+        if (-not $devices -or $devices.Count -eq 0) {
+            return [ordered]@{
+                $totalLabel              = 0
+                "Enabled"                = 0
+                "Disabled"               = 0
+                "Active (≤30 days)"      = 0
+                "Inactive (31-90 days)"  = 0
+                "Inactive (91-180 days)" = 0
+                "Inactive (>180 days)"   = 0
+                "Legacy OS Devices"      = 0
+            }
+        }
 
-        $active30 = ($devices | Where-Object {
+        $enabled = try { ($devices | Where-Object { $_.Enabled -eq "True" -or $_.Enabled -eq $true }).Count } catch { 0 }
+        $disabled = try { ($devices | Where-Object { $_.Enabled -eq "False" -or $_.Enabled -eq $false }).Count } catch { 0 }
+
+        $active30 = try {
+            ($devices | Where-Object {
                 $d = Get-LastLogonDays $_
                 $null -ne $d -and $d -le 30
             }).Count
+        }
+        catch { 0 }
 
-        $inactive31to90 = ($devices | Where-Object {
+        $inactive31to90 = try {
+            ($devices | Where-Object {
                 $d = Get-LastLogonDays $_
                 $null -ne $d -and $d -gt 30 -and $d -le 90
             }).Count
+        }
+        catch { 0 }
 
-        $inactive91to180 = ($devices | Where-Object {
+        $inactive91to180 = try {
+            ($devices | Where-Object {
                 $d = Get-LastLogonDays $_
                 $null -ne $d -and $d -gt 90 -and $d -le 180
             }).Count
+        }
+        catch { 0 }
 
-        $inactive180Plus = ($devices | Where-Object {
+        $inactive180Plus = try {
+            ($devices | Where-Object {
                 $d = Get-LastLogonDays $_
                 $null -ne $d -and $d -gt 180
             }).Count
+        }
+        catch { 0 }
 
         # Legacy OS devices
-        $legacy = ($devices | Where-Object {
+        $legacy = try {
+            ($devices | Where-Object {
                 $os = [string]$_.OperatingSystem
                 $os -match "(Windows XP|Windows 7|Windows 8\.1|Server 2003|Server 2008)"
             }).Count
+        }
+        catch { 0 }
 
         return [ordered]@{
-            $totalLabel              = $devices.Count
+            $totalLabel              = @($devices).Count
             "Enabled"                = $enabled
             "Disabled"               = $disabled
             "Active (≤30 days)"      = $active30
@@ -123,6 +152,16 @@ function Add-AdDeviceSummary {
 
     $serverMetrics = Get-DeviceMetrics -devices $servers -totalLabel "Servers"
     $workstationMetrics = Get-DeviceMetrics -devices $workstations -totalLabel "Workstations"
+
+    # Validate metrics
+    if (-not $serverMetrics -or -not ($serverMetrics -is [hashtable] -or $serverMetrics -is [System.Collections.Specialized.OrderedDictionary])) {
+        Write-Warning "Failed to create server metrics or metrics is invalid type."
+        return $InsertRange
+    }
+    if (-not $workstationMetrics -or -not ($workstationMetrics -is [hashtable] -or $workstationMetrics -is [System.Collections.Specialized.OrderedDictionary])) {
+        Write-Warning "Failed to create workstation metrics or metrics is invalid type."
+        return $InsertRange
+    }
 
     # Insert combined table
     if ($InsertRange) {

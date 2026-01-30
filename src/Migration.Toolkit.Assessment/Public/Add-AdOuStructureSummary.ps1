@@ -124,10 +124,12 @@ function Add-AdOuStructureSummary {
   $afterHeading2 = $para2.Range.Duplicate()
   $afterHeading2.Collapse(0) | Out-Null
 
-  $rows = $depthRows.Count + 1
+  # Ensure depthRows count is reliable
+  $depthRowsArray = @($depthRows)
+  $rows = $depthRowsArray.Count + 1
   $cols = 2
 
-  $table2 = $Document.Tables.Add($afterHeading2, $rows, $cols)
+  $table2 = $Document.Tables.Add($afterHeading2, [int]$rows, [int]$cols)
   $table2.Range.Style = "Normal"
 
   $styleObj = Get-AdWordTableStyle -Document $Document -TableStyleName $TableStyleName

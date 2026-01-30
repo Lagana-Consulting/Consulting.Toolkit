@@ -162,12 +162,20 @@ function Add-AdGroupStatsSummary {
     $caption.Range.InsertParagraphAfter()
 
     # Create table
-    $numRows = $data.Count + 1  # +1 for header
-    $numCols = $validColumns.Count
+    # Ensure row and column counts are integers
+    $numRows = @($data).Count + 1  # +1 for header
+    $numCols = @($validColumns.Keys).Count
+
+    # Validate counts are positive integers
+    if ($numRows -lt 2 -or $numCols -lt 1) {
+        Write-Warning "Invalid table dimensions: rows=$numRows, cols=$numCols"
+        return $InsertRange
+    }
+
     $tableRange = $caption.Range.Next()
     $tableRange.Collapse(1)
-    $table = $Document.Tables.Add($tableRange, $numRows, $numCols)
-    
+    $table = $Document.Tables.Add($tableRange, [int]$numRows, [int]$numCols)
+
     # Set table content style to Normal before applying table style
     $table.Range.Style = "Normal"
 
