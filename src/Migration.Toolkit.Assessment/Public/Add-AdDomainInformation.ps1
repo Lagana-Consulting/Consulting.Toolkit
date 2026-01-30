@@ -108,10 +108,9 @@ function Add-AdDomainInformation {
         $metrics["DisabledUsers"] = @($users | Where-Object { $_.Enabled -eq 'False' }).Count
 
         # Stale users (inactive > 90 days)
-        $cutoffDate = (Get-Date).AddDays(-90)
         $metrics["StaleUsers"] = @($users | Where-Object {
-                $_.LastLogonDate -and
-                ([datetime]::Parse($_.LastLogonDate) -lt $cutoffDate)
+                $_.LastLogonDays -and
+                ([int]$_.LastLogonDays -gt 90)
             }).Count
     }
     else {
@@ -128,10 +127,9 @@ function Add-AdDomainInformation {
         $metrics["TotalWorkstations"] = $workstations.Count
 
         # Active workstations (logged on in last 30 days)
-        $activeCutoff = (Get-Date).AddDays(-30)
         $metrics["ActiveWorkstations"] = @($workstations | Where-Object {
-                $_.LastLogonDate -and
-                ([datetime]::Parse($_.LastLogonDate) -gt $activeCutoff)
+                $_.LastLogonDays -and
+                ([int]$_.LastLogonDays -le 30)
             }).Count
     }
     else {
@@ -154,7 +152,16 @@ function Add-AdDomainInformation {
     if ($groupsCsv) {
         $groups = Import-Csv -Path $groupsCsv.FullName
         $metrics["TotalGroups"] = $groups.Count
-        $metrics["EmptyGroups"] = @($groups | Where-Object { -not $_.Members -or $_.Members -eq '' }).Count
+
+        # Empty groups from analysis CSV
+        $emptyGroupsCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Analysis__EmptyGroups__Domain-*.csv" | Select-Object -First 1
+        if ($emptyGroupsCsv) {
+            $emptyGroups = Import-Csv -Path $emptyGroupsCsv.FullName
+            $metrics["EmptyGroups"] = $emptyGroups.Count
+        }
+        else {
+            $metrics["EmptyGroups"] = 0
+        }
     }
     else {
         $metrics["TotalGroups"] = 0

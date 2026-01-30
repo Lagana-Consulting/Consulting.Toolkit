@@ -145,7 +145,7 @@ function Invoke-ADAssessmentAutomation {
             Mode      = $SectionDef.Mode
             DataFiles = @{}
             Domain    = $DomainName
-            Single    = if ($SectionDef.DataSource.Single) { $true } else { $false }
+            Single    = if ($SectionDef.DataSource.PSObject.Properties['Single']) { $SectionDef.DataSource.Single } else { $false }
             Columns   = $null
         }
         if ($SectionDef.PSObject.Properties.Name -contains 'Parameters' -and $SectionDef.Parameters) {
