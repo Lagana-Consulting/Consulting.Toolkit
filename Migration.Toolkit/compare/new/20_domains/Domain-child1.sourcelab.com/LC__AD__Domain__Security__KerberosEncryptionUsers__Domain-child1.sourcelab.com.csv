@@ -1,0 +1,8 @@
+﻿"DomainFqdn","SamAccountName","UserPrincipalName","EncryptionTypes","EncryptionRisk","SPNCount","SidHistoryCount","AdminCount"
+"child1.sourcelab.com","Admin","","","Unknown","0","0","1"
+"child1.sourcelab.com","Administrator","","","Unknown","0","0","1"
+"child1.sourcelab.com","Guest","","","Unknown","0","0","0"
+"child1.sourcelab.com","krbtgt","","","Unknown","1","0","1"
+"child1.sourcelab.com","plagana","","","Unknown","0","0","1"
+"child1.sourcelab.com","SOURCELAB$","","","Unknown","0","0","0"
+"child1.sourcelab.com","svcMigPro","svcMigPro@CHILD1.SOURCELAB.COM","","Unknown","0","0","0"

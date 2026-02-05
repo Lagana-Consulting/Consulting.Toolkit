@@ -1,0 +1,423 @@
+{
+  "Description": "Maps AD Discovery output structure to Assessment module table builders",
+  "Version": "1.0",
+  "SchemaVersion": "1.0",
+  "Styling": {
+    "TableStyleName": "BT-Default",
+    "DefaultHeaderFontColor": "#FFFFFF"
+  },
+  "DiscoveryOutputStructure": {
+    "RootDir": "<Customer>__vts_<timestamp>",
+    "Folders": {
+      "00_schemas": "CSV column definitions and metadata",
+      "10_forest": "Forest-level discovery (sites, trusts, UPN suffixes, etc.)",
+      "20_domains": "Per-domain discovery (users, computers, groups, GPOs, policies, etc.)",
+      "99_manifest": "Manifest and execution metadata"
+    }
+  },
+  "Sections": [
+    {
+      "Id": "Forest_Summary",
+      "Title": "Forest Summary",
+      "Bookmark": "BK_AD_Forest_Summary_Table",
+      "Category": "Infrastructure",
+      "Builder": "Add-AdForestSummary",
+      "DataSource": {
+        "Path": "10_forest",
+        "Pattern": "*__Forest__Summary__Forest.csv",
+        "Single": true,
+        "Description": "Forest metadata: Name, Domains, Mode, FunctionalLevel, Masters"
+      },
+      "Columns": null,
+      "Mode": "MetricValue"
+    },
+    {
+      "Id": "Forest_Trusts",
+      "Title": "Forest Trusts",
+      "Bookmark": "BK_Trusts_Table",
+      "Category": "Infrastructure",
+      "Builder": "Add-AdTrustInformation",
+      "DataSource": {
+        "Path": "10_forest",
+        "Pattern": "*__Security__Trusts__Forest.csv",
+        "Single": true,
+        "Description": "Trust relationships: Name, Direction, Type, Transitive"
+      },
+      "Columns": ["Name", "Direction", "TrustType", "DisallowTransitivity", "SelectiveAuthentication", "ForestTransitive"],
+      "Mode": "Table"
+    },
+    {
+      "Id": "Forest_Sites",
+      "Title": "Replication Sites",
+      "Bookmark": "BK_AD_Sites_Table",
+      "Category": "Infrastructure",
+      "Builder": "Add-AdRawTableFromCsv",
+      "DataSource": {
+        "Path": "10_forest",
+        "Pattern": "*__Network__Sites__Forest.csv",
+        "Single": true,
+        "Description": "AD replication sites"
+      },
+      "Columns": null,
+      "Mode": "Table"
+    },
+    {
+      "Id": "Forest_Subnets",
+      "Title": "Replication Subnets",
+      "Bookmark": "BK_AD_Subnets_Table",
+      "Category": "Infrastructure",
+      "Builder": "Add-AdRawTableFromCsv",
+      "DataSource": {
+        "Path": "10_forest",
+        "Pattern": "*__Network__Subnets__Forest.csv",
+        "Single": true,
+        "Description": "AD subnets"
+      },
+      "Columns": null,
+      "Mode": "Table"
+    },
+    {
+      "Id": "Forest_UPNSuffixes",
+      "Title": "UPN Suffixes",
+      "Bookmark": "BK_AD_UPN_Suffixes_Table",
+      "Category": "Infrastructure",
+      "Builder": "Add-AdRawTableFromCsv",
+      "DataSource": {
+        "Path": "10_forest",
+        "Pattern": "*__Identity__UpnSuffixes__Forest.csv",
+        "Single": true,
+        "Description": "User Principal Name suffixes"
+      },
+      "Columns": null,
+      "Mode": "Table"
+    },
+    {
+      "Id": "Forest_RiskSummary",
+      "Title": "Forest Risk Summary",
+      "Bookmark": "BK_AD_Forest_Risk_Summary",
+      "Category": "Risk",
+      "Builder": "Add-AdForestRiskSummary",
+      "DataSource": {
+        "Path": "",
+        "Pattern": "AD__Migration__RiskFlagsSummary__Forest.csv",
+        "Single": true,
+        "Description": "Forest-level migration risk flag counts by object type"
+      },
+      "Columns": null,
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_Summary",
+      "Title": "Domain Summary",
+      "Bookmark": "BK_AD_Domain_Information_Table",
+      "Category": "PerDomain",
+      "Builder": "Add-AdDomainInformation",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Domain__Summary__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Domain metadata: Users, Computers, Groups, OUs, GPOs, etc."
+      },
+      "Columns": null,
+      "Mode": "MetricValue"
+    },
+    {
+      "Id": "Domain_Controllers",
+      "Title": "Domain Controllers",
+      "Bookmark": "BK_Domain_Controllers_Table",
+      "Category": "PerDomain",
+      "Builder": "Add-AdDomainControllers",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Infrastructure__DomainControllers__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Domain controller inventory"
+      },
+      "Columns": ["Name", "OperatingSystem", "OperatingSystemVersion", "IPv4Address", "IsServer"],
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_Users",
+      "Title": "Users Summary",
+      "Bookmark": "BK_AD_User_Statistics",
+      "Category": "PerDomain",
+      "Builder": "Add-AdUserStatsSummary",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Identity__Users__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "User accounts: Enabled, Disabled, Stale, PasswordNeverExpires"
+      },
+      "Columns": null,
+      "Mode": "MetricValue"
+    },
+    {
+      "Id": "Domain_Workstations",
+      "Title": "Workstation Summary",
+      "Bookmark": "BK_AD_Workstation_Summary_Table",
+      "Category": "PerDomain",
+      "Builder": "Add-AdWorkstationSummary",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Identity__ComputersWorkstations__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Workstation devices with activity and legacy OS metrics"
+      },
+      "Columns": null,
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_Servers",
+      "Title": "Server Summary",
+      "Bookmark": "BK_AD_Server_Summary_Table",
+      "Category": "PerDomain",
+      "Builder": "Add-AdServerSummary",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Identity__ComputersServers__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Server devices with activity and legacy OS metrics"
+      },
+      "Columns": null,
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_Groups",
+      "Title": "Groups Summary",
+      "Bookmark": "BK_AD_Groups_Table",
+      "Category": "PerDomain",
+      "Builder": "Add-AdGroupStatsSummary",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Identity__Groups__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Groups by category and scope"
+      },
+      "Columns": ["GroupCategory", "GroupScope", "Count"],
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_PasswordPolicy",
+      "Title": "Default Password Policy",
+      "Bookmark": "BK_Password_Policies_Table",
+      "Category": "PerDomain",
+      "Builder": "Add-AdPasswordPolicies",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Security__PasswordPolicyDefault__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Default domain password policy"
+      },
+      "Columns": null,
+      "Mode": "MetricValue"
+    },
+    {
+      "Id": "Domain_GPO",
+      "Title": "GPO Summary",
+      "Bookmark": "BK_Group_Policy_Table",
+      "Category": "PerDomain",
+      "Builder": "Add-AdGPOSummary",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Domain__GPO__Inventory__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Group Policy object metrics"
+      },
+      "Columns": null,
+      "Mode": "MetricValue"
+    },
+    {
+      "Id": "Domain_OUs",
+      "Title": "Organizational Units Structure",
+      "Bookmark": "BK_AD_OU_Summary_Table",
+      "Category": "PerDomain",
+      "Builder": "Add-AdOuStructureSummary",
+      "DataSource": {
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Structure__OrganizationalUnits__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "OU structure and depth analysis"
+      },
+      "Columns": null,
+      "Mode": "MetricValue"
+    },
+    {
+      "Id": "Domain_FGPP",
+      "Title": "Fine-Grained Password Policies",
+      "Bookmark": "BK_FGPP_Table",
+      "Category": "Security",
+      "Builder": "Add-AdFineGrainPasswordPolicies",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Pattern": "*__Security__FineGrainPasswordPolicies__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Fine-Grained Password Policies (PSOs): Name, Precedence, MinPasswordLength, Complexity"
+      },
+      "Columns": ["Name", "Precedence", "MinPasswordLength", "ComplexityEnabled", "MinPasswordAge", "MaxPasswordAge"],
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_Contacts",
+      "Title": "AD Contacts",
+      "Bookmark": "BK_AD_Contacts_Table",
+      "Category": "Identity",
+      "Builder": "Add-AdContactsStatsSummary",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Pattern": "AD__Domain__Identity__Contacts__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "AD Contact objects: Total count, mail-enabled, target address patterns"
+      },
+      "Columns": null,
+      "Mode": "Pivot"
+    },
+    {
+      "Id": "Domain_Printers",
+      "Title": "Published Printers",
+      "Bookmark": "BK_AD_Printers_Table",
+      "Category": "Infrastructure",
+      "Builder": "Add-AdPublishedPrinters",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Pattern": "AD__Domain__Inventory__PublishedPrinters__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Published printers in AD: Name, ServerName, DriverName, Location"
+      },
+      "Columns": ["Name", "ServerName", "DriverName", "Location"],
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_OUDepth",
+      "Title": "OU Depth Analysis",
+      "Bookmark": "BK_AD_OU_Depth_Table",
+      "Category": "Structure",
+      "Builder": "Add-AdOUDepthSummary",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Pattern": "*__Analysis__OuDepthAnalysis__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "OU nesting depth analysis: MaxDepth, Count by depth"
+      },
+      "Columns": null,
+      "Mode": "Pivot"
+    },
+    {
+      "Id": "Domain_Discovery",
+      "Title": "Domain Discovery Summary",
+      "Bookmark": "BK_Domain_Discovery_Table",
+      "Category": "Infrastructure",
+      "Builder": "Add-AdDomainInformation",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Type": "Folder",
+        "PerDomain": true,
+        "Description": "Calculated domain metrics from multiple CSVs"
+      },
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_RiskSummary",
+      "Title": "Domain Risk Summary",
+      "Bookmark": "BK_AD_Domain_Risk_Summary",
+      "Category": "Risk",
+      "Builder": "Add-AdDomainRiskSummary",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Pattern": "*__Analysis__MigrationRiskFlagsSummary__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Domain-level migration risk flag counts by object type"
+      },
+      "Columns": null,
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_EmptyGroups",
+      "Title": "Empty Groups",
+      "Bookmark": "BK_AD_Empty_Groups_Table",
+      "Category": "Identity",
+      "Builder": "Add-AdEmptyGroupsTable",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Pattern": "*__Analysis__EmptyGroups__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Groups with no members: Count by GroupCategory/GroupScope"
+      },
+      "Columns": null,
+      "Mode": "Summary",
+      "Parameters": {
+        "Mode": "Summary"
+      }
+    },
+    {
+      "Id": "Domain_ServiceAccounts",
+      "Title": "Service Account Candidates",
+      "Bookmark": "BK_Service_Accounts_Table",
+      "Category": "Security",
+      "Builder": "Add-AdServiceAccountsTable",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Pattern": "*__Identity__ServiceAccountCandidates__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Accounts flagged as service accounts: SamAccountName, SPNCount, PasswordNeverExpires"
+      },
+      "Columns": null,
+      "Mode": "Table"
+    },
+    {
+      "Id": "Domain_PrivilegedAccounts",
+      "Title": "Privileged Accounts",
+      "Bookmark": "BK_Privileged_Accounts_Table",
+      "Category": "Security",
+      "Builder": "Add-AdPrivilegedAccountsTable",
+      "DataSource": {
+        "Path": "20_domains/{DomainName}",
+        "Pattern": "*__Security__PrivilegedAccounts__Domain-*.csv",
+        "Single": false,
+        "PerDomain": true,
+        "Description": "Accounts with elevated privileges: AdminCount, group membership"
+      },
+      "Columns": null,
+      "Mode": "Detail",
+      "Parameters": {
+        "Mode": "Detail"
+      }
+    }
+  ],
+  "Metadata": {
+    "ReportTitle": "Active Directory Assessment",
+    "ReportSubtitle": "Infrastructure and Security Analysis",
+    "Layout": {
+      "ExecutiveSummary": {
+        "Sections": ["Forest_Summary", "Domain_Summary"]
+      },
+      "Infrastructure": {
+        "Sections": ["Forest_Trusts", "Forest_Sites", "Forest_Subnets", "Domain_Controllers", "Domain_Printers", "Domain_Discovery"]
+      },
+      "Identity": {
+        "Sections": ["Domain_Users", "Domain_Computers", "Domain_Groups", "Domain_Contacts", "Domain_EmptyGroups"]
+      },
+      "Security": {
+        "Sections": ["Domain_PasswordPolicy", "Domain_FGPP", "Domain_GPO", "Domain_ServiceAccounts", "Domain_PrivilegedAccounts"]
+      },
+      "Structure": {
+        "Sections": ["Forest_UPNSuffixes", "Domain_OUs", "Domain_OUDepth"]
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+﻿"Name","DistinguishedName","ProtectedFromAccidentalDeletion"
+"Domain Controllers","OU=Domain Controllers,DC=SOURCELAB,DC=COM","False"
+"Service Accounts","OU=Service Accounts,DC=SOURCELAB,DC=COM","True"
+"Test","OU=Test,DC=SOURCELAB,DC=COM","True"
+"Groups","OU=Groups,DC=SOURCELAB,DC=COM","True"
+"ADMT","OU=ADMT,DC=SOURCELAB,DC=COM","True"
+"Groups","OU=Groups,OU=ADMT,DC=SOURCELAB,DC=COM","True"
+"Users","OU=Users,OU=ADMT,DC=SOURCELAB,DC=COM","True"

@@ -1,0 +1,2 @@
+﻿"DomainFqdn","SysvolPath","SizeGB","GpoFolderCount","Status","Recommendation"
+"child1.sourcelab.com","\\child1.sourcelab.com\SYSVOL\child1.sourcelab.com","0","2","OK","No action needed"

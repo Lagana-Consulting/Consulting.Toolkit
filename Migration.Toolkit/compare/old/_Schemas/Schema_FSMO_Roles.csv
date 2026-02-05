@@ -1,0 +1,4 @@
+﻿"Column","Type","Description","Example","Notes"
+"Scope","string","Role scope (Forest/Domain)","Domain",""
+"Role","string","FSMO role name","PDCEmulator",""
+"Value","string","FQDN/hostname of role holder","dc1.contoso.com",""

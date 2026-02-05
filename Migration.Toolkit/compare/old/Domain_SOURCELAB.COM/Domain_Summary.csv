@@ -1,0 +1,2 @@
+﻿"DomainFqdn","NetBIOSName","DomainMode","Forest","PDCEmulator","RIDMaster","InfrastructureMaster","DomainControllers"
+"SOURCELAB.COM","SOURCELAB","Windows2016Domain","SOURCELAB.COM","SOURCEDC01.SOURCELAB.COM","SOURCEDC01.SOURCELAB.COM","SOURCEDC01.SOURCELAB.COM","SOURCEDC01.SOURCELAB.COM"

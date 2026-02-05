@@ -1,0 +1,8 @@
+﻿"Column","Type","Description","Example","Notes"
+"DomainFqdn","string","Domain DNS root","contoso.com",""
+"SamAccountName","string","SAM account name","jdoe",""
+"Name","string","Display name","Jane Doe",""
+"DistinguishedName","string","AD distinguished name","CN=Jane Doe,OU=Users,DC=contoso,DC=com",""
+"ObjectClass","string","Object class","user","user or computer"
+"Enabled","bool","Enabled status","True",""
+"PrivilegeGroups","string","Semicolon-separated privileged group memberships","Domain Admins;Administrators","Derived by recursive group membership + adminCount"

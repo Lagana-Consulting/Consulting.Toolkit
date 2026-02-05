@@ -1,0 +1,2 @@
+﻿"Column","Type","Description","Example","Notes"
+"UPNSuffix","string","Configured UPN suffix","contoso.com","Compare to user UPN suffixes"

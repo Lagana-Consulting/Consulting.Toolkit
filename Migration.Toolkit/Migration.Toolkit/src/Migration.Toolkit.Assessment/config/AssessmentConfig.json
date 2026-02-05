@@ -1,0 +1,460 @@
+{
+  "TemplatePath": "C:\\Users\\PLagana\\OneDrive - Quest\\Documents\\Customers\\mars\\template\\Template - Discovery and Assessment Findings Report V1.0 - Quest 2025 style.docx",
+  "ResultsRoot": "C:\\Users\\PLagana\\OneDrive - Quest\\Documents\\Customers\\mars\\AntechDX_Ordered",
+  "OutputRoot": "C:\\Users\\PLagana\\OneDrive - Quest\\Documents\\Customers\\mars\\script\\output",
+  "Customer": {
+    "Name": "MARS - AntechDX",
+    "Location": "US",
+    "DnsDomain": "vcaantech.com",
+    "NetbiosDomain": "VCAANTECH"
+  },
+  "Placeholders": {
+    "[Customer_Name]": "Customer.Name",
+    "[LOCATION]": "Customer.Location",
+    "[Customer DNS DOMAIN NAME]": "Customer.DnsDomain",
+    "[Customer NETBIOS DOMAIN NAME]": "Customer.NetbiosDomain"
+  },
+  "TableStyleName": "BT-Default",
+  "DefaultTableHeaderFontColor": "#FFFFFF",
+  "Sections": [
+    {
+      "Id": "AD_Contacts",
+      "Title": "Contact Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Contacts_Table",
+      "Datasets": [
+        {
+          "Type": "CountRowsSummary",
+          "Title": "Contact Totals",
+          "Csv": "AD\\Contacts.csv",
+          "MetricName": "Total Contacts"
+        }
+      ]
+    },
+    {
+      "Id": "AD_OU_Summary",
+      "Title": "OU Structure for AD",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_OU_Summary_Table",
+      "Datasets": [
+        {
+          "Type": "OuStructureSummary",
+          "Title": "OU Structure Summary",
+          "Csv": "AD\\OrganizationalUnits.csv"
+        }
+      ]
+    },
+    {
+      "Id": "AD_User_Summary",
+      "Title": "AD User Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_User_Statistics",
+      "Datasets": [
+        {
+          "Type": "AdUserStatsSummary",
+          "Title": "AD User Discovery",
+          "Csv": "AD\\Users_All_InScope.csv"
+        }
+      ]
+    },
+    {
+      "Id": "DeviceSummary",
+      "Title": "Device Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Devices_Table",
+      "Datasets": [
+        {
+          "ServersCsv": "AD\\Computers_Servers.csv",
+          "Type": "AdDeviceSummary",
+          "WorkstationsCsv": "AD\\Computers_Workstations.csv",
+          "Title": "Device Discovery"
+        }
+      ]
+    },
+    {
+      "Id": "DomainControllers",
+      "Title": "Domain Controllers",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_Domain_Controllers_Table",
+      "Datasets": [
+        {
+          "Type": "RawTable",
+          "Title": "Domain Controller Inventory",
+          "Csv": "AD\\DomainControllers.csv"
+        }
+      ]
+    },
+    {
+      "Id": "DomainInformation",
+      "Title": "Domain Information",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Domain_Information_Table",
+      "Datasets": [
+        {
+          "Type": "RawTable",
+          "Title": "Domain Configuration",
+          "Csv": "AD\\Domain_Info.csv"
+        }
+      ]
+    },
+    {
+      "Id": "EmptyGroupsSummary",
+      "Title": "Empty Groups Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Empty_Groups_Table",
+      "Datasets": [
+        {
+          "MetricColumn": "SamAccountName",
+          "Type": "PivotTable",
+          "MetricAggregation": "Count",
+          "Csv": "AD\\Groups_Empty.csv",
+          "Title": "Empty Group Discovery",
+          "MetricLabel": "Count",
+          "GroupByColumns": [
+            "GroupCategory",
+            "GroupScope"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "Entra_Guest_Domain_Summary",
+      "Title": "Guest User Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_Entra_Guest_Accounts_Table",
+      "Datasets": [
+        {
+          "Type": "EntraGuestDomainSummary",
+          "Title": "Guest Account Domain Summary",
+          "Csv": "Users\\All_Users_InScope.csv"
+        }
+      ]
+    },
+    {
+      "Id": "EntraUserSummary",
+      "Title": "Entra User Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_Entra_Users_Table",
+      "Datasets": [
+        {
+          "Type": "EntraUserSummary",
+          "Title": "Entra User Discovery",
+          "Csv": "Users\\All_Users_InScope.csv"
+        }
+      ]
+    },
+    {
+      "Id": "EX_Mailbox_Summary",
+      "Title": "Mailbox Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_EXO_Mailboxes_Table",
+      "Datasets": [
+        {
+          "Type": "MailboxSummary",
+          "Title": "Mailbox Summary",
+          "Csv": "Exchange\\MailboxUsage_D30_InScope.csv"
+        }
+      ]
+    },
+    {
+      "Id": "ForestInformation",
+      "Title": "Forest Information",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Forest_Information_Table",
+      "Datasets": [
+        {
+          "Type": "SingleRowSummary",
+          "Title": "Forest Configuration",
+          "Csv": "AD\\Forest_Info.csv"
+        }
+      ]
+    },
+    {
+      "Id": "ForestSummary",
+      "Title": "Forest Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Forest_Summary_Table",
+      "Datasets": [
+        {
+          "Type": "SingleRowSummary",
+          "Title": "Forest Discovery",
+          "Csv": "AD\\Discovery_Summary.csv"
+        }
+      ]
+    },
+    {
+      "Id": "GPOSummary",
+      "Title": "GPO Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_Group_Policy_Table",
+      "Datasets": [
+        {
+          "Type": "RawTable",
+          "Title": "GPO Inventory",
+          "Csv": "AD\\GroupPolicyObjects.csv",
+          "Columns": {
+            "GPO Name": "DisplayName",
+            "Status": "GPOStatus"
+          }
+        }
+      ]
+    },
+    {
+      "Id": "GroupSummary",
+      "Title": "Group Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Groups_Table",
+      "Datasets": [
+        {
+          "MetricColumn": "SamAccountName",
+          "Type": "PivotTable",
+          "MetricAggregation": "Count",
+          "Csv": "AD\\Groups_All.csv",
+          "Title": "Group Discovery",
+          "MetricLabel": "Count",
+          "GroupByColumns": [
+            "GroupCategory",
+            "GroupScope"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "LitHoldSummary",
+      "Title": "LitHold Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_EXO_Lithold_Mailboxes_Table",
+      "Datasets": [
+        {
+          "MetricColumn": "UserPrincipalName",
+          "Type": "PivotTable",
+          "MetricAggregation": "Count",
+          "Csv": "Exchange\\LitigationHold.csv",
+          "Title": "LitHold Summary",
+          "MetricLabel": "Count",
+          "GroupByColumns": "LitigationHoldEnabled"
+        }
+      ]
+    },
+    {
+      "Id": "LogonScriptDiscovery",
+      "Title": "Logon Script Discovery",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_Login_Scripts_Table",
+      "Datasets": [
+        {
+          "MetricColumn": "SamAccountName",
+          "Type": "PivotTable",
+          "MetricAggregation": "Count",
+          "Csv": "AD\\Users_WithLoginScripts_InScope.csv",
+          "Title": "Logon Script Discovery",
+          "MetricLabel": "Count",
+          "GroupByColumns": "Enabled"
+        }
+      ]
+    },
+    {
+      "Id": "M365_Group_Summary",
+      "Title": "Microsoft 365 Group Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_Entra_M365_Groups_Table",
+      "Datasets": [
+        {
+          "Type": "M365GroupSummary",
+          "Title": "M365 Group Summary",
+          "Csv": "Office365Groups\\Office365GroupActivityDetail_D90_InScope.csv"
+        }
+      ]
+    },
+    {
+      "Id": "OD_Summary",
+      "Title": "OneDrive Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_ODfB_Sizes_Table",
+      "Datasets": [
+        {
+          "Type": "OneDriveSummary",
+          "Title": "OneDrive Summary",
+          "Csv": "OneDrive\\OneDrive_combined_InScope.csv"
+        }
+      ]
+    },
+    {
+      "Id": "PrinterSummary",
+      "Title": "Printer Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Printers_Table",
+      "Datasets": [
+        {
+          "Type": "RawTable",
+          "Title": "Printer Discovery",
+          "Csv": "AD\\Printers.csv",
+          "Columns": {
+            "Name": "Name",
+            "UNC Name": "uNCName",
+            "Location": "location"
+          }
+        }
+      ]
+    },
+    {
+      "Id": "PWDNeverExpiresSummary",
+      "Title": "PWD Never Expires Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_nonexpiring_passwords_Table",
+      "Datasets": [
+        {
+          "MetricColumn": "UserPrincipalName",
+          "Type": "PivotTable",
+          "MetricAggregation": "Count",
+          "Csv": "AD\\Users_PasswordNeverExpires_InScope.csv",
+          "Title": "PWD Never Expires Inventory",
+          "MetricLabel": "Count",
+          "GroupByColumns": "PasswordNeverExpires"
+        }
+      ]
+    },
+    {
+      "Id": "PWDSummary",
+      "Title": "PWD Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_Password_Policies_Table",
+      "Datasets": [
+        {
+          "Type": "SingleRowSummary",
+          "Title": "PWD Policies",
+          "Csv": "AD\\PasswordPolicy_Default.csv"
+        }
+      ]
+    },
+    {
+      "Id": "QuotaSummary",
+      "Title": "Quota Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_EXO_Mailbox_Quotas_Table",
+      "Datasets": [
+        {
+          "MetricColumn": "UserPrincipalName",
+          "Type": "PivotTable",
+          "MetricAggregation": "Count",
+          "Csv": "Exchange\\MailboxUsage_D30_InScope.csv",
+          "Title": "Quota Discovery",
+          "MetricLabel": "Count",
+          "GroupByColumns": [
+            "Prohibit Send Quota (Byte)",
+            "Prohibit Send/Receive Quota (Byte)",
+            "Prohibit Send Quota (Byte)",
+            "Issue Warning Quota (Byte)"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "RecycleBinStatus",
+      "Title": "Recycle Bin Status",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_RecycleBin",
+      "Datasets": [
+        {
+          "Type": "RawTable",
+          "Title": "Recycle Bin Config",
+          "Csv": "AD\\AD_RecycleBin_Status.csv"
+        }
+      ]
+    },
+    {
+      "Id": "Schema_Info",
+      "Title": "Schema Info",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Schema_Table",
+      "Datasets": [
+        {
+          "Type": "RawTable",
+          "Title": "Schema Summary",
+          "Csv": "AD\\Schema_Info.csv"
+        }
+      ]
+    },
+    {
+      "Id": "SitelinkSummary",
+      "Title": "Sitelink Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Sitelinks_Table",
+      "Datasets": [
+        {
+          "Type": "CountRowsSummary",
+          "Title": "Sitelink Discovery",
+          "Csv": "AD\\SiteLinks.csv",
+          "MetricName": "Count of Sitelinks"
+        }
+      ]
+    },
+    {
+      "Id": "SiteSummary",
+      "Title": "Site Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Sites_Table",
+      "Datasets": [
+        {
+          "Type": "CountRowsSummary",
+          "Title": "Site Discovery",
+          "Csv": "AD\\Sites.csv",
+          "MetricName": "Count of Sites"
+        }
+      ]
+    },
+    {
+      "Id": "SP_Summary",
+      "Title": "SharePoint Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_SPO_Summary_Table",
+      "Datasets": [
+        {
+          "Type": "SharePointSummary",
+          "Title": "SharePoint Summary",
+          "Csv": "SharePoint\\SharePointSiteUsageDetail_D90_InScope.csv"
+        }
+      ]
+    },
+    {
+      "Id": "SubnetSummary",
+      "Title": "Subnet Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_AD_Subnets_Table",
+      "Datasets": [
+        {
+          "Type": "CountRowsSummary",
+          "Title": "Subnet Discovery",
+          "Csv": "AD\\Subnets.csv",
+          "MetricName": "Count of Subnets"
+        }
+      ]
+    },
+    {
+      "Id": "Teams_Activity",
+      "Title": "Teams Activity Summary",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_Teams_Summary_Table",
+      "Datasets": [
+        {
+          "Type": "TeamsActivitySummary",
+          "Title": "Teams Activity Summary",
+          "Csv": "Teams\\TeamActivityDetail_D90.csv"
+        }
+      ]
+    },
+    {
+      "Id": "TrustRelationships",
+      "Title": "Trust Relationships",
+      "HeadingLevel": "Heading 2",
+      "Bookmark": "BK_Trusts_Table",
+      "Datasets": [
+        {
+          "Type": "RawTable",
+          "Title": "Trusts Config",
+          "Csv": "AD\\Trusts.csv"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+﻿"Column","Type","Description","Example","Notes"
+"DhcpServerName","string","DHCP server hostname","dhcp01.contoso.com",""
+"DN","string","Distinguished name","CN=dhcp01.contoso.com,...",""
+"DomainFqdn","string","Domain DNS root","contoso.com",""
+"Status","string","Authorization status","Authorized","Authorized or No Authorized Servers"
+"Notes","string","Additional notes","Scope details require DHCP module",""

@@ -1,0 +1,8 @@
+﻿"DomainFqdn","Name","SamAccountName","UserPrincipalName","UPN_Suffix","Enabled","whenCreated","whenChanged","LastLogonDate","LastLogonDays","PasswordLastSet","PasswordAgeDays","PasswordNeverExpires","CannotChangePassword","AccountExpirationDate","SIDHistoryCount","HasSPN","msDS_SupportedEncryptionTypes","EncryptionTypesExpanded"
+"CHILD1.SOURCELAB.COM","Administrator","Administrator",,,"True","11/6/2024 7:16:39 AM","11/6/2024 7:32:40 AM","11/6/2024 7:24:09 AM","432","11/6/2024 7:06:35 AM","432","False","False",,"0","False",,"None(0)"
+"CHILD1.SOURCELAB.COM","Guest","Guest",,,"False","11/6/2024 7:16:39 AM","11/6/2024 7:16:39 AM",,,,,"True","False",,"0","False",,"None(0)"
+"CHILD1.SOURCELAB.COM","Admin","Admin",,,"True","11/6/2024 7:16:39 AM","11/6/2024 7:32:40 AM",,,"11/6/2024 6:49:21 AM","432","True","False",,"0","False",,"None(0)"
+"CHILD1.SOURCELAB.COM","plagana","plagana",,,"True","11/6/2024 7:16:39 AM","11/6/2024 7:32:40 AM",,,"11/6/2024 6:50:18 AM","432","True","False",,"0","False",,"None(0)"
+"CHILD1.SOURCELAB.COM","krbtgt","krbtgt",,,"False","11/6/2024 7:17:31 AM","11/6/2024 7:32:40 AM",,,"11/6/2024 7:17:31 AM","432","False","False",,"0","True","0","None(0)"
+"CHILD1.SOURCELAB.COM","SOURCELAB$","SOURCELAB$",,,"True","11/6/2024 7:27:30 AM","1/6/2026 3:50:36 AM",,,"1/6/2026 3:50:36 AM","6","False","False",,"0","False",,"None(0)"
+"CHILD1.SOURCELAB.COM","svcMigPro","svcMigPro","svcMigPro@CHILD1.SOURCELAB.COM","child1.sourcelab.com","True","11/6/2024 10:39:25 AM","11/6/2024 10:39:25 AM",,,"11/6/2024 10:39:25 AM","432","True","False",,"0","False",,"None(0)"
