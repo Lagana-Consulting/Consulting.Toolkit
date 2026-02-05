@@ -1,0 +1,12 @@
+{
+    "DomainAdmins": {
+        "Low": 2,
+        "Medium": 5,
+        "High": 10
+    },
+    "GlobalAdmins": {
+        "Low": 2,
+        "Medium": 5,
+        "High": 10
+    }
+}

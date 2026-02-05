@@ -1,0 +1,11 @@
+{
+    "Name": "LowImpact",
+    "Nmap": {
+        "Arguments": "-sn",
+        "RequiresConsent": false
+    },
+    "Web": {
+        "ZapMode": "Passive",
+        "RequiresConsent": false
+    }
+}

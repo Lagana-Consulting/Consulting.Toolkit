@@ -1,0 +1,20 @@
+# Output artifacts
+/output/
+
+# Evidence and logs
+/Evidence/
+/Logs/
+
+# Logs
+*.log
+
+# Assessment artifacts
+*.zip
+*.csv
+
+# VS Code
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
