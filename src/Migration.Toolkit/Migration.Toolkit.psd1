@@ -48,6 +48,7 @@
     'Get-AdAdOuDelegationAcls',
     'Get-AdGpoInventory',
     'Get-AdGpoLinks',
+    'Get-AdGpoUserRightsAssignments',
     'Get-AdUsersSidHistory',
     'Get-AdServiceAccountCandidates',
     'Get-AdPrivilegedAccounts',
@@ -55,6 +56,7 @@
     'Get-AdAssessmentSummary',
     'Get-AdMigrationRiskFlags',
     'Get-AdMigrationRiskFlagsSummary',
+    'Get-AdUnconstrainedDelegation',
 
     # Extended assessment / analysis
     'Get-AdGroupNestingDepth',
