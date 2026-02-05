@@ -1,0 +1,136 @@
+﻿<Window x:Class="Collector.App.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Azure App Registration Setup" Height="650" Width="850"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Azure App Registration Setup" FontSize="20" FontWeight="SemiBold"/>
+            <TextBlock Text="Follow these steps to configure authentication for Microsoft Graph API" Opacity="0.75" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Instructions -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Step 1 -->
+                <Border Background="#F5F5F5" Padding="12" Margin="0,0,0,12" CornerRadius="4">
+                    <StackPanel>
+                        <TextBlock Text="📝 Step 1: Create App Registration" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                            1. Open the Azure Portal and navigate to Azure Active Directory → App registrations
+                        </TextBlock>
+                        <Button Content="🌐 Open Azure Portal (App Registrations)" 
+                                Click="OpenAzurePortal_Click" 
+                                HorizontalAlignment="Left" 
+                                Padding="12,6"
+                                Margin="0,8,0,8"/>
+
+                        <TextBlock TextWrapping="Wrap" Margin="0,4,0,4" FontWeight="SemiBold">
+                            2. Click "New registration" and configure:
+                        </TextBlock>
+                        <Border Background="White" Padding="12" Margin="8,4,0,8" BorderBrush="#DDDDDD" BorderThickness="1" CornerRadius="2">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,2">
+                                    <TextBlock Text="• Name: " FontWeight="SemiBold" Width="180"/>
+                                    <TextBlock Text="M365 Discovery Collector" FontFamily="Consolas"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,2">
+                                    <TextBlock Text="• Supported account types: " FontWeight="SemiBold" Width="180"/>
+                                    <TextBlock Text="Accounts in any organizational directory" FontFamily="Consolas"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,2">
+                                    <TextBlock Text="• Redirect URI: " FontWeight="SemiBold" Width="180"/>
+                                    <TextBlock Text="Public client/native → http://localhost" FontFamily="Consolas"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                            3. Click "Register" button
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- Step 2 -->
+                <Border Background="#FFF9E6" Padding="12" Margin="0,0,0,12" CornerRadius="4" BorderBrush="#FFD700" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="🔑 Step 2: Copy Application (Client) ID" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,8">
+                            From the app registration Overview page, copy the "Application (client) ID" (it looks like: 12345678-1234-1234-1234-123456789abc)
+                        </TextBlock>
+                        <TextBlock Text="Paste Client ID here:" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <TextBox x:Name="ClientIdTextBox" 
+                                 FontFamily="Consolas" 
+                                 FontSize="13"
+                                 Padding="8"
+                                 Text="{Binding ClientId, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Step 3 -->
+                <Border Background="#E3F2FD" Padding="12" Margin="0,0,0,12" CornerRadius="4" BorderBrush="#2196F3" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="🔐 Step 3: Configure API Permissions" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,8">
+                            Based on your selected workloads, you need these Microsoft Graph <Bold>Delegated</Bold> permissions:
+                        </TextBlock>
+
+                        <Border Background="White" Padding="12" Margin="0,0,0,12" BorderBrush="#2196F3" BorderThickness="1" CornerRadius="2">
+                            <ItemsControl x:Name="PermissionsList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,3">
+                                            <TextBlock Text="✓" Foreground="Green" Margin="0,0,8,0" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="13"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,4" FontWeight="SemiBold">
+                            To add these permissions:
+                        </TextBlock>
+                        <TextBlock Margin="16,2,0,2">1. Go to <Bold>API permissions</Bold> → <Bold>Add a permission</Bold></TextBlock>
+                        <TextBlock Margin="16,2,0,2">2. Select <Bold>Microsoft Graph</Bold> → <Bold>Delegated permissions</Bold></TextBlock>
+                        <TextBlock Margin="16,2,0,2">3. Search for and check each permission listed above</TextBlock>
+                        <TextBlock Margin="16,2,0,2">4. Click <Bold>Add permissions</Bold></TextBlock>
+                        <TextBlock Margin="16,2,0,8">5. Click <Bold>Grant admin consent for [tenant]</Bold> (if you're an admin) ⭐</TextBlock>
+
+                        <Border Background="#FFF3CD" Padding="8" CornerRadius="2" BorderBrush="#FFC107" BorderThickness="1">
+                            <TextBlock TextWrapping="Wrap">
+                                💡 <Bold>Note:</Bold> If you're not an admin, you'll be prompted for consent when you first sign in.
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Step 4 - Ready -->
+                <Border Background="#E8F5E9" Padding="12" CornerRadius="4" BorderBrush="#4CAF50" BorderThickness="2">
+                    <StackPanel>
+                        <TextBlock Text="✅ You're Ready!" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                        <TextBlock TextWrapping="Wrap">
+                            After completing these steps and entering your Client ID above, click "Save &amp; Close" to start using the app.
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" Click="Cancel_Click" MinWidth="100" Margin="0,0,8,0" Padding="8,6"/>
+            <Button Content="Save &amp; Close" Click="SaveAndClose_Click" MinWidth="120" Padding="8,6"
+                    IsEnabled="{Binding IsValid}" 
+                    Background="#4CAF50" Foreground="White" FontWeight="SemiBold"/>
+        </StackPanel>
+    </Grid>
+</Window>

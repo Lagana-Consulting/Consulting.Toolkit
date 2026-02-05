@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>true</UseWindowsForms>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<ApplicationIcon>Assets\app.ico</ApplicationIcon>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Collector.Core\Collector.Core.csproj" />
+		<ProjectReference Include="..\Collector.Graph\Collector.Graph.csproj" />
+		<ProjectReference Include="..\Collector.Export\Collector.Export.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Assets\app.ico" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Auth\" />
+	</ItemGroup>
+</Project>
