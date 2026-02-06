@@ -1,0 +1,7 @@
+﻿"Column","Type","Description","Example","Notes"
+"ObjectClass","string","user or computer","user",""
+"DomainFqdn","string","Domain DNS root","contoso.com",""
+"DistinguishedName","string","DN of flagged object","CN=Jane Doe,OU=Users,...",""
+"SamAccountName","string","SAM account name","jdoe",""
+"UserPrincipalName","string","UPN (users only)","jdoe@contoso.com",""
+"Flags","string","Semicolon-delimited risk flags","SIDHistoryPresent;UPN_NonRoutableSuffix","See Summary CSV for counts"

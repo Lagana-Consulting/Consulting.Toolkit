@@ -1,0 +1,5 @@
+﻿"Domain","SamAccountName","UserPrincipalName","Enabled","adminCount","PrivilegedIndicators","HasSPN","PasswordNeverExpires","PasswordAgeDays","LastLogonDays","SIDHistoryPresent"
+"CHILD1.SOURCELAB.COM","Admin",,"True","1","adminCount=1;Administrators","False","True","432",,"False"
+"CHILD1.SOURCELAB.COM","plagana",,"True","1","adminCount=1;Administrators","False","True","432",,"False"
+"CHILD1.SOURCELAB.COM","krbtgt",,"False","1","adminCount=1","True","False","432",,"False"
+"CHILD1.SOURCELAB.COM","Administrator",,"True","1","adminCount=1;Administrators;Domain Admins;Group Policy Creator Owners","False","False","432","432","False"

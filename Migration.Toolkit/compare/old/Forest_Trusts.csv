@@ -1,0 +1,3 @@
+﻿"Name","Source","Target","TrustType","TrustDirection","TrustAttributes","WhenCreated","WhenChanged"
+"CHILD1.SOURCELAB.COM","DC=SOURCELAB,DC=COM","CHILD1.SOURCELAB.COM","Uplevel",,"32",,
+"TARGETLAB.COM","DC=SOURCELAB,DC=COM","TARGETLAB.COM","Uplevel",,"8",,

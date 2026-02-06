@@ -1,0 +1,2 @@
+﻿"DomainFqdn","Name","DnsHostName","IsServer","EncryptionTypes","EncryptionRisk","SPNCount"
+"child1.sourcelab.com","SOURCECHILD-DC0","SOURCECHILD-DC0.CHILD1.SOURCELAB.COM","True","RC4_HMAC;AES128_HMAC_SHA1;AES256_HMAC_SHA1","Low","22"

@@ -1,0 +1,49 @@
+{
+  "TenantId": "YOUR_TENANT_ID_HERE",
+  "ApplicationId": "YOUR_APP_ID_HERE",
+  "CertificatePath": "C:\\certs\\cloud-discovery-cert.pfx",
+  "CertificatePassword": "ENCRYPTED_OR_STORED_SECURELY",
+  "AuthType": "Certificate",
+  "TenantName": "Your Organization Name",
+  "Environment": "Production",
+  "Workloads": {
+    "EntraID": {
+      "Enabled": true,
+      "IncludeGuestAccounts": true,
+      "IncludeRiskData": false,
+      "IncludeLicenseInfo": false
+    },
+    "Exchange": {
+      "Enabled": true,
+      "IncludeArchiveStatus": false,
+      "IncludeForwardingRules": false,
+      "IncludeResourceMailboxes": true
+    },
+    "SharePoint": {
+      "Enabled": true,
+      "IncludeStorage": false,
+      "IncludeItems": false,
+      "SiteTypes": ["All"]
+    },
+    "Teams": {
+      "Enabled": true,
+      "IncludeChannels": true,
+      "IncludeMembers": true
+    },
+    "M365Groups": {
+      "Enabled": true,
+      "IncludeMembers": true,
+      "IncludeResources": true
+    }
+  },
+  "Export": {
+    "Format": "CSV",
+    "Encoding": "UTF8",
+    "IncludeTimestamp": true
+  },
+  "Logging": {
+    "Enabled": true,
+    "Level": "Info",
+    "MaxLogAgeDays": 90
+  }
+}

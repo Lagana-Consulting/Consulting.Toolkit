@@ -1,0 +1,4 @@
+﻿"DomainFqdn","Name","DistinguishedName","Description","WhenCreated","WhenChanged","Level","IsTopLevel"
+"child1.sourcelab.com","Domain Controllers","OU=Domain Controllers,DC=CHILD1,DC=SOURCELAB,DC=COM","Default container for domain controllers","11/6/2024 7:16:38 AM","11/6/2024 7:16:38 AM","1","True"
+"child1.sourcelab.com","Service Accounts","OU=Service Accounts,DC=CHILD1,DC=SOURCELAB,DC=COM","","11/6/2024 10:38:44 AM","11/6/2024 10:38:44 AM","1","True"
+"child1.sourcelab.com","Staging","OU=Staging,DC=CHILD1,DC=SOURCELAB,DC=COM","","11/6/2024 10:50:46 AM","11/6/2024 10:50:46 AM","1","True"

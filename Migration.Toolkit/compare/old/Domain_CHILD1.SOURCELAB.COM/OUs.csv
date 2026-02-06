@@ -1,0 +1,4 @@
+﻿"Name","DistinguishedName","ProtectedFromAccidentalDeletion"
+"Domain Controllers","OU=Domain Controllers,DC=CHILD1,DC=SOURCELAB,DC=COM","False"
+"Service Accounts","OU=Service Accounts,DC=CHILD1,DC=SOURCELAB,DC=COM","True"
+"Staging","OU=Staging,DC=CHILD1,DC=SOURCELAB,DC=COM","True"

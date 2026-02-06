@@ -1,0 +1,3 @@
+﻿2026-01-21 13:20:28 [INFO] Run layout created. RunRoot=C:\scripts\Reports\ADOnly_20260121-132028
+2026-01-21 13:20:28 [INFO] Domain context: Domain=child1.sourcelab.com Server/DC=SOURCECHILD-DC0.CHILD1.SOURCELAB.COM
+2026-01-21 13:20:30 [INFO] Domain context: Domain=sourcelab.com Server/DC=SOURCEDC01.SOURCELAB.COM

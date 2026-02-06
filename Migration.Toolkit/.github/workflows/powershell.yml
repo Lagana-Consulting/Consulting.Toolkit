@@ -1,0 +1,56 @@
+name: PowerShell CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  analyze:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $settings = Join-Path $env:GITHUB_WORKSPACE 'src/Lagana.Consulting.Toolkit/PSScriptAnalyzerSettings.psd1'
+          $target = Join-Path $env:GITHUB_WORKSPACE 'src'
+          $results = Invoke-ScriptAnalyzer -Path $target -Recurse -Settings $settings
+
+          $errors = $results | Where-Object { $_.Severity -eq 'Error' }
+          $warnings = $results | Where-Object { $_.Severity -eq 'Warning' }
+
+          if ($warnings) {
+            Write-Host "PSScriptAnalyzer warnings (non-blocking):" -ForegroundColor Yellow
+            $warnings | Sort-Object RuleName, ScriptName, Line | Format-Table -AutoSize | Out-String | Write-Host
+          }
+
+          if ($errors) {
+            Write-Host "PSScriptAnalyzer errors:" -ForegroundColor Red
+            $errors | Sort-Object RuleName, ScriptName, Line | Format-Table -AutoSize | Out-String | Write-Host
+            throw "PSScriptAnalyzer found errors."
+          }
+
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+
+      - name: Run Pester
+        shell: pwsh
+        run: |
+          Invoke-Pester -Path "$env:GITHUB_WORKSPACE\tests" -CI

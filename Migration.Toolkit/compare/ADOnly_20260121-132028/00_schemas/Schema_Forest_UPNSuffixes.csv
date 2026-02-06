@@ -1,0 +1,5 @@
+﻿"Column","Type","Description","Example","Notes"
+"ForestName","string","Forest name","contoso.com",""
+"Suffix","string","UPN suffix","contoso.com",""
+"IsKnownSuffix","bool","Is a known/routable suffix","True","Used for cloud sync assessment"
+"IsNonRoutable","bool","Is a non-routable (private) suffix","False","Risk if True"

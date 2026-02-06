@@ -1,0 +1,7 @@
+﻿"Column","Type","Description","Example","Notes"
+"DomainFqdn","string","Domain DNS root","contoso.com",""
+"SysvolPath","string","SYSVOL UNC path","\\contoso.com\SYSVOL\contoso.com",""
+"SizeGB","decimal","Total size in GB","2.35",""
+"GpoFolderCount","int","Count of GPO folders","45",""
+"Status","string","Health status","Warning","OK, Warning, Critical, or Inaccessible"
+"Recommendation","string","Action recommendation","Monitor size growth",""

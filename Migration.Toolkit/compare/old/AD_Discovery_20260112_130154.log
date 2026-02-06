@@ -1,0 +1,18 @@
+[2026-01-12 13:01:54][INFO] Starting AD discovery run: C:\Users\Administrator\Discovery\AD_Discovery_20260112_130154
+[2026-01-12 13:01:54][INFO] Collecting forest data for: SOURCELAB.COM
+[2026-01-12 13:01:54][INFO] Collecting domain data: CHILD1.SOURCELAB.COM
+[2026-01-12 13:01:54][INFO] Using DC for CHILD1.SOURCELAB.COM: SOURCECHILD-DC0.CHILD1.SOURCELAB.COM
+[2026-01-12 13:01:54][INFO] No FGPP found in CHILD1.SOURCELAB.COM
+[2026-01-12 13:01:54][WARN] OU delegation export failed for CHILD1.SOURCELAB.COM: A referral was returned from the server
+[2026-01-12 13:01:54][INFO] Collecting privileged accounts for CHILD1.SOURCELAB.COM
+[2026-01-12 13:01:54][WARN] Privileged group not found or inaccessible: Enterprise Admins
+[2026-01-12 13:01:54][WARN] Privileged group not found or inaccessible: Schema Admins
+[2026-01-12 13:01:54][WARN] Privileged group not found or inaccessible: Administrators
+[2026-01-12 13:01:55][INFO] Collecting domain data: SOURCELAB.COM
+[2026-01-12 13:01:55][INFO] Using DC for SOURCELAB.COM: SOURCEDC01.SOURCELAB.COM
+[2026-01-12 13:01:55][INFO] No FGPP found in SOURCELAB.COM
+[2026-01-12 13:01:55][INFO] Collecting privileged accounts for SOURCELAB.COM
+[2026-01-12 13:01:56][INFO] Exports complete.
+[2026-01-12 13:01:56][INFO] Writing CSV schemas (Quest-style: Column, Type, Description, Example, Notes)
+[2026-01-12 13:01:56][INFO] Schema export complete.
+[2026-01-12 13:01:56][INFO] Done.
