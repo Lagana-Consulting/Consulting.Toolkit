@@ -272,6 +272,7 @@ function Invoke-AdDiscoveryAnalysis {
     Write-Host ""
 
     # ========================================
+
     # Step 3: Generate environment comparison
     # ========================================
     Write-Host "[3/6] Generating environment comparison report..." -ForegroundColor Yellow
@@ -282,6 +283,138 @@ function Invoke-AdDiscoveryAnalysis {
     catch {
         Write-Warning "Comparison report failed: $_"
         $comparisonReport = $null
+    }
+    Write-Host ""
+
+    # ========================================
+    # Step 3b: Compare password policies (default and FGPP)
+    # ========================================
+    Write-Host "[3b/6] Comparing password policies..." -ForegroundColor Yellow
+    $passwordPolicyComparisonPath = Join-Path $OutputRoot "AD__PasswordPolicy__Comparison.csv"
+    $defaultPolicyFiles = @()
+    $fgppPolicyFiles = @()
+    # Collect all relevant policy files from source and target
+    foreach ($srcRoot in $SourceRunRoot) {
+        $domainDir = Join-Path $srcRoot '20_domains'
+        if (Test-Path -LiteralPath $domainDir) {
+            Get-ChildItem -Path $domainDir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+                $d = $_.FullName
+                $domainNameRaw = (Split-Path $d -Leaf).ToLower()
+                $domainName = $domainNameRaw -replace '^domain-', ''
+                $defaultPolicyFiles += @(Find-CsvFile (Join-Path $d 'AD__Domain__Security__PasswordPolicyDefault_*.csv') | ForEach-Object { @{ Path = $_; Environment = 'Source'; Domain = $domainName } })
+                $fgppPolicyFiles += @(Find-CsvFile (Join-Path $d 'AD__Domain__Security__PasswordPolicyFgpp__*.csv') | ForEach-Object { @{ Path = $_; Environment = 'Source'; Domain = $domainName } })
+            }
+        }
+    }
+    $targetDomainDir = Join-Path $TargetRunRoot '20_domains'
+    if (Test-Path -LiteralPath $targetDomainDir) {
+        Get-ChildItem -Path $targetDomainDir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            $d = $_.FullName
+            $domainNameRaw = (Split-Path $d -Leaf).ToLower()
+            $domainName = $domainNameRaw -replace '^domain-', ''
+            $defaultPolicyFiles += @(Find-CsvFile (Join-Path $d 'AD__Domain__Security__PasswordPolicyDefault_*.csv') | ForEach-Object {
+                    Write-Host "[DEBUG] Loading Target Default Policy: $_ for domain $domainName"
+                    @{ Path = $_; Environment = 'Target'; Domain = $domainName }
+                })
+            $fgppPolicyFiles += @(Find-CsvFile (Join-Path $d 'AD__Domain__Security__PasswordPolicyFgpp__*.csv') | ForEach-Object {
+                    Write-Host "[DEBUG] Loading Target FGPP Policy: $_ for domain $domainName"
+                    @{ Path = $_; Environment = 'Target'; Domain = $domainName }
+                })
+        }
+    }
+
+    # Helper: build a hashtable of policies by environment/domain/policy name
+    function Build-PolicyTable($files, $policyType) {
+        $table = @{}
+        foreach ($f in $files) {
+            $items = Import-CsvSafe $f.Path
+            foreach ($item in $items) {
+                Write-Host ("[DEBUG] Policy row properties for {0} {1} {2}: {3}" -f $f.Environment, $f.Domain, $policyType, ($item | ConvertTo-Json -Compress))
+                $policyName = $null
+                if ($policyType -eq 'Default') {
+                    if ($item.PSObject.Properties['DomainFqdn']) {
+                        $policyName = $item.DomainFqdn
+                    }
+                    else {
+                        Write-Warning "Password policy row in $($f.Path) missing DomainFqdn for Default. Skipping."
+                        continue
+                    }
+                }
+                elseif ($policyType -eq 'FGPP') {
+                    if ($item.PSObject.Properties['Name']) {
+                        $policyName = $item.Name
+                    }
+                    else {
+                        Write-Warning "Password policy row in $($f.Path) missing Name for FGPP. Skipping."
+                        continue
+                    }
+                }
+                else {
+                    Write-Warning "Password policy row in $($f.Path) has unknown policy type $policyType. Skipping."
+                    continue
+                }
+                $key = "$($f.Environment)|$($f.Domain)|$policyType|$policyName"
+                $table[$key] = $item
+            }
+        }
+        return $table
+    }
+
+    $defaultTable = Build-PolicyTable $defaultPolicyFiles 'Default'
+    $fgppTable = Build-PolicyTable $fgppPolicyFiles 'FGPP'
+
+    # Get all unique domains and policy names
+    $allDomains = @($defaultPolicyFiles + $fgppPolicyFiles | ForEach-Object { $_.Domain.ToLower() -replace '^domain-', '' }) | Sort-Object -Unique
+    $allPolicyNames = @()
+    $allPolicyNames += $defaultTable.Keys | ForEach-Object { ($_ -split '\|')[3] }
+    $allPolicyNames += $fgppTable.Keys | ForEach-Object { ($_ -split '\|')[3] }
+    $allPolicyNames = $allPolicyNames | Sort-Object -Unique
+
+    $comparisonRows = @()
+    $allPropNames = @()
+    foreach ($domain in $allDomains) {
+        foreach ($policyType in @('Default', 'FGPP')) {
+            foreach ($policyName in $allPolicyNames) {
+                $srcKey = "Source|$domain|$policyType|$policyName"
+                $tgtKey = "Target|$domain|$policyType|$policyName"
+                $src = if ($policyType -eq 'Default') { $defaultTable[$srcKey] } else { $fgppTable[$srcKey] }
+                $tgt = if ($policyType -eq 'Default') { $defaultTable[$tgtKey] } else { $fgppTable[$tgtKey] }
+                if ($src -or $tgt) {
+                    $row = [ordered]@{
+                        Domain        = $domain
+                        PolicyType    = $policyType
+                        PolicyName    = $policyName
+                        Source_Exists = [bool]$src
+                        Target_Exists = [bool]$tgt
+                    }
+                    # Add all properties from both, using original property names, source takes precedence if both exist
+                    if ($src) {
+                        foreach ($p in $src.PSObject.Properties.Name) {
+                            if ($p -ne 'Name' -and $p -ne 'DomainFqdn') { $row[$p] = $src.$p }
+                            $allPropNames += $p
+                        }
+                    }
+                    if ($tgt) {
+                        Write-Host ("[DEBUG] Extracting Target row properties for {0} {1} {2}: {3}" -f $domain, $policyType, $policyName, ($tgt | ConvertTo-Json -Compress))
+                        foreach ($p in $tgt.PSObject.Properties.Name) {
+                            if (-not ($row.Keys -contains $p) -and $p -ne 'Name' -and $p -ne 'DomainFqdn') { $row[$p] = $tgt.$p }
+                            $allPropNames += $p
+                        }
+                    }
+                    $comparisonRows += [PSCustomObject]$row
+                }
+            }
+        }
+    }
+    if ($comparisonRows.Count -gt 0) {
+        $baseHeaders = @('Domain', 'PolicyName', 'PolicyType', 'Source_Exists', 'Target_Exists')
+        $allPropNames = $allPropNames | Sort-Object -Unique | Where-Object { $_ -notin @('Name', 'DomainFqdn') }
+        $headers = $baseHeaders + $allPropNames
+        $comparisonRows | Select-Object -Property $headers | Export-Csv -Path $passwordPolicyComparisonPath -NoTypeInformation -Force
+        Write-Host "  [OK] Password policy comparison: $passwordPolicyComparisonPath ($($comparisonRows.Count) rows)" -ForegroundColor Green
+    }
+    else {
+        Write-Host "  [OK] No password policy data found to compare" -ForegroundColor Yellow
     }
     Write-Host ""
 
