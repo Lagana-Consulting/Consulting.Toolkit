@@ -182,7 +182,7 @@ function Invoke-SATNucleiAnalysis {
         }
 
         # AD CS / Certificates
-        if (HasAny @('adcs', 'cert', 'certificate', 'certificates') -or
+        if ((HasAny @('adcs', 'cert', 'certificate', 'certificates')) -or
             ($tpath -match 'windows/adcs' -or $tpath -match 'windows/certificates') -or
             ($tid -match 'adcs|certsrv|certificat') -or
             ($nm -match 'adcs|certsrv|certificate')) {
@@ -190,7 +190,7 @@ function Invoke-SATNucleiAnalysis {
         }
 
         # Kerberos
-        if (HasAny @('kerberos', 'krb', 'kdc') -or
+        if ((HasAny @('kerberos', 'krb', 'kdc')) -or
             ($tpath -match 'kerberos') -or
             ($tid -match 'kerberos|krb') -or
             ($nm -match 'kerberos')) {
@@ -198,7 +198,7 @@ function Invoke-SATNucleiAnalysis {
         }
 
         # LDAP / LDAPS
-        if (HasAny @('ldap', 'ldaps') -or
+        if ((HasAny @('ldap', 'ldaps')) -or
             ($tpath -match 'ldap') -or
             ($tid -match 'ldap|ldaps') -or
             ($nm -match 'ldap|ldaps')) {
@@ -206,7 +206,7 @@ function Invoke-SATNucleiAnalysis {
         }
 
         # NTLM / relay-related auth exposure
-        if (HasAny @('ntlm', 'relay') -or
+        if ((HasAny @('ntlm', 'relay')) -or
             ($tpath -match 'ntlm') -or
             ($tid -match 'ntlm') -or
             ($nm -match 'ntlm')) {
@@ -214,7 +214,7 @@ function Invoke-SATNucleiAnalysis {
         }
 
         # SMB
-        if (HasAny @('smb') -or
+        if ((HasAny @('smb')) -or
             ($tpath -match 'smb') -or
             ($tid -match 'smb') -or
             ($nm -match 'smb')) {
@@ -222,7 +222,7 @@ function Invoke-SATNucleiAnalysis {
         }
 
         # ADFS / federation
-        if (HasAny @('adfs', 'federation') -or
+        if ((HasAny @('adfs', 'federation')) -or
             ($tpath -match 'adfs') -or
             ($tid -match 'adfs') -or
             ($nm -match 'adfs|federation')) {
@@ -230,7 +230,7 @@ function Invoke-SATNucleiAnalysis {
         }
 
         # Azure / Entra / cloud identity endpoints
-        if (HasAny @('azure', 'entra', 'microsoft', 'o365', 'm365') -or
+        if ((HasAny @('azure', 'entra', 'microsoft', 'o365', 'm365')) -or
             ($tpath -match 'cloud/azure|exposures/azure') -or
             ($tid -match 'azure|entra|o365|m365') -or
             ($nm -match 'azure|entra|microsoft 365|office 365')) {
