@@ -1,0 +1,5 @@
+rate-limit: 25
+bulk-size: 10
+concurrency: 10
+timeout: 5
+retries: 1

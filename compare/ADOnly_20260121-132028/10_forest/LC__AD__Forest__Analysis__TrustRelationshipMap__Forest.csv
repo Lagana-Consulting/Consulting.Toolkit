@@ -1,4 +1,0 @@
-﻿"SourceDomain","TargetDomain","Direction","TrustType","IsTransitive","SIDFilteringEnabled","SelectiveAuth","WhenCreated","WhenChanged","SecurityNotes","Recommendation"
-"child1.sourcelab.com","SOURCELAB.COM","Unknown","Unknown","True","False","False",,,"","Consider enabling SID filtering for security"
-"sourcelab.com","CHILD1.SOURCELAB.COM","Unknown","Unknown","True","False","False",,,"","Consider enabling SID filtering for security"
-"sourcelab.com","TARGETLAB.COM","Unknown","Unknown","True","False","False",,,"","Consider enabling SID filtering for security"

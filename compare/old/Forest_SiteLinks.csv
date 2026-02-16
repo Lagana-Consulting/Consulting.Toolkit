@@ -1,2 +1,0 @@
-﻿"Name","Cost","ReplicationFrequencyInMinutes","SitesIncluded","DistinguishedName"
-"DEFAULTIPSITELINK","100","180","Microsoft.ActiveDirectory.Management.ADPropertyValueCollection","CN=DEFAULTIPSITELINK,CN=IP,CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=SOURCELAB,DC=COM"

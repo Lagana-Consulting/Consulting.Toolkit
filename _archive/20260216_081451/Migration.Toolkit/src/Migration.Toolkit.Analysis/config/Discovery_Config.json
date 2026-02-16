@@ -1,0 +1,8 @@
+{
+    "SourceRunRoot": "C:\\scripts\\Reports\\AD_sourcelab.com_20260127-151056",
+    "TargetRunRoot": "C:\\scripts\\Reports\\AD_targetlab.com__target_20260127-151221",
+    "CustomerName": "Contoso Corp",
+    "OutputRoot": "c:\\scripts\\Reports\\Analysis",
+    "GenerateLoeForBoth": false,
+    "IncludeTargetPlanning": false
+}

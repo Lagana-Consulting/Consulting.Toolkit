@@ -1,8 +1,0 @@
-﻿"Column","Type","Description","Example","Notes"
-"DomainFqdn","string","Domain DNS root","contoso.com",""
-"DomainDn","string","Domain distinguished name","DC=contoso,DC=com",""
-"NetBIOSName","string","NetBIOS domain name","CONTOSO","Legacy compatibility"
-"DomainMode","string","Domain functional level","Windows2016Domain","Migration prerequisite"
-"PdcEmulator","string","PDC emulator FSMO holder","dc1.contoso.com",""
-"RidMaster","string","RID master FSMO holder","dc1.contoso.com",""
-"InfrastructureMaster","string","Infrastructure master FSMO holder","dc1.contoso.com",""

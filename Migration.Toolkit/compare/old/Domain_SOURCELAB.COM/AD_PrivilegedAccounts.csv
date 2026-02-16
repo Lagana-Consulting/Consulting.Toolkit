@@ -1,7 +1,0 @@
-﻿"Domain","SamAccountName","UserPrincipalName","Enabled","adminCount","PrivilegedIndicators","HasSPN","PasswordNeverExpires","PasswordAgeDays","LastLogonDays","SIDHistoryPresent"
-"SOURCELAB.COM","plagana",,"True","1","adminCount=1;Administrators","False","True","432",,"False"
-"SOURCELAB.COM","svcMigPro","svcMigPro@SOURCELAB.COM","True","1","adminCount=1;Administrators;Domain Admins","False","True","41","5","False"
-"SOURCELAB.COM","svc_ADMT_PMS","svc_ADMT_PMS@SOURCELAB.COM","True","1","adminCount=1;Administrators;Domain Admins","False","True","3",,"False"
-"SOURCELAB.COM","Admin",,"True","1","adminCount=1;Administrators","False","True","432",,"False"
-"SOURCELAB.COM","krbtgt",,"False","1","adminCount=1","True","False","432",,"False"
-"SOURCELAB.COM","Administrator",,"True","1","adminCount=1;Administrators;Domain Admins;Enterprise Admins;Group Policy Creator Owners;Schema Admins","False","False","41","5","False"

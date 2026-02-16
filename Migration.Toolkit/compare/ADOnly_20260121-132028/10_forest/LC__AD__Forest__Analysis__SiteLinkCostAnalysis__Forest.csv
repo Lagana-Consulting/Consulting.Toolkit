@@ -1,2 +1,0 @@
-﻿"Name","Cost","ReplicationInterval","SitesIncluded","Assessment","Recommendation"
-"DEFAULTIPSITELINK","100","180","CN=Default-First-Site-Name,CN=Sites,CN=Configuration,DC=SOURCELAB,DC=COM","Normal","No action needed"

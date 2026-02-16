@@ -1,2 +1,0 @@
-﻿"DomainFqdn","OuName","OuDistinguishedName","GpoPolicyDn","GpoGuid","LinkOption","LinkEnabled","Enforced","GpOptions"
-"sourcelab.com","Domain Controllers","OU=Domain Controllers,DC=SOURCELAB,DC=COM","CN={6AC1786C-016F-11D2-945F-00C04fB984F9},CN=Policies,CN=System,DC=SOURCELAB,DC=COM","6AC1786C-016F-11D2-945F-00C04fB984F9","0","True","False","0"

@@ -1,0 +1,11 @@
+{
+    "Name": "Deep",
+    "Nmap": {
+        "Arguments": "-sS -sV -O -p-",
+        "RequiresConsent": true
+    },
+    "Web": {
+        "ZapMode": "Active",
+        "RequiresConsent": true
+    }
+}

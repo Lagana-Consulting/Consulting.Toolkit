@@ -1,7 +1,0 @@
-﻿"DomainFqdn","SamAccountName","DistinguishedName","InPrivGroups","PrivGroups","AdminCount"
-"sourcelab.com","Admin","CN=Admin,CN=Users,DC=SOURCELAB,DC=COM","True","Administrators","True"
-"sourcelab.com","Administrator","CN=Administrator,CN=Users,DC=SOURCELAB,DC=COM","True","Administrators;Domain Admins;Enterprise Admins;Group Policy Creator Owners;Schema Admins","True"
-"sourcelab.com","krbtgt","CN=krbtgt,CN=Users,DC=SOURCELAB,DC=COM","False","","True"
-"sourcelab.com","plagana","CN=plagana,CN=Users,DC=SOURCELAB,DC=COM","True","Administrators","True"
-"sourcelab.com","svc_ADMT_PMS","CN=svc_ADMT_PMS,OU=Service Accounts,DC=SOURCELAB,DC=COM","True","Administrators;Domain Admins","True"
-"sourcelab.com","svcMigPro","CN=svcMigPro,OU=Service Accounts,DC=SOURCELAB,DC=COM","True","Administrators;Domain Admins","True"

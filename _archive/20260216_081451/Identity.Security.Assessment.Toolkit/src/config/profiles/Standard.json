@@ -1,0 +1,11 @@
+{
+    "Name": "Standard",
+    "Nmap": {
+        "Arguments": "-sS -sV --top-ports 1000",
+        "RequiresConsent": false
+    },
+    "Web": {
+        "ZapMode": "Passive",
+        "RequiresConsent": false
+    }
+}

@@ -1,8 +1,0 @@
-﻿"Flag","ObjectClass","Count"
-"UPN_NonRoutableSuffix","user","13"
-"PasswordAgeOver365d","user","8"
-"UPN_SuffixNotInForestList","user","5"
-"Disabled","user","4"
-"HasSPN","computer","3"
-"HasSPN(ServiceAcctCandidate)","user","2"
-"StaleLastLogonOver180d","user","1"

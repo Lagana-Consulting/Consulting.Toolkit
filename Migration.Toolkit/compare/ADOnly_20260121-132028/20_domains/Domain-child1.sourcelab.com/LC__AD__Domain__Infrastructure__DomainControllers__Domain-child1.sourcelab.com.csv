@@ -1,2 +1,0 @@
-﻿"DomainFqdn","HostName","Name","Site","IPv4Address","OperatingSystem","IsGlobalCatalog","IsReadOnly","IsPdc","IsEnabled"
-"child1.sourcelab.com","SOURCECHILD-DC0.CHILD1.SOURCELAB.COM","SOURCECHILD-DC0","Default-First-Site-Name","10.3.90.45","Windows Server 2022 Standard","True","False","False","False"

@@ -1,5 +1,0 @@
-﻿"ZoneName","Scope","DomainFqdn","DN","WhenCreated","WhenChanged","IntegrationType"
-"SOURCELAB.COM","Domain","sourcelab.com","DC=SOURCELAB.COM,CN=MicrosoftDNS,DC=DomainDnsZones,DC=SOURCELAB,DC=COM","11/6/2024 7:04:56 AM","11/6/2024 7:04:56 AM","AD-Integrated"
-"RootDNSServers","Domain","sourcelab.com","DC=RootDNSServers,CN=MicrosoftDNS,DC=DomainDnsZones,DC=SOURCELAB,DC=COM","11/6/2024 7:05:54 AM","11/15/2024 5:28:09 PM","AD-Integrated"
-"_msdcs.SOURCELAB.COM","Forest","sourcelab.com","DC=_msdcs.SOURCELAB.COM,CN=MicrosoftDNS,DC=ForestDnsZones,DC=SOURCELAB,DC=COM","11/6/2024 7:04:56 AM","11/6/2024 7:04:56 AM","AD-Integrated"
-"..TrustAnchors","Forest","sourcelab.com","DC=..TrustAnchors,CN=MicrosoftDNS,DC=ForestDnsZones,DC=SOURCELAB,DC=COM","11/6/2024 10:39:42 AM","11/6/2024 10:39:42 AM","AD-Integrated"

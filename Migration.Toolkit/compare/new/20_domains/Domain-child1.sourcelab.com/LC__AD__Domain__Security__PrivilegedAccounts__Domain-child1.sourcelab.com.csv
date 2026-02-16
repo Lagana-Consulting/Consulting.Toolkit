@@ -1,5 +1,0 @@
-﻿"DomainFqdn","SamAccountName","DistinguishedName","InPrivGroups","PrivGroups","AdminCount"
-"child1.sourcelab.com","Admin","CN=Admin,CN=Users,DC=CHILD1,DC=SOURCELAB,DC=COM","True","Administrators","True"
-"child1.sourcelab.com","Administrator","CN=Administrator,CN=Users,DC=CHILD1,DC=SOURCELAB,DC=COM","True","Administrators;Domain Admins;Group Policy Creator Owners","True"
-"child1.sourcelab.com","krbtgt","CN=krbtgt,CN=Users,DC=CHILD1,DC=SOURCELAB,DC=COM","False","","True"
-"child1.sourcelab.com","plagana","CN=plagana,CN=Users,DC=CHILD1,DC=SOURCELAB,DC=COM","True","Administrators","True"

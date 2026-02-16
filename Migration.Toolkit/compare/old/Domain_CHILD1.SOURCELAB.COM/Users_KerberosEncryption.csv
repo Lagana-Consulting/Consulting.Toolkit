@@ -1,8 +1,0 @@
-﻿"DomainFqdn","SamAccountName","UserPrincipalName","msDS_SupportedEncryptionTypes","EncryptionTypesExpanded"
-"CHILD1.SOURCELAB.COM","Administrator",,,"None(0)"
-"CHILD1.SOURCELAB.COM","Guest",,,"None(0)"
-"CHILD1.SOURCELAB.COM","Admin",,,"None(0)"
-"CHILD1.SOURCELAB.COM","plagana",,,"None(0)"
-"CHILD1.SOURCELAB.COM","krbtgt",,"0","None(0)"
-"CHILD1.SOURCELAB.COM","SOURCELAB$",,,"None(0)"
-"CHILD1.SOURCELAB.COM","svcMigPro","svcMigPro@CHILD1.SOURCELAB.COM",,"None(0)"

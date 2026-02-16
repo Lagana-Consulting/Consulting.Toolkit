@@ -1,7 +1,0 @@
-﻿"Column","Type","Description","Example","Notes"
-"DomainFqdn","string","Domain DNS root","contoso.com",""
-"ObjectClass","string","AD object class","user","user/computer/service accounts"
-"SamAccountName","string","SAM account name","svc_sql",""
-"UserPrincipalName","string","UPN (if user)","svc_sql@contoso.com",""
-"DistinguishedName","string","DN","CN=svc_sql,OU=Service Accounts,...",""
-"SPN","string","Service Principal Name","MSSQLSvc/sql01.contoso.com:1433","Kerberos dependency"

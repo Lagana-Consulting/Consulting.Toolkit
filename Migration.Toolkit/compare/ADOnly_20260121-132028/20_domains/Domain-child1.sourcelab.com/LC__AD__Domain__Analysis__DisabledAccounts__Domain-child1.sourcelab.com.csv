@@ -1,3 +1,0 @@
-﻿"ObjectClass","DomainFqdn","SamAccountName","Name","DistinguishedName","WhenCreated","WhenChanged","DaysSinceChange","CleanupCandidate"
-"user","child1.sourcelab.com","Guest","Guest","CN=Guest,CN=Users,DC=CHILD1,DC=SOURCELAB,DC=COM","11/6/2024 7:16:39 AM","11/6/2024 7:16:39 AM","441","Yes"
-"user","child1.sourcelab.com","krbtgt","krbtgt","CN=krbtgt,CN=Users,DC=CHILD1,DC=SOURCELAB,DC=COM","11/6/2024 7:17:31 AM","11/6/2024 7:32:40 AM","441","Yes"

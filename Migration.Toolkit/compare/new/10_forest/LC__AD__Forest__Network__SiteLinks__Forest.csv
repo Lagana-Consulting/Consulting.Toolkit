@@ -1,2 +1,0 @@
-﻿"Name","Cost","ReplicationFrequencyInMinutes","SitesIncluded","DistinguishedName","Description"
-"DEFAULTIPSITELINK","100","180","CN=Default-First-Site-Name,CN=Sites,CN=Configuration,DC=SOURCELAB,DC=COM","CN=DEFAULTIPSITELINK,CN=IP,CN=Inter-Site Transports,CN=Sites,CN=Configuration,DC=SOURCELAB,DC=COM",""

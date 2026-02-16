@@ -1,6 +1,0 @@
-﻿"Scope","Role","Value"
-"Forest","SchemaMaster","SOURCEDC01.SOURCELAB.COM"
-"Forest","DomainNamingMaster","SOURCEDC01.SOURCELAB.COM"
-"Domain","PDCEmulator","SOURCEDC01.SOURCELAB.COM"
-"Domain","RIDMaster","SOURCEDC01.SOURCELAB.COM"
-"Domain","InfrastructureMaster","SOURCEDC01.SOURCELAB.COM"

@@ -1,7 +1,0 @@
-﻿"Column","Type","Description","Example","Notes"
-"ItemType","string","PKI component type","EnterpriseCA","CertificateTemplate, EnterpriseCA, or NTAuthStore"
-"Name","string","Object name","ContosoRootCA",""
-"DisplayName","string","Display name","Contoso Root CA",""
-"ObjectDN","string","Distinguished name","CN=ContosoRootCA,CN=Enrollment Services,...",""
-"Details","string","Additional details","Host: dc01.contoso.com","OID, hostname, or certificate count"
-"ForestName","string","Forest name","contoso.com",""

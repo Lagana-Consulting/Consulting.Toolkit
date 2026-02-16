@@ -1,1 +1,11 @@
 .vs/
+**/.vs/
+**/bin/
+**/obj/
+_work/
+output/
+logs/
+dist/
+compare/
+*.zip
+*.7z

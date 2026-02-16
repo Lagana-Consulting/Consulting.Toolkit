@@ -1,3 +1,0 @@
-﻿"DomainFqdn","DisplayName","Id","Owner","CreationTime","ModificationTime","GpoStatus","Description","UserVersion","ComputerVersion","WmiFilter"
-"child1.sourcelab.com","Default Domain Controllers Policy","6ac1786c-016f-11d2-945f-00c04fb984f9","CHILD1\Domain Admins","11/6/2024 10:16:38 AM","11/6/2024 10:16:38 AM","AllSettingsEnabled","",,,""
-"child1.sourcelab.com","Default Domain Policy","31b2f340-016d-11d2-945f-00c04fb984f9","CHILD1\Domain Admins","11/6/2024 10:16:38 AM","11/6/2024 10:24:10 AM","AllSettingsEnabled","",,,""

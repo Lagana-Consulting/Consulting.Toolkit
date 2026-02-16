@@ -1,8 +1,0 @@
-﻿"DomainFqdn","Name","DistinguishedName","Depth","DepthWarning","IsTopLevel"
-"sourcelab.com","Groups","OU=Groups,OU=ADMT,DC=SOURCELAB,DC=COM","2","Normal","False"
-"sourcelab.com","Users","OU=Users,OU=ADMT,DC=SOURCELAB,DC=COM","2","Normal","False"
-"sourcelab.com","ADMT","OU=ADMT,DC=SOURCELAB,DC=COM","1","Normal","True"
-"sourcelab.com","Domain Controllers","OU=Domain Controllers,DC=SOURCELAB,DC=COM","1","Normal","True"
-"sourcelab.com","Groups","OU=Groups,DC=SOURCELAB,DC=COM","1","Normal","True"
-"sourcelab.com","Service Accounts","OU=Service Accounts,DC=SOURCELAB,DC=COM","1","Normal","True"
-"sourcelab.com","Test","OU=Test,DC=SOURCELAB,DC=COM","1","Normal","True"

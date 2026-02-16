@@ -1,3 +1,0 @@
-﻿"ZoneName","Scope","DomainFqdn","DN","WhenCreated","WhenChanged","IntegrationType"
-"CHILD1.SOURCELAB.COM","Domain","child1.sourcelab.com","DC=CHILD1.SOURCELAB.COM,CN=MicrosoftDNS,DC=DomainDnsZones,DC=CHILD1,DC=SOURCELAB,DC=COM","11/6/2024 7:50:49 AM","11/6/2024 7:50:49 AM","AD-Integrated"
-"RootDNSServers","Domain","child1.sourcelab.com","DC=RootDNSServers,CN=MicrosoftDNS,DC=DomainDnsZones,DC=CHILD1,DC=SOURCELAB,DC=COM","11/6/2024 7:50:49 AM","11/6/2024 10:45:15 AM","AD-Integrated"

@@ -1,3 +1,0 @@
-﻿"DisplayName","Id","GpoStatus","CreationTime","ModificationTime","Owner","WmiFilter"
-"Default Domain Policy","31b2f340-016d-11d2-945f-00c04fb984f9","AllSettingsEnabled","11/6/2024 7:02:30 AM","11/6/2024 7:07:14 AM","SOURCELAB\Domain Admins",
-"Default Domain Controllers Policy","6ac1786c-016f-11d2-945f-00c04fb984f9","AllSettingsEnabled","11/6/2024 7:02:30 AM","11/6/2024 7:02:30 AM","SOURCELAB\Domain Admins",

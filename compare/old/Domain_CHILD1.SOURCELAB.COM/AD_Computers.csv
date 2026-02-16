@@ -1,2 +1,0 @@
-﻿"DomainFqdn","Name","SamAccountName","Enabled","OperatingSystem","OperatingSystemVersion","IPv4Address","whenCreated","whenChanged","LastLogonDate","LastLogonDays","HasSPN","msDS_SupportedEncryptionTypes","EncryptionTypesExpanded"
-"CHILD1.SOURCELAB.COM","SOURCECHILD-DC0","SOURCECHILD-DC0$","True","Windows Server 2022 Standard","10.0 (20348)","10.3.90.45","11/6/2024 7:17:31 AM","1/6/2026 5:10:29 PM","1/6/2026 5:10:29 PM","5","True","28","RC4-HMAC;AES128-CTS-HMAC-SHA1-96;AES256-CTS-HMAC-SHA1-96"
