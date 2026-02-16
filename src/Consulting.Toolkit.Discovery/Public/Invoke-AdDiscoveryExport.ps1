@@ -1,100 +1,111 @@
 function Invoke-AdDiscoveryExport {
+    <#
+    .SYNOPSIS
+    Executes a pure Active Directory discovery collection run.
+
+    .DESCRIPTION
+    Performs live AD data collection using Invoke-AdDiscovery and
+    generates a Discovery Index file describing all collected datasets.
+
+    This command:
+      • Collects AD data (no analysis)
+      • Writes structured CSV output
+      • Generates Discovery.Index.json
+
+    This command does NOT:
+      • Perform risk scoring
+      • Compare environments
+      • Generate HTML reports
+      • Run duplicate detection
+      • Perform migration readiness logic
+
+    .PARAMETER Environment
+    Logical label (Source, Target, Production, etc.)
+
+    .PARAMETER OutputRoot
+    Root path where discovery run folder will be created.
+
+    .PARAMETER CustomerName
+    Optional metadata stored in discovery index.
+
+    .PARAMETER Server
+    Optional specific DC.
+
+    .EXAMPLE
+    Invoke-AdDiscoveryExport -Environment Source -OutputRoot C:\Discovery
+    #>
+
     [CmdletBinding()]
     param(
-        [Parameter()][string]$Environment = "Source",
-        [Parameter()][string]$OutputRoot = "c:\scripts\Reports",
-        [Parameter()][string]$Prefix = "",
-        [Parameter()][string]$CustomerName = "",
-        [Parameter()][string]$Server,
-        [Parameter()][int]$StaleUserThresholdDays = 180,
-        [Parameter()][int]$StaleComputerThresholdDays = 90
+        [Parameter()]
+        [string]$Environment = 'Source',
+
+        [Parameter()]
+        [string]$OutputRoot = 'C:\Discovery',
+
+        [Parameter()]
+        [string]$CustomerName,
+
+        [Parameter()]
+        [string]$Server,
+
+        [switch]$IncludeSecurity
     )
 
     Set-StrictMode -Version Latest
     $ErrorActionPreference = 'Stop'
 
-    # --- existing: forest discovery + layout creation (reuse your helpers)
-    $now = Get-Date
-    $envTag = $Environment.ToLower().Replace(' ', '_')
+    Write-Host "========================================"
+    Write-Host "Consulting.Toolkit.Discovery Collector"
+    Write-Host "========================================"
+    Write-Host ""
 
-    $forestParams = @{}
-    if ($Server) { $forestParams.Server = $Server }
-    $forest = Get-AdAdForest @forestParams
-    $domains = @(Get-AdAdDomains -Forest $forest)
-    $suffixSet = Get-AdKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
-
-    $rootDomainTag = if ([string]::IsNullOrWhiteSpace($forest.RootDomain)) { 'unknowndomain' } else { $forest.RootDomain.ToLower().Replace(' ', '_') }
-    $basePrefix = if ($Prefix) { $Prefix } else { "AD_{0}" -f $rootDomainTag }
-    $envPrefix = if ($envTag -eq "source") { $basePrefix } else { "${basePrefix}__${envTag}" }
-
-    $layout = New-AdRunLayout -OutputRoot $OutputRoot -Prefix $envPrefix -CreateLog
-
-    # --- ensure folders (keep your structure)
-    $schemasDir = Join-Path $layout.RunRoot '00_schemas'
-    $forestDir = Join-Path $layout.RunRoot '10_forest'
-    $domainsRoot = Join-Path $layout.RunRoot '20_domains'
-    $manifestDir = Join-Path $layout.RunRoot '99_manifest'
-    $logsDir = Join-Path $layout.RunRoot '90_logs'
-    foreach ($p in @($schemasDir, $forestDir, $domainsRoot, $manifestDir, $logsDir)) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
-
-    # --- export schemas (still allowed in discovery)
-    Export-AdSchemas -SchemasDir $schemasDir | Out-Null
-
-    # --- EXPORTS ONLY (no derived analysis datasets here)
-    (Get-AdAdForestSummary -Forest $forest) |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Summary__Forest.csv') -Force -AllowEmpty
-
-    (Get-AdAdForestTrusts -LogPath $layout.LogPath) |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Security__Trusts__Forest.csv') -Force -AllowEmpty
-
-    foreach ($d in $domains) {
-        $ctxParams = @{ DomainFqdn = $d; LogPath = $layout.LogPath }
-        if ($Server) { $ctxParams.Server = $Server }
-        $ctx = Get-AdAdDomainContext @ctxParams
-        $scopeTag = "Domain-$($ctx.DomainFqdn)"
-        $domainDir = Join-Path $domainsRoot $scopeTag
-        New-Item -ItemType Directory -Force -Path $domainDir | Out-Null
-
-        # inventory exports
-        (Get-AdAdDomainSummary -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Summary__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        (Get-AdAdDomainControllers -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Infrastructure__DomainControllers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $users = @(Get-AdAdUsers -DomainContext $ctx -Now $now -KnownUpnSuffixSet $suffixSet)
-        $groups = @(Get-AdAdGroups -DomainContext $ctx)
-        $comps = @(Get-AdAdComputers -DomainContext $ctx -Now $now)
-
-        $users  | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Users__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-        $groups | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Groups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-        $comps  | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ComputersAll__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # security inventories (still “raw”)
-        (Get-AdUsersSidHistory -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__UsersSidHistory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        (Get-AdAdSpns -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Spns__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        (Get-AdGpoInventory -DomainContext $ctx -LogPath $layout.LogPath) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__GPO__Inventory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        (Get-AdGpoLinks -DomainContext $ctx -Scope OneLevel) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__GPO__Links__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+    # Build parameter splat for Invoke-AdDiscovery
+    $invokeParams = @{
+        Environment  = $Environment
+        OutputRoot   = $OutputRoot
+        CustomerName = $CustomerName
     }
 
-    # --- strict discovery index (contract)
-    $indexPath = Join-Path $manifestDir 'Discovery__Index__Run.json'
-    New-ADDiscoveryIndex -RunRoot $layout.RunRoot -Environment $Environment -CustomerName $CustomerName -OutputPath $indexPath
-
-    return [pscustomobject]@{
-        RunRoot       = $layout.RunRoot
-        LogPath       = $layout.LogPath
-        Environment   = $Environment
-        ForestName    = $forest.Name
-        DomainCount   = $domains.Count
-        IndexPath     = $indexPath
-        ExecutionTime = $now
+    if ($PSBoundParameters.ContainsKey('Server') -and -not [string]::IsNullOrWhiteSpace($Server)) {
+        $invokeParams.Server = $Server
     }
+
+    # Capture ALL pipeline output
+    $raw = @(Invoke-AdDiscovery @invokeParams)
+
+    # Select last object that contains RunRoot
+    $result = $raw |
+    Where-Object {
+        $_ -and
+        $_.PSObject -and
+        ($_.PSObject.Properties.Name -contains 'RunRoot')
+    } |
+    Select-Object -Last 1
+
+    if (-not $result) {
+        $types = ($raw | ForEach-Object { $_.GetType().FullName } | Sort-Object -Unique) -join ', '
+        throw "Invoke-AdDiscovery did not return a result object with RunRoot. Returned types: $types"
+    }
+
+    # Generate discovery index
+    $indexPath = Join-Path $result.RunRoot '99_manifest\Discovery.Index.json'
+
+    $tags = @()
+    if ($IncludeSecurity) { $tags += 'security' }
+
+    New-ADDiscoveryIndex `
+        -RunRoot $result.RunRoot `
+        -Environment $Environment `
+        -CustomerName $CustomerName `
+        -OutputPath $indexPath `
+        -Tags $tags
+
+    Write-Host ""
+    Write-Host "[OK] Discovery complete" -ForegroundColor Green
+    Write-Host "RunRoot: $($result.RunRoot)" -ForegroundColor Yellow
+    Write-Host "Index:   $indexPath" -ForegroundColor Yellow
+    Write-Host ""
+
+    return $result
 }

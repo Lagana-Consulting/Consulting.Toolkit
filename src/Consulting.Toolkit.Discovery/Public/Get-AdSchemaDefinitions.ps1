@@ -438,5 +438,145 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'Recommendation'; Type = 'string'; Description = 'Recommendation'; Example = 'Monitor GPO application time'; Notes = '' }
   )
 
+  # =========================
+  # Security (ADCS / Tier0 / Delegation / SPN / DC Signals)
+  # =========================
+
+  # Forest: ADCS Enterprise CAs
+  $schemas['Forest_Security_ADCS_EnterpriseCAs'] = @(
+    [pscustomobject]@{ Column = 'ForestName'; Type = 'string'; Description = 'Forest DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'CAName'; Type = 'string'; Description = 'Enterprise CA common name'; Example = 'CONTOSO-CA01'; Notes = '' }
+    [pscustomobject]@{ Column = 'DnsHostName'; Type = 'string'; Description = 'CA host FQDN'; Example = 'ca01.contoso.com'; Notes = 'If available' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'CA object DN'; Example = 'CN=CONTOSO-CA01,...'; Notes = '' }
+    [pscustomobject]@{ Column = 'CertificateSubject'; Type = 'string'; Description = 'CA cert subject'; Example = 'CN=CONTOSO-CA01'; Notes = '' }
+    [pscustomobject]@{ Column = 'CertificateSerialNumber'; Type = 'string'; Description = 'CA cert serial number'; Example = '01A2...'; Notes = '' }
+    [pscustomobject]@{ Column = 'ValidityNotAfterUtc'; Type = 'datetime'; Description = 'CA cert expiration (UTC)'; Example = '2027-05-01T00:00:00Z'; Notes = '' }
+    [pscustomobject]@{ Column = 'PublishedTemplates'; Type = 'string'; Description = 'Templates published by this CA'; Example = 'User;Machine'; Notes = 'Semicolon-delimited' }
+  )
+
+  # Forest: ADCS Enrollment Services -> Templates mapping
+  $schemas['Forest_Security_ADCS_EnrollmentServicesTemplates'] = @(
+    [pscustomobject]@{ Column = 'ForestName'; Type = 'string'; Description = 'Forest DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'EnrollmentServiceName'; Type = 'string'; Description = 'Enrollment Services name'; Example = 'CONTOSO-CA01'; Notes = '' }
+    [pscustomobject]@{ Column = 'EnrollmentServiceDn'; Type = 'string'; Description = 'Enrollment Services DN'; Example = 'CN=...,CN=Enrollment Services,...'; Notes = '' }
+    [pscustomobject]@{ Column = 'TemplateName'; Type = 'string'; Description = 'Certificate template name'; Example = 'User'; Notes = '' }
+    [pscustomobject]@{ Column = 'TemplateOid'; Type = 'string'; Description = 'Template OID'; Example = '1.3.6.1.4.1...'; Notes = 'If available' }
+  )
+
+  # Forest: ADCS Certificate Templates
+  $schemas['Forest_Security_ADCS_CertificateTemplates'] = @(
+    [pscustomobject]@{ Column = 'ForestName'; Type = 'string'; Description = 'Forest DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'TemplateName'; Type = 'string'; Description = 'Template display/name'; Example = 'User'; Notes = '' }
+    [pscustomobject]@{ Column = 'TemplateCn'; Type = 'string'; Description = 'Template CN'; Example = 'User'; Notes = '' }
+    [pscustomobject]@{ Column = 'TemplateOid'; Type = 'string'; Description = 'Template OID'; Example = '1.3.6.1.4.1...'; Notes = '' }
+    [pscustomobject]@{ Column = 'SchemaVersion'; Type = 'int'; Description = 'Template schema version'; Example = '2'; Notes = '' }
+    [pscustomobject]@{ Column = 'Enabled'; Type = 'bool'; Description = 'Template appears enabled/usable'; Example = 'true'; Notes = 'Best-effort depending on collection' }
+    [pscustomobject]@{ Column = 'EnrolleeSuppliesSubject'; Type = 'bool'; Description = 'Enrollee supplies subject'; Example = 'false'; Notes = 'Important for abuse paths' }
+    [pscustomobject]@{ Column = 'ClientAuth'; Type = 'bool'; Description = 'EKU includes client auth'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'SmartcardLogon'; Type = 'bool'; Description = 'EKU includes smartcard logon'; Example = 'false'; Notes = '' }
+    [pscustomobject]@{ Column = 'AnyPurpose'; Type = 'bool'; Description = 'EKU any purpose'; Example = 'false'; Notes = '' }
+    [pscustomobject]@{ Column = 'RequiresManagerApproval'; Type = 'bool'; Description = 'Manager approval required'; Example = 'false'; Notes = '' }
+    [pscustomobject]@{ Column = 'AuthorizedSignatures'; Type = 'int'; Description = 'Authorized signatures required'; Example = '0'; Notes = '' }
+  )
+
+  # Forest: ADCS Template Permissions (flattened ACEs)
+  $schemas['Forest_Security_ADCS_CertificateTemplatePermissions'] = @(
+    [pscustomobject]@{ Column = 'ForestName'; Type = 'string'; Description = 'Forest DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'TemplateName'; Type = 'string'; Description = 'Template name'; Example = 'User'; Notes = '' }
+    [pscustomobject]@{ Column = 'Principal'; Type = 'string'; Description = 'Trustee (resolved)'; Example = 'CONTOSO\Domain Users'; Notes = '' }
+    [pscustomobject]@{ Column = 'PrincipalSid'; Type = 'string'; Description = 'Trustee SID'; Example = 'S-1-5-21-...'; Notes = '' }
+    [pscustomobject]@{ Column = 'Right'; Type = 'string'; Description = 'Permission/right'; Example = 'Enroll'; Notes = 'Enroll/AutoEnroll/WriteDacl/WriteOwner/GenericAll/etc' }
+    [pscustomobject]@{ Column = 'AccessType'; Type = 'string'; Description = 'Allow/Deny'; Example = 'Allow'; Notes = '' }
+    [pscustomobject]@{ Column = 'Inherited'; Type = 'bool'; Description = 'Inherited ACE'; Example = 'false'; Notes = '' }
+  )
+
+  # Domain: Privileged Group Members (Tier0)
+  $schemas['Domain_Security_PrivilegedGroupMembers'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupName'; Type = 'string'; Description = 'Privileged group name'; Example = 'Domain Admins'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupDn'; Type = 'string'; Description = 'Group DN'; Example = 'CN=Domain Admins,CN=Users,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberSamAccountName'; Type = 'string'; Description = 'Member sAMAccountName'; Example = 'jdoe'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberDn'; Type = 'string'; Description = 'Member DN'; Example = 'CN=John Doe,OU=Users,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberObjectClass'; Type = 'string'; Description = 'user/group/computer'; Example = 'user'; Notes = '' }
+    [pscustomobject]@{ Column = 'IsDirectMember'; Type = 'bool'; Description = 'Direct membership vs nested'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'MembershipPath'; Type = 'string'; Description = 'Nested chain (if any)'; Example = 'GroupA > GroupB'; Notes = 'Semicolon-delimited or arrow-delimited' }
+  )
+
+  # Domain: adminCount=1 objects
+  $schemas['Domain_Security_AdminCountObjects'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'user/group'; Example = 'user'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'sAMAccountName'; Example = 'svc_sql'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=svc_sql,OU=Svc,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'AdminCount'; Type = 'int'; Description = 'adminCount value'; Example = '1'; Notes = 'Typically 1' }
+    [pscustomobject]@{ Column = 'IsProtectedByAdminSDHolder'; Type = 'bool'; Description = 'Best-effort flag'; Example = 'true'; Notes = 'If your collector infers it' }
+  )
+
+  # Domain: Protected Users group members
+  $schemas['Domain_Security_ProtectedUsers'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberSamAccountName'; Type = 'string'; Description = 'Member sAMAccountName'; Example = 'jdoe'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberDn'; Type = 'string'; Description = 'Member DN'; Example = 'CN=John Doe,OU=Users,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberObjectClass'; Type = 'string'; Description = 'user/group'; Example = 'user'; Notes = '' }
+  )
+
+  # Domain: Delegation - Unconstrained
+  $schemas['Domain_Security_DelegationUnconstrained'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'computer/user'; Example = 'computer'; Notes = '' }
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Object name'; Example = 'APP01$'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=APP01,OU=Servers,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'TrustedForDelegation'; Type = 'bool'; Description = 'Unconstrained delegation flag'; Example = 'true'; Notes = '' }
+  )
+
+  # Domain: Delegation - Constrained
+  $schemas['Domain_Security_DelegationConstrained'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'computer/user'; Example = 'computer'; Notes = '' }
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Object name'; Example = 'WEB01$'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=WEB01,OU=Servers,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'AllowedToDelegateTo'; Type = 'string'; Description = 'SPNs in msDS-AllowedToDelegateTo'; Example = 'HTTP/app01.contoso.com'; Notes = 'Semicolon-delimited' }
+  )
+
+  # Domain: Delegation - Protocol Transition (S4U2Self)
+  $schemas['Domain_Security_DelegationProtocolTransition'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'computer/user'; Example = 'user'; Notes = '' }
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Object name'; Example = 'svc_web'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=svc_web,OU=Svc,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'TrustedToAuthForDelegation'; Type = 'bool'; Description = 'Protocol transition enabled'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'AllowedToDelegateTo'; Type = 'string'; Description = 'SPNs in msDS-AllowedToDelegateTo'; Example = 'HTTP/app01.contoso.com'; Notes = 'Semicolon-delimited' }
+  )
+
+  # Domain: Resource-Based Constrained Delegation (RBCD)
+  $schemas['Domain_Security_DelegationRBCD'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'TargetName'; Type = 'string'; Description = 'Target resource name'; Example = 'FILE01$'; Notes = '' }
+    [pscustomobject]@{ Column = 'TargetDn'; Type = 'string'; Description = 'Target DN'; Example = 'CN=FILE01,OU=Servers,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'AllowedPrincipal'; Type = 'string'; Description = 'Principal allowed via msDS-AllowedToActOnBehalfOfOtherIdentity'; Example = 'CONTOSO\\svc_app'; Notes = '' }
+    [pscustomobject]@{ Column = 'AllowedPrincipalSid'; Type = 'string'; Description = 'Principal SID'; Example = 'S-1-5-21-...'; Notes = '' }
+    [pscustomobject]@{ Column = 'AccessType'; Type = 'string'; Description = 'Allow/Deny (if ACE expanded)'; Example = 'Allow'; Notes = 'If you flatten ACEs' }
+  )
+
+  # Domain: SPN Accounts (security-focused view of service principals)
+  $schemas['Domain_Security_SpnAccounts'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'user/computer'; Example = 'user'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'Account name'; Example = 'svc_sql'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=svc_sql,OU=Svc,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'SPNs'; Type = 'string'; Description = 'ServicePrincipalName values'; Example = 'MSSQLSvc/sql01.contoso.com:1433'; Notes = 'Semicolon-delimited' }
+    [pscustomobject]@{ Column = 'Enabled'; Type = 'bool'; Description = 'Account enabled'; Example = 'true'; Notes = 'If available in your collector' }
+    [pscustomobject]@{ Column = 'PasswordLastSetUtc'; Type = 'datetime'; Description = 'Password last set (UTC)'; Example = '2025-12-10T01:02:03Z'; Notes = 'If you collect it' }
+  )
+
+  # Domain: Domain Controller security signals (best-effort)
+  $schemas['Domain_Security_DomainControllerSecuritySignals'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'DomainController'; Type = 'string'; Description = 'DC host name'; Example = 'dc01.contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Signal'; Type = 'string'; Description = 'Signal name'; Example = 'LDAPSigning'; Notes = 'A single signal per row is easiest to consume' }
+    [pscustomobject]@{ Column = 'Value'; Type = 'string'; Description = 'Signal value'; Example = 'Required'; Notes = 'Could be string/bool/int; keep as string' }
+    [pscustomobject]@{ Column = 'Evidence'; Type = 'string'; Description = 'Optional evidence/source'; Example = 'Registry/Policy'; Notes = 'If you capture it' }
+  )
+
   return $schemas
 }

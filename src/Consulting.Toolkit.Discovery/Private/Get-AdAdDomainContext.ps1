@@ -32,8 +32,7 @@ function Get-AdAdDomainContext {
   $dobj = $null
   try {
     $dobj = Get-ADDomain -Identity $domain -Server $dc -ErrorAction Stop
-  }
-  catch {
+  } catch {
     # If specified server failed, try without server parameter (use default context)
     if (-not [string]::IsNullOrWhiteSpace($dc) -and $dc -ne $domain) {
       try {
@@ -41,12 +40,10 @@ function Get-AdAdDomainContext {
           Write-AdLog -Path $LogPath -Level WARN -Message ("Server '$dc' unreachable. Retrying with default domain context for $domain")
         }
         $dobj = Get-ADDomain -Identity $domain -ErrorAction Stop
-      }
-      catch {
+      } catch {
         throw "Failed to query domain '$domain'. $($_.Exception.Message)"
       }
-    }
-    else {
+    } else {
       throw "Failed to query domain '$domain' using server '$dc'. $($_.Exception.Message)"
     }
   }
@@ -63,5 +60,9 @@ function Get-AdAdDomainContext {
     InfrastructureMaster = [string]$dobj.InfrastructureMaster
     Forest               = [string]$dobj.Forest
     DnsRoot              = [string]$dobj.DNSRoot
+    # compatibility / readability
+    DomainController     = $dc
+    DomainName           = $domain
+
   }
 }

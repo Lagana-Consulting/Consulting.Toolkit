@@ -1,0 +1,38 @@
+function Get-AdSecurityDomainControllerSignals {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)] $DomainContext
+    )
+
+    if (-not (Get-Command Get-ADDomainController -ErrorAction SilentlyContinue)) {
+        throw "ActiveDirectory module not available (Get-ADDomainController missing)."
+    }
+
+    $server = $DomainContext.Server
+    $domain = $DomainContext.DomainFqdn
+
+    $dcs = @()
+    try {
+        $dcs = @(Get-ADDomainController -Filter * -Server $server -ErrorAction Stop)
+    } catch {
+        # fallback: try without -Server
+        $dcs = @(Get-ADDomainController -Filter * -ErrorAction Stop)
+    }
+
+    foreach ($dc in $dcs) {
+        # Best-effort signals from AD-visible properties
+        [pscustomobject]@{
+            DomainFqdn      = $domain
+            Name            = $dc.Name
+            HostName        = $dc.HostName
+            Site            = $dc.Site
+            IPv4Address     = $dc.IPv4Address
+            IsGlobalCatalog = [bool]$dc.IsGlobalCatalog
+            IsReadOnly      = [bool]$dc.IsReadOnly
+            OperatingSystem = $dc.OperatingSystem
+            OSVersion       = $dc.OperatingSystemVersion
+            Forest          = $dc.Forest
+            Domain          = $dc.Domain
+        }
+    }
+}

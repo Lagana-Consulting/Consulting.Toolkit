@@ -1,102 +1,43 @@
 function Invoke-AdDiscovery {
     <#
-  .SYNOPSIS
-  Performs comprehensive Active Directory discovery and assessment.
+    .SYNOPSIS
+    Collects Active Directory discovery data (pure collector).
 
-  .DESCRIPTION
-  Discovers and analyzes an Active Directory environment, generating detailed CSV reports
-  covering:
-  - Forest topology (sites, trusts, UPN suffixes)
-  - Domain infrastructure (DCs, password policies, GPOs)
-  - Identity objects (users, groups, computers, OUs)
-  - Security analysis (privileged accounts, encryption, SID history)
-  - Extended assessments (group nesting, cross-domain membership, stale objects)
-  - Migration risk flags and assessment summary (forest and per-domain)
+    .DESCRIPTION
+    Performs live AD data collection and writes structured CSV outputs.
+    This function intentionally does NOT:
+      - apply thresholds (stale/legacy)
+      - generate analysis datasets (AD__Domain__Analysis__*)
+      - generate risk flags / assessment summaries
+      - generate HTML reports
+      - compare environments
 
-  Creates a timestamped directory structure with organized CSV outputs suitable for
-  offline analysis and reporting.
+    Outputs a timestamped run folder containing:
+      - 00_schemas (CSV schema definitions)
+      - 10_forest  (forest-level datasets)
+      - 20_domains (per-domain datasets)
+      - 90_logs    (logs)
+      - 99_manifest (run metadata CSVs)
 
-  .PARAMETER Environment
-  Environment label for this discovery run (e.g., "Source", "Target", "Production").
-  Used in folder naming and manifest. Default is "Source".
+    .PARAMETER Environment
+    Logical label for this discovery run (Source/Target/etc.)
 
-  .PARAMETER OutputRoot
-  Root directory where discovery output folder will be created.
-  Default is "c:\scripts\Reports".
+    .PARAMETER OutputRoot
+    Root folder where the run folder will be created.
 
-  .PARAMETER Prefix
-  Custom prefix for the run folder name. If not specified, uses the forest root domain
-  name (e.g., "AD_contoso.com"). Final folder: {Prefix}_{Timestamp}
+    .PARAMETER Prefix
+    Optional prefix for run folder name. If omitted, derived from forest root domain.
 
-  .PARAMETER CustomerName
-  Customer or organization name for manifest metadata. Optional.
+    .PARAMETER CustomerName
+    Optional metadata stored in run info.
 
-  .PARAMETER Server
-  Domain controller or global catalog server to query. If not specified, uses
-  automatic DC discovery. Useful when specific DC is unreachable or in locked-down
-  network environments. Optional.
+    .PARAMETER Server
+    Optional specific DC/GC to use for initial forest discovery and domain context.
 
-  .PARAMETER StaleUserThresholdDays
-  Days since last logon to consider a user account stale. Default is 180.
-
-  .PARAMETER StaleComputerThresholdDays
-  Days since last logon to consider a computer account stale. Default is 90.
-
-  .EXAMPLE
-  Invoke-AdDiscovery
-
-  Runs discovery for the current forest using default settings.
-  Output: c:\scripts\Reports\AD_{forestname}_{timestamp}\
-
-  .EXAMPLE
-  Invoke-AdDiscovery -Environment "Production" -OutputRoot "D:\ADReports"
-
-  Runs discovery labeled as "Production" environment with custom output location.
-
-  .EXAMPLE
-  Invoke-AdDiscovery -Server "dc01.contoso.com"
-
-  Runs discovery using a specific domain controller.
-
-  .EXAMPLE
-  Invoke-AdDiscovery -Environment "Source" -CustomerName "Contoso Corp" -Prefix "Contoso_PreMigration"
-
-  Runs discovery with custom prefix and customer name in manifest.
-
-  .EXAMPLE
-  Invoke-AdDiscovery -StaleUserThresholdDays 90 -StaleComputerThresholdDays 60
-
-  Runs discovery with custom staleness thresholds.
-
-  .OUTPUTS
-  PSCustomObject with discovery run information:
-  - RunRoot (path to discovery output folder)
-  - LogPath (path to discovery log file)
-  - Environment (environment label)
-  - ForestName (discovered forest name)
-  - DomainCount (number of domains)
-  - UserCount, ComputerCount, GroupCount (total objects)
-
-  .NOTES
-  Requires:
-  - Active Directory PowerShell module (RSAT)
-  - Domain-joined Windows host or appropriate credentials
-  - Read access to AD forest/domains
-
-  Discovery run structure:
-  {RunRoot}\
-    ├── 00_schemas\       (CSV schema definitions)
-    ├── 10_forest\        (Forest-level data)
-    ├── 20_domains\       (Per-domain data)
-    │   └── Domain-{FQDN}\
-    ├── 90_logs\          (Discovery logs)
-    └── 99_manifest\      (Run metadata)
-
-  .LINK
-  Get-AdAdForest
-  New-AdRunLayout
-  Get-AdAssessmentSummary
-  #>
+    .OUTPUTS
+    PSCustomObject with:
+      RunRoot, LogPath, Environment, ForestName, DomainCount, UserCount, ComputerCount, GroupCount, ExecutionTime
+    #>
     [CmdletBinding()]
     param(
         [Parameter()]
@@ -114,11 +55,7 @@ function Invoke-AdDiscovery {
         [Parameter()]
         [string]$Server,
 
-        [Parameter()]
-        [int]$StaleUserThresholdDays = 180,
-
-        [Parameter()]
-        [int]$StaleComputerThresholdDays = 90
+        [switch]$IncludeSecurity
     )
 
     Set-StrictMode -Version Latest
@@ -127,12 +64,8 @@ function Invoke-AdDiscovery {
     $Now = Get-Date
     $EnvironmentSafeTag = $Environment.ToLower().Replace(' ', '_')
 
-    $LegacyWorkstationOsRegex = '(?i)Windows (XP|Vista|7|8|8\.1|2000)'
-    $LegacyServerOsRegex = '(?i)Windows Server (2003|2008|2008 R2|2012|2012 R2)'
-
-    # Track execution status
+    # Track execution status (collector-style)
     $executionLog = @()
-
     function Log-ExecutionStatus {
         param([string]$Operation, [string]$Status, [string]$Message = "")
         $executionLog += [pscustomobject]@{
@@ -147,22 +80,22 @@ function Invoke-AdDiscovery {
     }
 
     # Verify required functions are available
-    if (-not (Get-Command Export-AdCsvSafe -ErrorAction SilentlyContinue)) {
-        throw "Export-AdCsvSafe not found. Ensure Migration.Toolkit module is properly loaded."
-    }
-
-    if (-not (Get-Command Export-AdSchemas -ErrorAction SilentlyContinue)) {
-        throw "Export-AdSchemas not found. Ensure Migration.Toolkit module is properly loaded."
+    foreach ($fn in @('Export-AdCsvSafe', 'Export-AdSchemas', 'Get-AdAdForest', 'Get-AdAdDomains', 'Get-AdAdDomainContext', 'New-AdRunLayout')) {
+        if (-not (Get-Command $fn -ErrorAction SilentlyContinue)) {
+            throw "$fn not found. Ensure Consulting.Toolkit.Discovery is properly loaded."
+        }
     }
 
     function Get-DomainScopeTag([string]$DomainFqdn) {
         return ("Domain-{0}" -f $DomainFqdn)
     }
 
-    # Discover forest early so we can name the run folder with the forest root domain
+    # -------------------------
+    # Forest discovery
+    # -------------------------
     Write-Host "Discovering Active Directory forest..." -ForegroundColor Cyan
     $forestParams = @{}
-    if ($Server) {
+    if (-not [string]::IsNullOrWhiteSpace($Server)) {
         $forestParams['Server'] = $Server
         Write-Host "  Using server: $Server" -ForegroundColor Yellow
     }
@@ -172,8 +105,7 @@ function Invoke-AdDiscovery {
         $domains = @(Get-AdAdDomains -Forest $forest)
         $suffixSet = Get-AdKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
         Log-ExecutionStatus "Forest Discovery" "OK"
-    }
-    catch {
+    } catch {
         Log-ExecutionStatus "Forest Discovery" "FAIL" $_.Exception.Message
         throw "Forest discovery failed. Cannot continue. $_"
     }
@@ -181,20 +113,29 @@ function Invoke-AdDiscovery {
     Write-Host "  Forest: $($forest.Name)" -ForegroundColor Green
     Write-Host "  Domains: $(@($domains).Count)" -ForegroundColor Green
 
-    # Build a default prefix based on forest root domain when not explicitly provided
+    # Default prefix from forest root domain if Prefix not supplied
     $rootDomainTag = if ([string]::IsNullOrWhiteSpace($forest.RootDomain)) { 'UnknownDomain' } else { $forest.RootDomain.ToLower().Replace(' ', '_') }
     $basePrefix = if ($PSBoundParameters.ContainsKey('Prefix') -and -not [string]::IsNullOrWhiteSpace($Prefix)) {
         $Prefix
-    }
-    else {
+    } else {
         "AD_{0}" -f $rootDomainTag
     }
+
+    # Environment-tagged prefix
+    $EnvironmentPrefix = if ($EnvironmentSafeTag -eq "source") { $basePrefix } else { "${basePrefix}__${EnvironmentSafeTag}" }
 
     # -------------------------
     # Run layout + folders
     # -------------------------
-    $EnvironmentPrefix = if ($EnvironmentSafeTag -eq "source") { $basePrefix } else { "${basePrefix}__${EnvironmentSafeTag}" }
-    $layout = New-AdRunLayout -OutputRoot $OutputRoot -Prefix $EnvironmentPrefix -CreateLog
+    $layoutRaw = @(New-AdRunLayout -OutputRoot $OutputRoot -Prefix $EnvironmentPrefix -CreateLog)
+    $layout = $layoutRaw |
+    Where-Object { $_ -and $_.PSObject -and ($_.PSObject.Properties.Name -contains 'RunRoot') } |
+    Select-Object -Last 1
+
+    if (-not $layout) {
+        $returnedTypes = ($layoutRaw | ForEach-Object { $_.GetType().FullName } | Sort-Object -Unique) -join ', '
+        throw "New-AdRunLayout did not return a layout object with RunRoot. Returned types: $returnedTypes"
+    }
 
     Write-Host "  Output: $($layout.RunRoot)" -ForegroundColor Yellow
 
@@ -208,6 +149,11 @@ function Invoke-AdDiscovery {
         if (-not (Test-Path -LiteralPath $p)) { New-Item -ItemType Directory -Path $p -Force | Out-Null }
     }
 
+    if ($IncludeSecurity) {
+        Write-Host "Exporting security datasets (forest)..." -ForegroundColor Cyan
+        Invoke-AdSecurityDiscoveryExport -Forest $forest -ForestDir $forestDir -ScopeTag 'Forest' -LogPath $layout.LogPath
+    }
+
     # -------------------------
     # Schemas
     # -------------------------
@@ -215,420 +161,166 @@ function Invoke-AdDiscovery {
     try {
         Export-AdSchemas -SchemasDir $schemasDir | Out-Null
         Log-ExecutionStatus "CSV Schemas Export" "OK"
-    }
-    catch {
+    } catch {
         Log-ExecutionStatus "CSV Schemas Export" "FAIL" $_.Exception.Message
     }
 
     # -------------------------
-    # Forest exports
+    # Forest exports (collector)
     # -------------------------
     Write-Host "Exporting forest-level data..." -ForegroundColor Cyan
 
-    try {
-        (Get-AdAdForestSummary -Forest $forest) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Summary__Forest.csv') -Force -AllowEmpty
-    }
-    catch { Log-ExecutionStatus "Forest Summary" "FAIL" $_.Exception.Message }
+    try { (Get-AdAdForestSummary -Forest $forest) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Summary__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Forest Summary" "FAIL" $_.Exception.Message }
+    try { (Get-AdAdForestUpnSuffixes -Forest $forest -Domains $domains) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Identity__UpnSuffixes__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Forest UPN Suffixes" "FAIL" $_.Exception.Message }
+    try { (Get-AdAdReplicationSites) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Sites__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Replication Sites" "FAIL" $_.Exception.Message }
 
-    try {
-        (Get-AdAdForestUpnSuffixes -Forest $forest -Domains $domains) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Identity__UpnSuffixes__Forest.csv') -Force -AllowEmpty
-    }
-    catch { Log-ExecutionStatus "Forest UPN Suffixes" "FAIL" $_.Exception.Message }
-
-    try {
-        (Get-AdAdReplicationSites) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Sites__Forest.csv') -Force -AllowEmpty
-    }
-    catch { Log-ExecutionStatus "Replication Sites" "FAIL" $_.Exception.Message }
-
-    (Get-AdAdReplicationSubnets) |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Subnets__Forest.csv') -Force -AllowEmpty
-
-    (Get-AdAdReplicationSiteLinks) |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__SiteLinks__Forest.csv') -Force -AllowEmpty
-
-    (Get-AdAdForestTrusts -LogPath $layout.LogPath) |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Security__Trusts__Forest.csv') -Force -AllowEmpty
+    try { (Get-AdAdReplicationSubnets)   | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Subnets__Forest.csv')   -Force -AllowEmpty } catch { Log-ExecutionStatus "Replication Subnets" "FAIL" $_.Exception.Message }
+    try { (Get-AdAdReplicationSiteLinks) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__SiteLinks__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Replication SiteLinks" "FAIL" $_.Exception.Message }
+    try { (Get-AdAdForestTrusts -LogPath $layout.LogPath) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Security__Trusts__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Forest Trusts" "FAIL" $_.Exception.Message }
 
     # -------------------------
-    # Domain loop
+    # Domain loop (collector)
     # -------------------------
     $allUsers = @()
     $allComputers = @()
     $allGroups = @()
-    $allOus = @()
-    $allGpos = @()
-    $allPrivilegedAccounts = @()
-    $allTombstone = @()
-    $allGroupNesting = @()
-    $allCrossDomainMembership = @()
-    $allWeakPasswordPolicies = @()
-    $allEmptyGroups = @()
-    $allDuplicateSpns = @()
-    $allTopSpns = @()
-    $allOuDepth = @()
-    $allDisabledAccounts = @()
-    $allAdminSdHolder = @()
-    $allDnsZones = @()
-    $allDhcpScopes = @()
-    $allSysvolSizes = @()
-    $allTokenBloat = @()
-    $allGpoPerformance = @()
 
     foreach ($d in $domains) {
         Write-Host "`nProcessing domain: $d" -ForegroundColor Cyan
 
         try {
             $ctxParams = @{ DomainFqdn = $d; LogPath = $layout.LogPath }
-            if ($Server) { $ctxParams['Server'] = $Server }
+            if (-not [string]::IsNullOrWhiteSpace($Server)) { $ctxParams['Server'] = $Server }
             $ctx = Get-AdAdDomainContext @ctxParams
-            $scopeTag = Get-DomainScopeTag $ctx.DomainFqdn
 
+            $scopeTag = Get-DomainScopeTag $ctx.DomainFqdn
             $domainDir = Join-Path $domainsRoot $scopeTag
             if (-not (Test-Path -LiteralPath $domainDir)) { New-Item -ItemType Directory -Path $domainDir -Force | Out-Null }
 
-            # Domain summaries / infra
+            if ($IncludeSecurity) {
+                Write-Host "  - Security discovery (tier0/delegation/adcs signals)" -ForegroundColor Gray
+                Invoke-AdSecurityDiscoveryExport -Forest $forest -ForestDir $forestDir -DomainContext $ctx -DomainDir $domainDir -ScopeTag $scopeTag -LogPath $layout.LogPath
+            }
+
+            # Domain summary / infrastructure
             Write-Host "  - Domain summary and infrastructure" -ForegroundColor Gray
-            try {
-                (Get-AdAdDomainSummary -DomainContext $ctx) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Summary__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-            }
-            catch { Log-ExecutionStatus "Domain Summary ($d)" "FAIL" $_.Exception.Message }
+            (Get-AdAdDomainSummary -DomainContext $ctx) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Summary__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-            try {
-                (Get-AdAdDomainControllers -DomainContext $ctx) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Infrastructure__DomainControllers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-            }
-            catch { Log-ExecutionStatus "Domain Controllers ($d)" "FAIL" $_.Exception.Message }
+            (Get-AdAdDomainControllers -DomainContext $ctx) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Infrastructure__DomainControllers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-            # Password policy
+            # Password policies (collector: raw policy datasets)
             Write-Host "  - Password policies" -ForegroundColor Gray
-            try {
-                (Get-AdAdDefaultPasswordPolicy -DomainContext $ctx) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyDefault__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-            }
-            catch { Log-ExecutionStatus "Default Password Policy ($d)" "FAIL" $_.Exception.Message }
+            (Get-AdAdDefaultPasswordPolicy -DomainContext $ctx) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyDefault__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-            try {
-                (Get-AdAdFineGrainedPasswordPolicies -DomainContext $ctx -LogPath $layout.LogPath) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyFgpp__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-            }
-            catch { Log-ExecutionStatus "Fine-Grained Password Policies ($d)" "FAIL" $_.Exception.Message }
+            (Get-AdAdFineGrainedPasswordPolicies -DomainContext $ctx -LogPath $layout.LogPath) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyFgpp__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-            try {
-                (Get-AdAdFineGrainedPasswordPolicyAssignments -DomainContext $ctx -LogPath $layout.LogPath) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyFgppAssignments__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-            }
-            catch { Log-ExecutionStatus "FGPP Assignments ($d)" "FAIL" $_.Exception.Message }
+            (Get-AdAdFineGrainedPasswordPolicyAssignments -DomainContext $ctx -LogPath $layout.LogPath) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PasswordPolicyFgppAssignments__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-            # Structure / delegation
+            # Structure / delegation (collector)
             Write-Host "  - Organizational units and delegation" -ForegroundColor Gray
-            try {
-                (Get-AdAdOrganizationalUnits -DomainContext $ctx) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Structure__OrganizationalUnits__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-            }
-            catch { Log-ExecutionStatus "Organizational Units ($d)" "FAIL" $_.Exception.Message }
+            (Get-AdAdOrganizationalUnits -DomainContext $ctx) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Structure__OrganizationalUnits__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-            try {
-                (Get-AdAdOuDelegationAcls -DomainContext $ctx -Scope OneLevel) | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__OuDelegationAcls__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-            }
-            catch { Log-ExecutionStatus "OU Delegation ACLs ($d)" "FAIL" $_.Exception.Message }
+            (Get-AdAdOuDelegationAcls -DomainContext $ctx -Scope OneLevel) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__OuDelegationAcls__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-            # Identity objects (keep materialized arrays if you reuse them)
+            # Identity objects (collector: full sets)
             Write-Host "  - Identity objects (users, groups, computers)" -ForegroundColor Gray
-            $groups = @()
-            $users = @()
-            $comps = @()
-            $ous = @()
+            $groups = @(Get-AdAdGroups -DomainContext $ctx)
+            $users = @(Get-AdAdUsers  -DomainContext $ctx -Now $Now -KnownUpnSuffixSet $suffixSet)
+            $comps = @(Get-AdAdComputers -DomainContext $ctx -Now $Now)
 
-            try {
-                $groups = @(Get-AdAdGroups -DomainContext $ctx)
-            }
-            catch { Log-ExecutionStatus "Groups enumeration ($d)" "FAIL" $_.Exception.Message }
-
-            try {
-                $users = @(Get-AdAdUsers -DomainContext $ctx -Now $Now -KnownUpnSuffixSet $suffixSet)
-            }
-            catch { Log-ExecutionStatus "Users enumeration ($d)" "FAIL" $_.Exception.Message }
-
-            try {
-                $comps = @(Get-AdAdComputers -DomainContext $ctx -Now $Now)
-            }
-            catch { Log-ExecutionStatus "Computers enumeration ($d)" "FAIL" $_.Exception.Message }
-
-            try {
-                $ous = @(Get-AdAdOrganizationalUnits -DomainContext $ctx)
-            }
-            catch { Log-ExecutionStatus "OUs enumeration ($d)" "FAIL" $_.Exception.Message }
-
-            # Collect for forest-level assessment
+            $allGroups += $groups
             $allUsers += $users
             $allComputers += $comps
-            $allGroups += $groups
-            $allOus += $ous
-        }
-        catch {
+
+            $groups | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Groups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            $users  | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Users__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+            $comps  | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ComputersAll__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            # Published resources (collector)
+            Write-Host "  - Published resources" -ForegroundColor Gray
+            (Get-AdAdPublishedPrinters -DomainContext $ctx) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Inventory__PublishedPrinters__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            (Get-AdAdPublishedSharedFolders -DomainContext $ctx) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Inventory__PublishedSharedFolders__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            # Contacts (collector) — use function signature you currently have
+            Write-Host "  - AD Contacts" -ForegroundColor Gray
+            (Get-AdAdContacts -DomainName $ctx.DomainFqdn -Server $ctx.DomainController) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Contacts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            # SPNs (collector)
+            Write-Host "  - Service Principal Names" -ForegroundColor Gray
+            (Get-AdAdSpns -DomainContext $ctx) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Spns__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            # Security inventory (collector: raw facts, no scoring)
+            Write-Host "  - Security inventory (SID history, privileged accounts, service candidates)" -ForegroundColor Gray
+            (Get-AdUsersSidHistory -DomainContext $ctx) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__UsersSidHistory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            (Get-AdServiceAccountCandidates -DomainContext $ctx -Now $Now) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ServiceAccountCandidates__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            (Get-AdPrivilegedAccounts -DomainContext $ctx) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PrivilegedAccounts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            # GPO inventory + links (collector)
+            Write-Host "  - Group Policy Objects" -ForegroundColor Gray
+            $gpos = @(Get-AdGpoInventory -DomainContext $ctx -LogPath $layout.LogPath)
+            $gpos | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__GPO__Inventory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            (Get-AdGpoLinks -DomainContext $ctx -Scope OneLevel) |
+            Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__GPO__Links__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+
+            Log-ExecutionStatus "Domain Processing ($d)" "OK"
+        } catch {
             Log-ExecutionStatus "Domain Processing ($d)" "FAIL" $_.Exception.Message
             Write-Host "  Skipping domain due to error: $_" -ForegroundColor Red
             continue
         }
-
-        $groups |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Groups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $users |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Users__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $comps |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ComputersAll__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Workstations vs servers split
-        @($comps | Where-Object { -not $_.IsServer }) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ComputersWorkstations__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        @($comps | Where-Object { $_.IsServer }) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ComputersServers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Published resources
-        Write-Host "  - Published resources" -ForegroundColor Gray
-        (Get-AdAdPublishedPrinters -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Inventory__PublishedPrinters__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        (Get-AdAdPublishedSharedFolders -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Inventory__PublishedSharedFolders__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Contacts
-        Write-Host "  - AD Contacts" -ForegroundColor Gray
-        (Get-AdAdContacts -DomainName $ctx.DomainName -Server $ctx.DomainController) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Contacts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Stale objects
-        Write-Host "  - Stale accounts analysis" -ForegroundColor Gray
-        @($users | Where-Object { $_.LastLogonDays -and [int]$_.LastLogonDays -gt $StaleUserThresholdDays }) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__StaleUsers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        @($comps | Where-Object { -not $_.IsServer -and $_.LastLogonDays -and [int]$_.LastLogonDays -gt $StaleComputerThresholdDays }) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__StaleWorkstations__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        @($comps | Where-Object { $_.IsServer -and $_.LastLogonDays -and [int]$_.LastLogonDays -gt $StaleComputerThresholdDays }) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__StaleServers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Legacy OS
-        Write-Host "  - Legacy operating systems" -ForegroundColor Gray
-        @($comps | Where-Object { -not $_.IsServer -and $_.OperatingSystem -match $LegacyWorkstationOsRegex }) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__LegacyWorkstationOs__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        @($comps | Where-Object { $_.IsServer -and $_.OperatingSystem -match $LegacyServerOsRegex }) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__LegacyServerOs__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # SPNs
-        Write-Host "  - Service Principal Names" -ForegroundColor Gray
-        (Get-AdAdSpns -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Spns__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # SIDHistory, service candidates, privileged
-        Write-Host "  - Security analysis (SID history, privileged accounts)" -ForegroundColor Gray
-        (Get-AdUsersSidHistory -DomainContext $ctx) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__UsersSidHistory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        (Get-AdServiceAccountCandidates -DomainContext $ctx -Now $Now) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ServiceAccountCandidates__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $privAccounts = @(Get-AdPrivilegedAccounts -DomainContext $ctx)
-        $allPrivilegedAccounts += $privAccounts
-        $privAccounts |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PrivilegedAccounts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # GPO inventory + links
-        Write-Host "  - Group Policy Objects" -ForegroundColor Gray
-        $gpos = @(Get-AdGpoInventory -DomainContext $ctx -LogPath $layout.LogPath)
-        $allGpos += $gpos
-        $gpos |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__GPO__Inventory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        (Get-AdGpoLinks -DomainContext $ctx -Scope OneLevel) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__GPO__Links__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Kerberos encryption focused datasets
-        Write-Host "  - Kerberos encryption analysis" -ForegroundColor Gray
-        $userKerb = $users | Select-Object DomainFqdn, SamAccountName, UserPrincipalName, EncryptionTypes, EncryptionRisk, SPNCount, SidHistoryCount, AdminCount
-        @($userKerb) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__KerberosEncryptionUsers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Computers Kerberos encryption dataset
-        $compKerb = $comps | Select-Object DomainFqdn, Name, DnsHostName, IsServer, EncryptionTypes, EncryptionRisk, SPNCount
-        @($compKerb) |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__KerberosEncryptionComputers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Extended assessment - Per-domain analysis
-        Write-Host "  - Extended assessments" -ForegroundColor Gray
-
-        $nestingDepth = @(Get-AdGroupNestingDepth -DomainContext $ctx)
-        $allGroupNesting += $nestingDepth
-        $nestingDepth |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__GroupNestingDepth__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $crossDomainMember = @(Get-AdCrossDomainGroupMembership -DomainContext $ctx)
-        $allCrossDomainMembership += $crossDomainMember
-        $crossDomainMember |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__CrossDomainGroupMembership__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $weakPwdPolicies = @(Get-AdWeakPasswordPolicies -DomainContext $ctx)
-        $allWeakPasswordPolicies += $weakPwdPolicies
-        $weakPwdPolicies |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__WeakPasswordPolicies__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $emptyGroups = @(Get-AdEmptyGroups -DomainContext $ctx)
-        $allEmptyGroups += $emptyGroups
-        $emptyGroups |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__EmptyGroups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $dupSpns = @(Get-AdDuplicateSpns -DomainContext $ctx)
-        $allDuplicateSpns += $dupSpns
-        $dupSpns |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__DuplicateSpns__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $topSpns = @(Get-AdTopSpnsByType -DomainContext $ctx -Top 10)
-        $allTopSpns += $topSpns
-        $topSpns |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__TopSpnsByType__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $ouDepth = @(Get-AdOuDepthAnalysis -DomainContext $ctx)
-        $allOuDepth += $ouDepth
-        $ouDepth |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__OuDepthAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $disabledAccts = @(Get-AdDisabledAccounts -AllUsers $users -AllComputers $comps)
-        $allDisabledAccounts += $disabledAccts
-        $disabledAccts |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__DisabledAccounts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $adminSdHolder = @(Get-AdAdminSdHolderImpact -DomainContext $ctx)
-        $allAdminSdHolder += $adminSdHolder
-        $adminSdHolder |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__AdminSdHolderImpact__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Tombstone lifetime per domain
-        $tombstone = @(Get-AdTombstoneLifetime -DomainContext $ctx)
-        $allTombstone += $tombstone
-        $tombstone |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__TombstoneLifetime__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $dnsZones = @(Get-AdDnsZoneInventory -DomainFqdn $ctx.DomainFqdn -Server $ctx.Server)
-        $allDnsZones += $dnsZones
-        $dnsZones |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__DnsZoneInventory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $dhcpScopes = @(Get-AdDhcpScopeAnalysis -DomainFqdn $ctx.DomainFqdn -Server $ctx.Server)
-        $allDhcpScopes += $dhcpScopes
-        $dhcpScopes |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__DhcpScopeAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $sysvolSizes = @(Get-AdSysvolSizeAnalysis -DomainFqdn $ctx.DomainFqdn -Server $ctx.Server)
-        $allSysvolSizes += $sysvolSizes
-        $sysvolSizes |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__SysvolSizeAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $tokenBloat = @(Get-AdGroupTokenBloat -AllUsers $users)
-        $allTokenBloat += $tokenBloat
-        $tokenBloat |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__GroupTokenBloat__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $gpoPerf = @(Get-AdGpoPerformanceAnalysis -AllGpos $gpos)
-        $allGpoPerformance += $gpoPerf
-        $gpoPerf |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__GpoPerformanceAnalysis__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        # Migration risk flags - per domain
-        Write-Host "  - Migration risk flags and summary" -ForegroundColor Gray
-        $domainRiskFlags = @(Get-AdMigrationRiskFlags -AllUsers $users -AllComputers $comps -LegacyWorkstationOsRegex $LegacyWorkstationOsRegex -LegacyServerOsRegex $LegacyServerOsRegex)
-        $domainRiskFlags |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__MigrationRiskFlags__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
-
-        $domainRiskFlagsSummary = @(Get-AdMigrationRiskFlagsSummary -RiskFlagsData $domainRiskFlags)
-        $domainRiskFlagsSummary |
-        Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Analysis__MigrationRiskFlagsSummary__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
     }
 
     # -------------------------
-    # Forest-level extended assessments
+    # Manifest (collector metadata only)
     # -------------------------
-    Write-Host "`nRunning forest-level extended assessments..." -ForegroundColor Cyan
+    Write-Host "`nCreating run manifest..." -ForegroundColor Cyan
 
-    $siteLinkData = @(Get-AdSiteLinkCostAnalysis)
-    $siteLinkData |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Analysis__SiteLinkCostAnalysis__Forest.csv') -Force -AllowEmpty
-
-    $fsmoData = @(Get-AdFsmoRoleAvailability -ForestName $($forest.Name))
-    $fsmoData |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Analysis__FsmoRoleAvailability__Forest.csv') -Force -AllowEmpty
-
-    $certServicesData = @(Get-AdCertificateServicesInventory -Forest $forest)
-    $certServicesData |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Analysis__CertificateServicesInventory__Forest.csv') -Force -AllowEmpty
-
-    $trustMapData = @(Get-AdTrustRelationshipMap -Forest $forest)
-    $trustMapData |
-    Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Analysis__TrustRelationshipMap__Forest.csv') -Force -AllowEmpty
-
-    # -------------------------
-    # Assessment Summary & Migration Risk Flags
-    # -------------------------
-    Write-Host "Generating assessment summary and risk flags..." -ForegroundColor Cyan
-
-    $assessmentSummary = Get-AdAssessmentSummary `
-        -ForestName $forest.Name `
-        -AllUsers @($allUsers) `
-        -AllComputers @($allComputers) `
-        -AllGroups @($allGroups) `
-        -PrivilegedAccounts @($allPrivilegedAccounts) `
-        -GroupNestingData @($allGroupNesting) `
-        -CrossDomainMembershipData @($allCrossDomainMembership) `
-        -WeakPasswordPoliciesData @($allWeakPasswordPolicies) `
-        -EmptyGroupsData @($allEmptyGroups) `
-        -DuplicateSpnsData @($allDuplicateSpns) `
-        -DisabledAccountsData @($allDisabledAccounts) `
-        -AdminSdHolderData @($allAdminSdHolder) `
-        -FsmoAvailabilityData @($fsmoData) `
-        -OuDepthData @($allOuDepth) `
-        -TopSpnsData @($allTopSpns) `
-        -SiteLinkData @($siteLinkData) `
-        -TombstoneData @($allTombstone)
-
-    $assessmentSummary |
-    Export-AdCsvSafe -Path (Join-Path $layout.RunRoot 'AD__Assessment__Summary__Forest.csv') -Force
-
-    $migrationRiskFlags = Get-AdMigrationRiskFlags -AllUsers @($allUsers) -AllComputers @($allComputers)
-    $migrationRiskFlags |
-    Export-AdCsvSafe -Path (Join-Path $layout.RunRoot 'AD__Migration__RiskFlags__Forest.csv') -Force -AllowEmpty
-
-    $migrationRiskFlagsSummary = Get-AdMigrationRiskFlagsSummary -RiskFlagsData @($migrationRiskFlags)
-    $migrationRiskFlagsSummary |
-    Export-AdCsvSafe -Path (Join-Path $layout.RunRoot 'AD__Migration__RiskFlagsSummary__Forest.csv') -Force -AllowEmpty
-
-    # -------------------------
-    # Manifest (for assessment automation)
-    # -------------------------
-    Write-Host "Creating discovery manifest..." -ForegroundColor Cyan
-
-    $allCsv = Get-ChildItem -Path $layout.RunRoot -Recurse -File -Filter *.csv -ErrorAction SilentlyContinue
-    $manifest = foreach ($f in $allCsv) {
-        $count = 0
-        try { $count = (Import-Csv -Path $f.FullName).Count } catch { $count = 0 }
-
-        [pscustomobject]@{
-            FileName      = $f.Name
-            RelativePath  = $f.FullName.Substring($layout.RunRoot.Length).TrimStart('\', '/')
-            RowCount      = $count
-            LastWriteTime = $f.LastWriteTime
+    try {
+        $allCsv = Get-ChildItem -Path $layout.RunRoot -Recurse -File -Filter *.csv -ErrorAction SilentlyContinue
+        $manifest = foreach ($f in $allCsv) {
+            [pscustomobject]@{
+                FileName      = $f.Name
+                RelativePath  = $f.FullName.Substring($layout.RunRoot.Length).TrimStart('\', '/')
+                Bytes         = $f.Length
+                LastWriteTime = $f.LastWriteTime
+            }
         }
+
+        $manifestInfo = [pscustomobject]@{
+            Environment   = $Environment
+            ExecutionTime = $Now
+            OutputRoot    = $layout.RunRoot
+            Prefix        = $EnvironmentPrefix
+            CustomerName  = $CustomerName
+            ForestName    = $forest.Name
+            DomainCount   = $domains.Count
+        }
+
+        @($manifest) | Export-AdCsvSafe -Path (Join-Path $manifestDir 'Run__Manifest__Run.csv') -Force -AllowEmpty
+        $manifestInfo | Export-AdCsvSafe -Path (Join-Path $manifestDir 'Run__Info__Run.csv') -Force -AllowEmpty
+
+        Log-ExecutionStatus "Run Manifest" "OK"
+    } catch {
+        Log-ExecutionStatus "Run Manifest" "FAIL" $_.Exception.Message
     }
-
-    $manifestInfo = [pscustomobject]@{
-        Environment   = $Environment
-        ExecutionTime = $Now
-        OutputRoot    = $layout.RunRoot
-        Prefix        = $EnvironmentPrefix
-        CustomerName  = $CustomerName
-    }
-
-    @($manifest) |
-    Export-AdCsvSafe -Path (Join-Path $manifestDir 'Run__Manifest__Run.csv') -Force -AllowEmpty
-
-    $manifestInfo | Export-AdCsvSafe -Path (Join-Path $manifestDir 'Run__Info__Run.csv') -Force
 
     # -------------------------
     # Completion summary
@@ -642,30 +334,9 @@ function Invoke-AdDiscovery {
     Write-Host "Users: $($allUsers.Count)" -ForegroundColor Yellow
     Write-Host "Computers: $($allComputers.Count)" -ForegroundColor Yellow
     Write-Host "Groups: $($allGroups.Count)" -ForegroundColor Yellow
-    Write-Host ""
     Write-Host "Outputs in: $($layout.RunRoot)" -ForegroundColor Yellow
-
-    # Show execution summary
-    if ($executionLog) {
-        Write-Host ""
-        Write-Host "Execution Summary:" -ForegroundColor Cyan
-        $failures = $executionLog | Where-Object { $_.Status -eq 'FAIL' }
-        $successes = $executionLog | Where-Object { $_.Status -eq 'OK' }
-        Write-Host "  Successful operations: $($successes.Count)" -ForegroundColor Green
-        Write-Host "  Failed operations: $($failures.Count)" -ForegroundColor $(if ($failures.Count -gt 0) { 'Yellow' } else { 'Green' })
-        if ($failures) {
-            Write-Host "  Failed items:" -ForegroundColor Yellow
-            $failures | ForEach-Object { Write-Host "    - $($_.Operation): $($_.Message)" -ForegroundColor Yellow }
-        }
-    }
-
-    Write-Host ""
-    Write-Host "To generate reports, run:" -ForegroundColor Cyan
-    Write-Host "  New-AdAssessmentReport -DiscoveryOutputPath '$($layout.RunRoot)'" -ForegroundColor White
-    Write-Host "  New-AdComprehensiveAssessmentReport -DiscoveryOutputPath '$($layout.RunRoot)' -OutputPath '$(Join-Path $layout.RunRoot "LC__Assessment__Report__$EnvironmentSafeTag.html")'" -ForegroundColor White
     Write-Host ""
 
-    # Return summary object
     return [pscustomobject]@{
         RunRoot       = $layout.RunRoot
         LogPath       = $layout.LogPath

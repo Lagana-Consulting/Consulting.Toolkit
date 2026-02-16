@@ -6,7 +6,7 @@
     CompanyName          = 'Lagana Consulting'
     Copyright            = '(c) 2026 Lagana Consulting'
     Description          = 'Discovery collectors and export pipeline for AD/cloud inventory outputs (contract-first).'
-    PowerShellVersion    = '7.2'
+    PowerShellVersion    = '5.1'
     CompatiblePSEditions = @('Core')
 
     # Keep empty in monorepo unless you enforce PSModulePath in build/dev bootstrap

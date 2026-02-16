@@ -1,615 +1,709 @@
+<#
+Invoke-AdDiscoveryAnalysis (Workspace Engine)
+===========================================
+- Supports:
+  - One run only (source OR target)
+  - Multiple source runs
+  - Optional target run
+- Reads each run's: 99_manifest\Discovery__Index__Run.json (Discovery.v1 preferred; falls back to file scan)
+- Produces:
+  - <WorkspaceRoot>\30_analysis\cross_run\AD__CrossRun__IdentityCollisions.csv
+  - <WorkspaceRoot>\30_analysis\cross_run\AD__CrossRun__PasswordPolicyDiff.csv
+  - <WorkspaceRoot>\99_manifest\Workspace__Index__Workspace.json
+  - <WorkspaceRoot>\99_manifest\Workspace__Runs__Workspace.json
+
+No HTML. No “assessment engine”. No live AD queries. Pure offline analysis.
+
+How you run it:
+
+# Sources + Target
+Invoke-AdDiscoveryAnalysis `
+  -SourceRunRoot @("C:\Discovery\AD_contoso_source_20260215_090000","C:\Discovery\AD_fabrikam_source_20260215_091500") `
+  -TargetRunRoot "C:\Discovery\AD_target_20260215_093000" `
+  -WorkspaceRoot "C:\AnalysisWorkspaces\Contoso_20260216"
+
+# Single run only (source-only OR target-only)
+Invoke-AdDiscoveryAnalysis -SourceRunRoot "C:\Discovery\AD_contoso_source_20260215_090000"
+
+# If you want source-vs-source password policy diffs (pairwise):
+Invoke-AdDiscoveryAnalysis -SourceRunRoot @("C:\Discovery\F1","C:\Discovery\F2") -IncludeSourceVsSource
+
+#>
+
 function Invoke-AdDiscoveryAnalysis {
-    <#
-    .SYNOPSIS
-    Performs offline analysis of AD discovery data and generates comprehensive reports.
-
-    .DESCRIPTION
-    Analyzes pre-collected AD discovery CSV data from source and target environments
-    to generate:
-    - Source and target assessment reports (HTML)
-    - Migration planning report
-    - Environment comparison report (HTML)
-    - Cross-forest duplicate object analysis
-
-    No live Active Directory queries are performed—all analysis is based on CSV data
-    from discovery runs. Supports multi-source forest scenarios.
-
-    Requires PowerShell 7+ (Analysis module requirement).
-
-    .PARAMETER ConfigFile
-    Path to JSON configuration file containing:
-    - SourceRunRoots (array): Source discovery output paths
-    - TargetRunRoot (string): Target discovery output path
-    - CustomerName (string): Organization name for reports
-    - OutputRoot (string): Analysis output directory
-
-    .PARAMETER SourceRunRoot
-    Array of paths to source environment discovery output folders.
-    Used when not providing ConfigFile. Required in Manual parameter set.
-
-    .PARAMETER TargetRunRoot
-    Path to target environment discovery output folder.
-    Used when not providing ConfigFile. Required in Manual parameter set.
-
-    .PARAMETER CustomerName
-    Customer/organization name for report headers and titles.
-    Default is "Organization".
-
-    .PARAMETER OutputRoot
-    Root directory for analysis outputs. If not specified, creates
-    'Analysis_{timestamp}' folder in current directory.
-
-    .PARAMETER GenerateLoeForBoth
-    [Deprecated] LOE workbook generation has been removed.
-
-    .PARAMETER IncludeTargetPlanning
-    Generate migration planning report for target environment.
-    Useful for understanding target environment preparation needs.
-
-    .PARAMETER OpenReports
-    Automatically open generated HTML reports in browser after creation.
-
-    .EXAMPLE
-    Invoke-AdDiscoveryAnalysis -ConfigFile "C:\Analysis\config.json"
-
-    Runs analysis using configuration file.
-
-    .EXAMPLE
-    Invoke-AdDiscoveryAnalysis `
-      -SourceRunRoot "C:\Discovery\Source_20260128-100000" `
-      -TargetRunRoot "C:\Discovery\Target_20260128-110000" `
-      -CustomerName "Contoso Corp" `
-      -OutputRoot "C:\Analysis" `
-      -OpenReports
-
-    Runs analysis with manual parameters and opens reports.
-
-    .EXAMPLE
-    # Multi-source forest scenario
-    Invoke-AdDiscoveryAnalysis `
-      -SourceRunRoot @("C:\Discovery\Forest1", "C:\Discovery\Forest2") `
-      -TargetRunRoot "C:\Discovery\Target" `
-      -CustomerName "Multi-Forest Migration" `
-      -IncludeTargetPlanning
-
-    Analyzes multiple source forests against single target.
-
-    .OUTPUTS
-    Generated reports in OutputRoot:
-    - Source_Assessment_{timestamp}.html
-    - Target_Assessment_{timestamp}.html (if IncludeTargetPlanning)
-    - Migration_Planning_{timestamp}.html
-    - Environment_Comparison_{timestamp}.html
-    - CrossForest_Duplicates_{timestamp}.csv
-
-    .NOTES
-    Requires PowerShell 7+.
-    Discovery data must be from Migration.Toolkit discovery runs (expected CSV schema).
-    Config file format: { "SourceRunRoots": [...], "TargetRunRoot": "...", "CustomerName": "...", "OutputRoot": "..." }
-
-    .LINK
-    New-AdComprehensiveAssessmentReport
-    New-AdMigrationPlanningReport
-    Invoke-AdCrossForestDuplicateCheck
-    #>
-    [CmdletBinding(DefaultParameterSetName = 'Manual')]
+    [CmdletBinding()]
     param(
-        [Parameter(Mandatory, ParameterSetName = 'Config')]
-        [string]$ConfigFile,
-
-        [Parameter(Mandatory, ParameterSetName = 'Manual')]
+        [Parameter(ParameterSetName = 'Manual')]
         [string[]]$SourceRunRoot,
 
-        [Parameter(Mandatory, ParameterSetName = 'Manual')]
+        [Parameter(ParameterSetName = 'Manual')]
         [string]$TargetRunRoot,
 
-        [Parameter(ParameterSetName = 'Manual')]
-        [string]$CustomerName = "Organization",
+        [Parameter(ParameterSetName = 'Config')]
+        [string]$ConfigFile,
 
-        [Parameter(ParameterSetName = 'Manual')]
-        [string]$OutputRoot,
+        [string]$WorkspaceRoot,
 
-        [switch]$GenerateLoeForBoth,
-        [switch]$IncludeTargetPlanning,
-        [switch]$OpenReports
+        # Cross-run collision config
+        [string[]]$CollisionKeysUser = @('SamAccountName', 'UserPrincipalName', 'Mail', 'ProxyAddresses', 'ServicePrincipalName'),
+        [string[]]$CollisionKeysGroup = @('SamAccountName', 'Mail', 'ProxyAddresses'),
+        [string[]]$CollisionKeysComputer = @('Name', 'DnsHostName', 'ServicePrincipalName'),
+
+        [switch]$IncludeSourceVsSource,
+        [switch]$WhatIf
     )
 
-    # ========================================
-    # Load config if provided
-    # ========================================
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
+
+    # ---------------------------
+    # Load config (optional)
+    # ---------------------------
     if ($PSCmdlet.ParameterSetName -eq 'Config') {
-        if (-not (Test-Path -LiteralPath $ConfigFile)) {
-            throw "Config file not found: $ConfigFile"
-        }
-        try {
-            $config = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
+        if (-not (Test-Path -LiteralPath $ConfigFile)) { throw "Config not found: $ConfigFile" }
+        $cfg = Get-Content -LiteralPath $ConfigFile -Raw | ConvertFrom-Json
 
-            # Support both SourceRunRoots (array) and SourceRunRoot (string) for backward compatibility
-            if ($config.PSObject.Properties['SourceRunRoots']) {
-                $SourceRunRoot = $config.SourceRunRoots
-            }
-            elseif ($config.PSObject.Properties['SourceRunRoot']) {
-                $SourceRunRoot = @($config.SourceRunRoot)
-            }
-            else {
-                throw "Config must contain SourceRunRoot or SourceRunRoots"
-            }
-            $TargetRunRoot = $config.TargetRunRoot
-            $CustomerName = if ($config.CustomerName) { $config.CustomerName } else { "Organization" }
-            $OutputRoot = if ($config.OutputRoot) { $config.OutputRoot } else { $SourceRunRoot[0] }
-            if ($config.PSObject.Properties['GenerateLoeForBoth']) { $GenerateLoeForBoth = [bool]$config.GenerateLoeForBoth }
-            if ($config.PSObject.Properties['IncludeTargetPlanning']) { $IncludeTargetPlanning = [bool]$config.IncludeTargetPlanning }
-        }
-        catch {
-            throw "Failed to parse config file: $_"
-        }
+        $SourceRunRoot = @()
+        if ($cfg.PSObject.Properties['SourceRunRoots']) { $SourceRunRoot = @($cfg.SourceRunRoots) }
+        elseif ($cfg.PSObject.Properties['SourceRunRoot']) { $SourceRunRoot = @($cfg.SourceRunRoot) }
+
+        $TargetRunRoot = $cfg.TargetRunRoot
+        if (-not $WorkspaceRoot -and $cfg.PSObject.Properties['WorkspaceRoot']) { $WorkspaceRoot = $cfg.WorkspaceRoot }
+
+        if ($cfg.PSObject.Properties['IncludeSourceVsSource']) { $IncludeSourceVsSource = [bool]$cfg.IncludeSourceVsSource }
     }
 
-    # Normalize SourceRunRoot to array if single string
-    if ($SourceRunRoot -isnot [array]) {
-        $SourceRunRoot = @($SourceRunRoot)
+    $SourceRunRoot = @($SourceRunRoot | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ([string]::IsNullOrWhiteSpace($TargetRunRoot)) { $TargetRunRoot = $null }
+
+    if ($SourceRunRoot.Count -eq 0 -and -not $TargetRunRoot) {
+        throw "Provide at least one SourceRunRoot or a TargetRunRoot (or a ConfigFile)."
     }
 
-    # Validate paths
-    foreach ($srcRoot in $SourceRunRoot) {
-        if (-not (Test-Path -LiteralPath $srcRoot)) {
-            throw "Source run root not found: $srcRoot"
-        }
+    foreach ($p in $SourceRunRoot) {
+        if (-not (Test-Path -LiteralPath $p)) { throw "Source run root not found: $p" }
     }
-    if (-not (Test-Path -LiteralPath $TargetRunRoot)) {
+    if ($TargetRunRoot -and -not (Test-Path -LiteralPath $TargetRunRoot)) {
         throw "Target run root not found: $TargetRunRoot"
     }
 
-    # Create output root if missing
-    if (-not (Test-Path -LiteralPath $OutputRoot)) {
-        New-Item -ItemType Directory -Path $OutputRoot -Force | Out-Null
+    # ---------------------------
+    # Workspace layout
+    # ---------------------------
+    if (-not $WorkspaceRoot) {
+        $ts = (Get-Date).ToString('yyyyMMdd_HHmmss')
+        $WorkspaceRoot = Join-Path (Get-Location).Path "AnalysisWorkspace_$ts"
     }
 
-    # Define all output paths upfront
-    $sourceAssessmentPath = Join-Path $OutputRoot "AD__Assessment__Report__Source.html"
-    $targetAssessmentPath = Join-Path $OutputRoot "AD__Assessment__Report__Target.html"
-    $targetComprehensivePath = Join-Path $OutputRoot "AD__Comprehensive__Assessment__Target.html"
-    $comparisonPath = Join-Path $OutputRoot "AD__Environment__Comparison__Report.html"
-    $duplicatePath = Join-Path $OutputRoot "AD__Duplicate__Objects__Cross_Forest.csv"
-    $planningPath = Join-Path $OutputRoot "AD__Migration__Planning__Report__Source.html"
+    $inputsDir = Join-Path $WorkspaceRoot '00_inputs'
+    $analysisDir = Join-Path $WorkspaceRoot '30_analysis'
+    $perRunDir = Join-Path $analysisDir 'per_run'
+    $crossRunDir = Join-Path $analysisDir 'cross_run'
+    $manifestDir = Join-Path $WorkspaceRoot '99_manifest'
 
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "AD Discovery Analysis Engine" -ForegroundColor Cyan
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Sources: $($SourceRunRoot.Count) forest(s)" -ForegroundColor White
-    foreach ($src in $SourceRunRoot) {
-        Write-Host "  - $src" -ForegroundColor White
-    }
-    Write-Host "Target: $TargetRunRoot" -ForegroundColor White
-    Write-Host "Output: $OutputRoot" -ForegroundColor White
-    Write-Host ""
-
-    # Helper to safely import CSV
-    function Import-CsvSafe([string]$Path) {
-        if (-not (Test-Path -LiteralPath $Path)) {
-            return @()
-        }
-        try {
-            return @(Import-Csv -Path $Path -ErrorAction Stop)
-        }
-        catch {
-            Write-Warning "Failed to import $Path : $_"
-            return @()
+    if (-not $WhatIf) {
+        foreach ($d in @($WorkspaceRoot, $inputsDir, $analysisDir, $perRunDir, $crossRunDir, $manifestDir)) {
+            if (-not (Test-Path -LiteralPath $d)) { New-Item -ItemType Directory -Path $d -Force | Out-Null }
         }
     }
 
-    # Helper to find CSV files by pattern (handles wildcards)
-    function Find-CsvFile([string]$SearchPath) {
-        if (-not (Test-Path -Path $SearchPath)) {
-            return @()
+    # ---------------------------
+    # Helper functions (private)
+    # ---------------------------
+    function Get-DiscoveryIndexPath([string]$RunRoot) {
+        $p = Join-Path $RunRoot '99_manifest\Discovery__Index__Run.json'
+        if (Test-Path -LiteralPath $p) { return $p }
+        return $null
+    }
+
+    function Load-DiscoveryIndex([string]$RunRoot) {
+        $idxPath = Get-DiscoveryIndexPath $RunRoot
+        if ($idxPath) {
+            try {
+                return Get-Content -LiteralPath $idxPath -Raw | ConvertFrom-Json
+            } catch {
+                throw "Failed to parse discovery index JSON: $idxPath :: $($_.Exception.Message)"
+            }
         }
 
-        return @(Get-ChildItem -Path $SearchPath -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
-    }
+        # Fallback if index missing: minimal synthetic index by scanning CSV/JSON
+        $files = Get-ChildItem -LiteralPath $RunRoot -Recurse -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Extension -in '.csv', '.json' } |
+        Where-Object { $_.FullName -notmatch '[\\/](30_analysis|40_assessment)[\\/]' }
 
-    # ========================================
-    # Step 1: Generate per-source assessment reports
-    # ========================================
-    Write-Host "[1/6] Generating source environment assessments..." -ForegroundColor Yellow
-    $assessmentSources = @()
-    $sourceAssessmentPaths = @()
-    $sourceComprehensivePaths = @()
-
-    foreach ($srcRoot in $SourceRunRoot) {
-        # Extract forest/domain prefix from path
-        $pathParts = Split-Path -Path $srcRoot -Leaf
-        $prefix = if ($pathParts -match '^([A-Za-z0-9_]+)') { $matches[1] } else { "Source" }
-
-        # Generate per-source assessment with suffix
-        $srcAssessmentPath = Join-Path $OutputRoot "AD__Assessment__Report__Source__$prefix.html"
-        $srcComprehensivePath = Join-Path $OutputRoot "AD__Comprehensive__Assessment__Source__$prefix.html"
-
-        try {
-            $assessment = New-AdAssessmentReport -DiscoveryOutputPath $srcRoot -OutputPath $srcAssessmentPath
-            Write-Host "  [OK] Source assessment ($prefix): $srcAssessmentPath" -ForegroundColor Green
-            $assessmentSources += @{ Prefix = $prefix; Path = $srcAssessmentPath; Data = $assessment }
-            $sourceAssessmentPaths += $srcAssessmentPath
-        }
-        catch {
-            Write-Warning "Source assessment ($prefix) failed: $_"
+        $datasets = foreach ($f in $files) {
+            $rel = $f.FullName.Substring($RunRoot.Length).TrimStart('\', '/')
+            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $f.FullName).Hash.ToLowerInvariant()
+            [pscustomobject]@{
+                name             = "File.$([IO.Path]::GetFileNameWithoutExtension($f.Name))"
+                kind             = 'Run'
+                domainFqdn       = $null
+                contentType      = if ($f.Extension -eq '.csv') { 'text/csv' } else { 'application/json' }
+                path             = $rel
+                sha256           = $hash
+                bytes            = $f.Length
+                rows             = $null
+                lastWriteTimeUtc = $f.LastWriteTimeUtc.ToString('o')
+                tags             = @()
+            }
         }
 
-        # Generate comprehensive assessment report
-        try {
-            $comprehensiveAssessment = New-AdComprehensiveAssessmentReport -DiscoveryOutputPath $srcRoot -OutputPath $srcComprehensivePath -CustomerName $CustomerName
-            Write-Host "  [OK] Comprehensive assessment ($prefix): $srcComprehensivePath" -ForegroundColor Green
-            $sourceComprehensivePaths += $srcComprehensivePath
+        return [pscustomobject]@{
+            schemaVersion  = '1.0'
+            contract       = 'Discovery.v0_fallback'
+            tool           = 'Unknown'
+            toolVersion    = 'Unknown'
+            generatedAtUtc = (Get-Date).ToUniversalTime().ToString('o')
+            environment    = 'Unknown'
+            customerName   = $null
+            runRoot        = $RunRoot
+            datasets       = $datasets
         }
-        catch {
-            Write-Warning "Comprehensive assessment ($prefix) failed: $_"
+    }
+
+    function Get-RunIdFromIndex([string]$IndexPath) {
+        $h = (Get-FileHash -Algorithm SHA256 -LiteralPath $IndexPath).Hash.ToLowerInvariant()
+        return $h.Substring(0, 12)
+    }
+
+    function Resolve-DatasetPaths {
+        param(
+            [Parameter(Mandatory)]$Index,
+            [Parameter(Mandatory)][string]$RunRoot,
+            [Parameter(Mandatory)][string]$DatasetName
+        )
+
+        $hits = @()
+        if ($Index.PSObject.Properties['datasets']) {
+            $hits = @($Index.datasets | Where-Object { $_.name -eq $DatasetName })
         }
-    }
-    Write-Host ""
-
-    # ========================================
-    # Step 2: Generate target assessment report
-    # ========================================
-    Write-Host "[2/6] Generating target environment assessment..." -ForegroundColor Yellow
-    try {
-        $assessmentTarget = New-AdAssessmentReport -DiscoveryOutputPath $TargetRunRoot -OutputPath $targetAssessmentPath
-        Write-Host "  [OK] Target assessment: $targetAssessmentPath" -ForegroundColor Green
-    }
-    catch {
-        Write-Warning "Target assessment failed: $_"
-        $assessmentTarget = $null
-    }
-
-    # Generate comprehensive assessment for target
-    try {
-        $comprehensiveTarget = New-AdComprehensiveAssessmentReport -DiscoveryOutputPath $TargetRunRoot -OutputPath $targetComprehensivePath -CustomerName $CustomerName
-        Write-Host "  [OK] Comprehensive assessment (target): $targetComprehensivePath" -ForegroundColor Green
-    }
-    catch {
-        Write-Warning "Comprehensive target assessment failed: $_"
-        $comprehensiveTarget = $null
-    }
-    Write-Host ""
-
-    # ========================================
-
-    # Step 3: Generate environment comparison
-    # ========================================
-    Write-Host "[3/6] Generating environment comparison report..." -ForegroundColor Yellow
-    try {
-        $comparisonReport = New-AdEnvironmentComparisonReport -SourceRunRoot $SourceRunRoot[0] -TargetRunRoot $TargetRunRoot -OutputPath $comparisonPath -CustomerName $CustomerName
-        Write-Host "  [OK] Comparison report: $comparisonPath" -ForegroundColor Green
-    }
-    catch {
-        Write-Warning "Comparison report failed: $_"
-        $comparisonReport = $null
-    }
-    Write-Host ""
-
-    # ========================================
-    # Step 3b: Compare password policies (default and FGPP)
-    # ========================================
-    Write-Host "[3b/6] Comparing password policies..." -ForegroundColor Yellow
-    $passwordPolicyComparisonPath = Join-Path $OutputRoot "AD__PasswordPolicy__Comparison.csv"
-    $defaultPolicyFiles = @()
-    $fgppPolicyFiles = @()
-    # Collect all relevant policy files from source and target
-    foreach ($srcRoot in $SourceRunRoot) {
-        $domainDir = Join-Path $srcRoot '20_domains'
-        if (Test-Path -LiteralPath $domainDir) {
-            Get-ChildItem -Path $domainDir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-                $d = $_.FullName
-                $domainNameRaw = (Split-Path $d -Leaf).ToLower()
-                $domainName = $domainNameRaw -replace '^domain-', ''
-                $defaultPolicyFiles += @(Find-CsvFile (Join-Path $d 'AD__Domain__Security__PasswordPolicyDefault_*.csv') | ForEach-Object { @{ Path = $_; Environment = 'Source'; Domain = $domainName } })
-                $fgppPolicyFiles += @(Find-CsvFile (Join-Path $d 'AD__Domain__Security__PasswordPolicyFgpp__*.csv') | ForEach-Object { @{ Path = $_; Environment = 'Source'; Domain = $domainName } })
+        foreach ($d in $hits) {
+            $full = Join-Path $RunRoot $d.path
+            if (Test-Path -LiteralPath $full) {
+                [pscustomobject]@{
+                    name       = $d.name
+                    kind       = $d.kind
+                    domainFqdn = $d.domainFqdn
+                    path       = $full
+                    relPath    = $d.path
+                    sha256     = $d.sha256
+                }
             }
         }
     }
-    $targetDomainDir = Join-Path $TargetRunRoot '20_domains'
-    if (Test-Path -LiteralPath $targetDomainDir) {
-        Get-ChildItem -Path $targetDomainDir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-            $d = $_.FullName
-            $domainNameRaw = (Split-Path $d -Leaf).ToLower()
-            $domainName = $domainNameRaw -replace '^domain-', ''
-            $defaultPolicyFiles += @(Find-CsvFile (Join-Path $d 'AD__Domain__Security__PasswordPolicyDefault_*.csv') | ForEach-Object {
-                    Write-Host "[DEBUG] Loading Target Default Policy: $_ for domain $domainName"
-                    @{ Path = $_; Environment = 'Target'; Domain = $domainName }
-                })
-            $fgppPolicyFiles += @(Find-CsvFile (Join-Path $d 'AD__Domain__Security__PasswordPolicyFgpp__*.csv') | ForEach-Object {
-                    Write-Host "[DEBUG] Loading Target FGPP Policy: $_ for domain $domainName"
-                    @{ Path = $_; Environment = 'Target'; Domain = $domainName }
-                })
+
+    function Import-CsvSafe([string]$Path) {
+        if (-not (Test-Path -LiteralPath $Path)) { return @() }
+        try { return @(Import-Csv -LiteralPath $Path -ErrorAction Stop) } catch { return @() }
+    }
+
+    function Get-PropertyValue {
+        param($Obj, [string]$Name)
+        if (-not $Obj) { return $null }
+        $p = $Obj.PSObject.Properties[$Name]
+        if ($p) { return $p.Value }
+        return $null
+    }
+
+    function Normalize-Token([string]$s) {
+        if ([string]::IsNullOrWhiteSpace($s)) { return $null }
+        return ($s.Trim().ToLowerInvariant())
+    }
+
+    function Split-MultiValue([object]$v) {
+        if ($null -eq $v) { return @() }
+        $s = [string]$v
+        if ([string]::IsNullOrWhiteSpace($s)) { return @() }
+        # common separators in exports: ';', ',', '|'
+        $parts = $s -split '[;,\|]' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+        return @($parts)
+    }
+
+    function Get-ObjectId([psobject]$o) {
+        foreach ($k in @('ObjectGuid', 'objectGuid', 'Guid', 'GUID', 'Id', 'ID')) {
+            $v = Get-PropertyValue $o $k
+            if ($v) { return [string]$v }
+        }
+        $dn = Get-PropertyValue $o 'DistinguishedName'
+        if ($dn) { return [string]$dn }
+        return [string]($o | ConvertTo-Json -Compress)
+    }
+
+    # ---------------------------
+    # Register runs in workspace
+    # ---------------------------
+    $runs = @()
+
+    foreach ($src in $SourceRunRoot) {
+        $idxPath = Get-DiscoveryIndexPath $src
+        if (-not $idxPath) { throw "Missing Discovery__Index__Run.json under: $src\99_manifest" }
+        $idx = Load-DiscoveryIndex $src
+        $runId = Get-RunIdFromIndex $idxPath
+
+        $runs += [pscustomobject]@{
+            runId                = $runId
+            role                 = 'Source'
+            runRoot              = $src
+            discoveryIndexPath   = $idxPath
+            discoveryIndexSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $idxPath).Hash.ToLowerInvariant()
+            environment          = $idx.environment
+            tool                 = $idx.tool
+            toolVersion          = $idx.toolVersion
+            analysisRoot         = (Join-Path $perRunDir $runId)
         }
     }
 
-    # Helper: build a hashtable of policies by environment/domain/policy name
-    function Build-PolicyTable($files, $policyType) {
-        $table = @{}
-        foreach ($f in $files) {
-            $items = Import-CsvSafe $f.Path
-            foreach ($item in $items) {
-                Write-Host ("[DEBUG] Policy row properties for {0} {1} {2}: {3}" -f $f.Environment, $f.Domain, $policyType, ($item | ConvertTo-Json -Compress))
-                $policyName = $null
-                if ($policyType -eq 'Default') {
-                    if ($item.PSObject.Properties['DomainFqdn']) {
-                        $policyName = $item.DomainFqdn
+    if ($TargetRunRoot) {
+        $idxPath = Get-DiscoveryIndexPath $TargetRunRoot
+        if (-not $idxPath) { throw "Missing Discovery__Index__Run.json under: $TargetRunRoot\99_manifest" }
+        $idx = Load-DiscoveryIndex $TargetRunRoot
+        $runId = Get-RunIdFromIndex $idxPath
+
+        $runs += [pscustomobject]@{
+            runId                = $runId
+            role                 = 'Target'
+            runRoot              = $TargetRunRoot
+            discoveryIndexPath   = $idxPath
+            discoveryIndexSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $idxPath).Hash.ToLowerInvariant()
+            environment          = $idx.environment
+            tool                 = $idx.tool
+            toolVersion          = $idx.toolVersion
+            analysisRoot         = (Join-Path $perRunDir $runId)
+        }
+    }
+
+    # Create per-run analysis folders (placeholder for future run-level steps)
+    if (-not $WhatIf) {
+        foreach ($r in $runs) {
+            if (-not (Test-Path -LiteralPath $r.analysisRoot)) { New-Item -ItemType Directory -Path $r.analysisRoot -Force | Out-Null }
+        }
+    }
+
+    # Persist runs registry
+    $runsPath = Join-Path $manifestDir 'Workspace__Runs__Workspace.json'
+    if (-not $WhatIf) {
+        [pscustomobject]@{
+            schemaVersion  = '1.0'
+            contract       = 'Analysis.WorkspaceRuns.v1'
+            generatedAtUtc = (Get-Date).ToUniversalTime().ToString('o')
+            workspaceRoot  = $WorkspaceRoot
+            runs           = $runs
+        } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $runsPath -Encoding UTF8
+    }
+
+    # ---------------------------
+    # Cross-run dataset 1: Identity collisions
+    # ---------------------------
+    function New-CrossRunIdentityCollisions {
+        param(
+            [Parameter(Mandatory)][psobject[]]$Runs,
+            [Parameter(Mandatory)][string]$OutCsvPath
+        )
+
+        $collisions = New-Object System.Collections.Generic.List[object]
+
+        # Build map: CollisionType|NormalizedValue -> list of occurrences
+        $map = @{}
+
+        function Add-Occurrence {
+            param(
+                [string]$CollisionType,
+                [string]$Value,
+                [pscustomobject]$Occurrence
+            )
+            $nv = Normalize-Token $Value
+            if (-not $nv) { return }
+
+            $key = "$CollisionType|$nv"
+            if (-not $map.ContainsKey($key)) { $map[$key] = New-Object System.Collections.Generic.List[object] }
+            $map[$key].Add($Occurrence)
+        }
+
+        foreach ($r in $Runs) {
+            $idx = Load-DiscoveryIndex $r.runRoot
+
+            # Users
+            foreach ($ds in @(Resolve-DatasetPaths -Index $idx -RunRoot $r.runRoot -DatasetName 'Domain.Users')) {
+                $rows = Import-CsvSafe $ds.path
+                foreach ($o in $rows) {
+                    $occBase = [pscustomobject]@{
+                        RunId             = $r.runId
+                        Role              = $r.role
+                        Environment       = $r.environment
+                        DomainFqdn        = $ds.domainFqdn
+                        ObjectType        = 'User'
+                        ObjectId          = Get-ObjectId $o
+                        SamAccountName    = Get-PropertyValue $o 'SamAccountName'
+                        UserPrincipalName = Get-PropertyValue $o 'UserPrincipalName'
+                        Mail              = Get-PropertyValue $o 'Mail'
                     }
-                    else {
-                        Write-Warning "Password policy row in $($f.Path) missing DomainFqdn for Default. Skipping."
-                        continue
+
+                    if ($CollisionKeysUser -contains 'SamAccountName') { Add-Occurrence 'User.SamAccountName'    $occBase.SamAccountName $occBase }
+                    if ($CollisionKeysUser -contains 'UserPrincipalName') { Add-Occurrence 'User.UPN'               $occBase.UserPrincipalName $occBase }
+                    if ($CollisionKeysUser -contains 'Mail') { Add-Occurrence 'User.Mail'              $occBase.Mail $occBase }
+
+                    if ($CollisionKeysUser -contains 'ProxyAddresses') {
+                        foreach ($p in (Split-MultiValue (Get-PropertyValue $o 'ProxyAddresses'))) {
+                            Add-Occurrence 'User.ProxyAddress' $p $occBase
+                        }
+                    }
+                    if ($CollisionKeysUser -contains 'ServicePrincipalName') {
+                        foreach ($s in (Split-MultiValue (Get-PropertyValue $o 'ServicePrincipalName'))) {
+                            Add-Occurrence 'User.SPN' $s $occBase
+                        }
                     }
                 }
-                elseif ($policyType -eq 'FGPP') {
-                    if ($item.PSObject.Properties['Name']) {
-                        $policyName = $item.Name
+            }
+
+            # Groups
+            foreach ($ds in @(Resolve-DatasetPaths -Index $idx -RunRoot $r.runRoot -DatasetName 'Domain.Groups')) {
+                $rows = Import-CsvSafe $ds.path
+                foreach ($o in $rows) {
+                    $occBase = [pscustomobject]@{
+                        RunId          = $r.runId
+                        Role           = $r.role
+                        Environment    = $r.environment
+                        DomainFqdn     = $ds.domainFqdn
+                        ObjectType     = 'Group'
+                        ObjectId       = Get-ObjectId $o
+                        SamAccountName = Get-PropertyValue $o 'SamAccountName'
+                        Mail           = Get-PropertyValue $o 'Mail'
                     }
-                    else {
-                        Write-Warning "Password policy row in $($f.Path) missing Name for FGPP. Skipping."
-                        continue
+
+                    if ($CollisionKeysGroup -contains 'SamAccountName') { Add-Occurrence 'Group.SamAccountName' $occBase.SamAccountName $occBase }
+                    if ($CollisionKeysGroup -contains 'Mail') { Add-Occurrence 'Group.Mail'          $occBase.Mail $occBase }
+                    if ($CollisionKeysGroup -contains 'ProxyAddresses') {
+                        foreach ($p in (Split-MultiValue (Get-PropertyValue $o 'ProxyAddresses'))) {
+                            Add-Occurrence 'Group.ProxyAddress' $p $occBase
+                        }
                     }
                 }
-                else {
-                    Write-Warning "Password policy row in $($f.Path) has unknown policy type $policyType. Skipping."
+            }
+
+            # Computers
+            foreach ($ds in @(Resolve-DatasetPaths -Index $idx -RunRoot $r.runRoot -DatasetName 'Domain.Computers.All')) {
+                $rows = Import-CsvSafe $ds.path
+                foreach ($o in $rows) {
+                    $occBase = [pscustomobject]@{
+                        RunId       = $r.runId
+                        Role        = $r.role
+                        Environment = $r.environment
+                        DomainFqdn  = $ds.domainFqdn
+                        ObjectType  = 'Computer'
+                        ObjectId    = Get-ObjectId $o
+                        Name        = Get-PropertyValue $o 'Name'
+                        DnsHostName = Get-PropertyValue $o 'DnsHostName'
+                    }
+
+                    if ($CollisionKeysComputer -contains 'Name') { Add-Occurrence 'Computer.Name'       $occBase.Name $occBase }
+                    if ($CollisionKeysComputer -contains 'DnsHostName') { Add-Occurrence 'Computer.DnsHostName' $occBase.DnsHostName $occBase }
+
+                    if ($CollisionKeysComputer -contains 'ServicePrincipalName') {
+                        foreach ($s in (Split-MultiValue (Get-PropertyValue $o 'ServicePrincipalName'))) {
+                            Add-Occurrence 'Computer.SPN' $s $occBase
+                        }
+                    }
+                }
+            }
+        }
+
+        # Emit collisions
+        foreach ($k in $map.Keys) {
+            $parts = $k.Split('|', 2)
+            $ctype = $parts[0]
+            $val = $parts[1]
+            $list = @($map[$k])
+
+            # Only a "collision" if:
+            # - multiple objects, AND
+            # - spans >1 run OR >1 role
+            if ($list.Count -lt 2) { continue }
+
+            $runIds = @($list | Select-Object -ExpandProperty RunId -Unique)
+            $roles = @($list | Select-Object -ExpandProperty Role -Unique)
+
+            if ($runIds.Count -lt 2 -and $roles.Count -lt 2) { continue }
+
+            # compact object summary for human scan
+            $objSummary = $list | ForEach-Object {
+                "{0}:{1}:{2}:{3}" -f $_.Role, $_.ObjectType, $_.DomainFqdn, $_.ObjectId
+            }
+
+            $collisions.Add([pscustomobject]@{
+                    CollisionType   = $ctype
+                    Value           = $val
+                    OccurrenceCount = $list.Count
+                    RunsInvolved    = ($runIds -join ';')
+                    RolesInvolved   = ($roles -join ';')
+                    Objects         = ($objSummary -join ' | ')
+                })
+        }
+
+        $collisions = @($collisions | Sort-Object CollisionType, Value)
+
+        if ($collisions.Count -gt 0) {
+            $collisions | Export-Csv -LiteralPath $OutCsvPath -NoTypeInformation -Force
+        } else {
+            # Write empty file with headers for pipeline stability
+            "" | Out-File -LiteralPath $OutCsvPath -Encoding UTF8
+            "CollisionType,Value,OccurrenceCount,RunsInvolved,RolesInvolved,Objects" | Out-File -LiteralPath $OutCsvPath -Append -Encoding UTF8
+        }
+
+        return $collisions.Count
+    }
+
+    $identityCollisionsPath = Join-Path $crossRunDir 'AD__CrossRun__IdentityCollisions.csv'
+
+    # If only one run and user didn't ask for source-vs-source, collisions are usually meaningless.
+    $shouldRunCollisions = $false
+    if ($runs.Count -ge 2) { $shouldRunCollisions = $true }
+
+    if (-not $WhatIf -and $shouldRunCollisions) {
+        Write-Host "Generating cross-run identity collisions..." -ForegroundColor Cyan
+        $cnt = New-CrossRunIdentityCollisions -Runs $runs -OutCsvPath $identityCollisionsPath
+        Write-Host "  Wrote: $identityCollisionsPath ($cnt collisions)" -ForegroundColor Green
+    }
+
+    # ---------------------------
+    # Cross-run dataset 2: Password policy diff
+    # ---------------------------
+    function Convert-RowToComparableHashtable {
+        param([psobject]$Row)
+
+        $h = @{}
+        foreach ($p in $Row.PSObject.Properties) {
+            # drop noisy fields if present
+            if ($p.Name -in @('PSComputerName', 'RunId', 'Role', 'Environment', 'DomainFqdn')) { continue }
+            $val = $p.Value
+            if ($null -eq $val) { $val = '' }
+            $h[$p.Name] = [string]$val
+        }
+        return $h
+    }
+
+    function New-CrossRunPasswordPolicyDiff {
+        param(
+            [Parameter(Mandatory)][psobject[]]$Runs,
+            [Parameter(Mandatory)][string]$OutCsvPath,
+            [switch]$IncludeSourceVsSource
+        )
+
+        $sources = @($Runs | Where-Object Role -eq 'Source')
+        $targets = @($Runs | Where-Object Role -eq 'Target')
+
+        $diffs = New-Object System.Collections.Generic.List[object]
+
+        function Load-PoliciesForRun {
+            param([pscustomobject]$Run)
+
+            $idx = Load-DiscoveryIndex $Run.runRoot
+
+            $pol = New-Object System.Collections.Generic.List[object]
+
+            # Default policy (usually 1 row per domain)
+            foreach ($ds in @(Resolve-DatasetPaths -Index $idx -RunRoot $Run.runRoot -DatasetName 'Domain.PasswordPolicy.Default')) {
+                foreach ($r in (Import-CsvSafe $ds.path)) {
+                    $pol.Add([pscustomobject]@{
+                            RunId       = $Run.runId
+                            Role        = $Run.role
+                            Environment = $Run.environment
+                            DomainFqdn  = (Get-PropertyValue $r 'DomainFqdn')
+                            PolicyType  = 'Default'
+                            PolicyName  = (Get-PropertyValue $r 'DomainFqdn')
+                            Row         = $r
+                        })
+                }
+            }
+
+            # FGPP (0..n rows per domain)
+            foreach ($ds in @(Resolve-DatasetPaths -Index $idx -RunRoot $Run.runRoot -DatasetName 'Domain.PasswordPolicy.FGPP')) {
+                foreach ($r in (Import-CsvSafe $ds.path)) {
+                    $name = (Get-PropertyValue $r 'Name')
+                    if (-not $name) { $name = '(UnnamedFGPP)' }
+                    $pol.Add([pscustomobject]@{
+                            RunId       = $Run.runId
+                            Role        = $Run.role
+                            Environment = $Run.environment
+                            DomainFqdn  = (Get-PropertyValue $r 'DomainFqdn')
+                            PolicyType  = 'FGPP'
+                            PolicyName  = $name
+                            Row         = $r
+                        })
+                }
+            }
+
+            return @($pol)
+        }
+
+        # Build per-run policy sets
+        $runPolicies = @{}
+        foreach ($r in $Runs) {
+            $runPolicies[$r.runId] = Load-PoliciesForRun $r
+        }
+
+        function Diff-PolicyPair {
+            param(
+                [pscustomobject]$LeftRun,
+                [pscustomobject]$RightRun
+            )
+
+            $left = @($runPolicies[$LeftRun.runId])
+            $right = @($runPolicies[$RightRun.runId])
+
+            # Index by (DomainFqdn|Type|Name)
+            $lMap = @{}
+            foreach ($p in $left) { $lMap["$($p.DomainFqdn)|$($p.PolicyType)|$($p.PolicyName)"] = $p }
+            $rMap = @{}
+            foreach ($p in $right) { $rMap["$($p.DomainFqdn)|$($p.PolicyType)|$($p.PolicyName)"] = $p }
+
+            $keys = @($lMap.Keys + $rMap.Keys | Sort-Object -Unique)
+
+            foreach ($k in $keys) {
+                $lp = $lMap[$k]
+                $rp = $rMap[$k]
+
+                if (-not $lp -and -not $rp) { continue }
+
+                $domain = ($k -split '\|')[0]
+                $ptype = ($k -split '\|')[1]
+                $pname = ($k -split '\|')[2]
+
+                if (-not $lp) {
+                    $diffs.Add([pscustomobject]@{
+                            DomainFqdn  = $domain
+                            PolicyType  = $ptype
+                            PolicyName  = $pname
+                            LeftRole    = $LeftRun.role
+                            LeftRunId   = $LeftRun.runId
+                            RightRole   = $RightRun.role
+                            RightRunId  = $RightRun.runId
+                            Property    = '(PolicyMissing)'
+                            LeftValue   = ''
+                            RightValue  = 'Present'
+                            IsDifferent = $true
+                        })
                     continue
                 }
-                $key = "$($f.Environment)|$($f.Domain)|$policyType|$policyName"
-                $table[$key] = $item
-            }
-        }
-        return $table
-    }
 
-    $defaultTable = Build-PolicyTable $defaultPolicyFiles 'Default'
-    $fgppTable = Build-PolicyTable $fgppPolicyFiles 'FGPP'
-
-    # Get all unique domains and policy names
-    $allDomains = @($defaultPolicyFiles + $fgppPolicyFiles | ForEach-Object { $_.Domain.ToLower() -replace '^domain-', '' }) | Sort-Object -Unique
-    $allPolicyNames = @()
-    $allPolicyNames += $defaultTable.Keys | ForEach-Object { ($_ -split '\|')[3] }
-    $allPolicyNames += $fgppTable.Keys | ForEach-Object { ($_ -split '\|')[3] }
-    $allPolicyNames = $allPolicyNames | Sort-Object -Unique
-
-    $comparisonRows = @()
-    $allPropNames = @()
-    foreach ($domain in $allDomains) {
-        foreach ($policyType in @('Default', 'FGPP')) {
-            foreach ($policyName in $allPolicyNames) {
-                $srcKey = "Source|$domain|$policyType|$policyName"
-                $tgtKey = "Target|$domain|$policyType|$policyName"
-                $src = if ($policyType -eq 'Default') { $defaultTable[$srcKey] } else { $fgppTable[$srcKey] }
-                $tgt = if ($policyType -eq 'Default') { $defaultTable[$tgtKey] } else { $fgppTable[$tgtKey] }
-                if ($src -or $tgt) {
-                    $row = [ordered]@{
-                        Domain        = $domain
-                        PolicyType    = $policyType
-                        PolicyName    = $policyName
-                        Source_Exists = [bool]$src
-                        Target_Exists = [bool]$tgt
-                    }
-                    # Add all properties from both, using original property names, source takes precedence if both exist
-                    if ($src) {
-                        foreach ($p in $src.PSObject.Properties.Name) {
-                            if ($p -ne 'Name' -and $p -ne 'DomainFqdn') { $row[$p] = $src.$p }
-                            $allPropNames += $p
-                        }
-                    }
-                    if ($tgt) {
-                        Write-Host ("[DEBUG] Extracting Target row properties for {0} {1} {2}: {3}" -f $domain, $policyType, $policyName, ($tgt | ConvertTo-Json -Compress))
-                        foreach ($p in $tgt.PSObject.Properties.Name) {
-                            if (-not ($row.Keys -contains $p) -and $p -ne 'Name' -and $p -ne 'DomainFqdn') { $row[$p] = $tgt.$p }
-                            $allPropNames += $p
-                        }
-                    }
-                    $comparisonRows += [PSCustomObject]$row
+                if (-not $rp) {
+                    $diffs.Add([pscustomobject]@{
+                            DomainFqdn  = $domain
+                            PolicyType  = $ptype
+                            PolicyName  = $pname
+                            LeftRole    = $LeftRun.role
+                            LeftRunId   = $LeftRun.runId
+                            RightRole   = $RightRun.role
+                            RightRunId  = $RightRun.runId
+                            Property    = '(PolicyMissing)'
+                            LeftValue   = 'Present'
+                            RightValue  = ''
+                            IsDifferent = $true
+                        })
+                    continue
                 }
-            }
-        }
-    }
-    if ($comparisonRows.Count -gt 0) {
-        $baseHeaders = @('Domain', 'PolicyName', 'PolicyType', 'Source_Exists', 'Target_Exists')
-        $allPropNames = $allPropNames | Sort-Object -Unique | Where-Object { $_ -notin @('Name', 'DomainFqdn') }
-        $headers = $baseHeaders + $allPropNames
-        $comparisonRows | Select-Object -Property $headers | Export-Csv -Path $passwordPolicyComparisonPath -NoTypeInformation -Force
-        Write-Host "  [OK] Password policy comparison: $passwordPolicyComparisonPath ($($comparisonRows.Count) rows)" -ForegroundColor Green
-    }
-    else {
-        Write-Host "  [OK] No password policy data found to compare" -ForegroundColor Yellow
-    }
-    Write-Host ""
 
-    # ========================================
-    # Step 4: Generate readiness checklist
-    # ========================================
-    # ========================================
-    # Step 4: Cross-forest duplicate object analysis
-    # ========================================
-    Write-Host "[4/5] Analyzing cross-forest duplicate objects..." -ForegroundColor Yellow
-    $crossForestDuplicates = @()
-    try {
-        $sourceUsers = @()
-        $sourceGroups = @()
-        $sourceComputers = @()
-        $targetUsers = @()
-        $targetGroups = @()
-        $targetComputers = @()
+                $lh = Convert-RowToComparableHashtable $lp.Row
+                $rh = Convert-RowToComparableHashtable $rp.Row
 
-        # Load source objects from all source roots
-        foreach ($srcRoot in $SourceRunRoot) {
-            $sourceDomainDir = Join-Path $srcRoot '20_domains'
-            if (Test-Path -LiteralPath $sourceDomainDir) {
-                Get-ChildItem -Path $sourceDomainDir -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer } | ForEach-Object {
-                    $domainFolder = $_.FullName
+                $props = @($lh.Keys + $rh.Keys | Sort-Object -Unique)
+                foreach ($prop in $props) {
+                    if ($prop -in @('DomainFqdn', 'Name')) { continue }
+                    $lv = if ($lh.ContainsKey($prop)) { $lh[$prop] } else { '' }
+                    $rv = if ($rh.ContainsKey($prop)) { $rh[$prop] } else { '' }
 
-                    $userPattern = Join-Path $domainFolder 'AD__Domain__Identity__Users__*.csv'
-                    @(Find-CsvFile $userPattern) | ForEach-Object { $sourceUsers += Import-CsvSafe $_ }
-
-                    $groupPattern = Join-Path $domainFolder 'AD__Domain__Identity__Groups__*.csv'
-                    @(Find-CsvFile $groupPattern) | ForEach-Object { $sourceGroups += Import-CsvSafe $_ }
-
-                    $compPattern = Join-Path $domainFolder 'AD__Domain__Identity__ComputersAll__*.csv'
-                    @(Find-CsvFile $compPattern) | ForEach-Object { $sourceComputers += Import-CsvSafe $_ }
+                    if ($lv -ne $rv) {
+                        $diffs.Add([pscustomobject]@{
+                                DomainFqdn  = $domain
+                                PolicyType  = $ptype
+                                PolicyName  = $pname
+                                LeftRole    = $LeftRun.role
+                                LeftRunId   = $LeftRun.runId
+                                RightRole   = $RightRun.role
+                                RightRunId  = $RightRun.runId
+                                Property    = $prop
+                                LeftValue   = $lv
+                                RightValue  = $rv
+                                IsDifferent = $true
+                            })
+                    }
                 }
             }
         }
 
-        # Load target objects
-        $targetDomainDir = Join-Path $TargetRunRoot '20_domains'
-        if (Test-Path -LiteralPath $targetDomainDir) {
-            Get-ChildItem -Path $targetDomainDir -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer } | ForEach-Object {
-                $domainFolder = $_.FullName
-
-                $userPattern = Join-Path $domainFolder 'AD__Domain__Identity__Users__*.csv'
-                @(Find-CsvFile $userPattern) | ForEach-Object { $targetUsers += Import-CsvSafe $_ }
-
-                $groupPattern = Join-Path $domainFolder 'AD__Domain__Identity__Groups__*.csv'
-                @(Find-CsvFile $groupPattern) | ForEach-Object { $targetGroups += Import-CsvSafe $_ }
-
-                $compPattern = Join-Path $domainFolder 'AD__Domain__Identity__ComputersAll__*.csv'
-                @(Find-CsvFile $compPattern) | ForEach-Object { $targetComputers += Import-CsvSafe $_ }
+        if ($targets.Count -gt 0 -and $sources.Count -gt 0) {
+            # Compare each source against the (single) target
+            $t = $targets[0]
+            foreach ($s in $sources) {
+                Diff-PolicyPair -LeftRun $s -RightRun $t
             }
-        }
-
-        # Tag environment
-        $sourceUsers | ForEach-Object { $_ | Add-Member -NotePropertyName Environment -NotePropertyValue 'Source' -Force }
-        $sourceGroups | ForEach-Object { $_ | Add-Member -NotePropertyName Environment -NotePropertyValue 'Source' -Force }
-        $sourceComputers | ForEach-Object { $_ | Add-Member -NotePropertyName Environment -NotePropertyValue 'Source' -Force }
-        $targetUsers | ForEach-Object { $_ | Add-Member -NotePropertyName Environment -NotePropertyValue 'Target' -Force }
-        $targetGroups | ForEach-Object { $_ | Add-Member -NotePropertyName Environment -NotePropertyValue 'Target' -Force }
-        $targetComputers | ForEach-Object { $_ | Add-Member -NotePropertyName Environment -NotePropertyValue 'Target' -Force }
-
-        # Combine
-        $allUsers = @($sourceUsers) + @($targetUsers)
-        $allGroups = @($sourceGroups) + @($targetGroups)
-        $allComputers = @($sourceComputers) + @($targetComputers)
-
-        # Run duplicate check only if data exists
-        if ($allUsers.Count -gt 0 -or $allGroups.Count -gt 0 -or $allComputers.Count -gt 0) {
-            $dupParams = @{
-                AllUsers       = @($allUsers)
-                AllGroups      = @($allGroups)
-                AllComputers   = @($allComputers)
-                ExcludeBuiltIn = $true
+        } elseif ($IncludeSourceVsSource -and $sources.Count -gt 1) {
+            # Pairwise source comparisons (can grow quickly; opt-in)
+            for ($i = 0; $i -lt $sources.Count; $i++) {
+                for ($j = $i + 1; $j -lt $sources.Count; $j++) {
+                    Diff-PolicyPair -LeftRun $sources[$i] -RightRun $sources[$j]
+                }
             }
-            $duplicates = Get-AdDuplicateObjectsCrossForest @dupParams
+        } else {
+            # no valid cross-run comparison scenario
+        }
 
-            # Filter to cross-forest only (where ConflictingDomains contains both source and target)
-            $crossForestDuplicates = @($duplicates | Where-Object {
-                    ($_.ConflictingDomains -match ';') -or
-                    ($_.ConflictCount -gt 1)
-                })
+        $out = @($diffs | Sort-Object DomainFqdn, PolicyType, PolicyName, Property)
 
-            if ($crossForestDuplicates.Count -gt 0) {
-                $exportColumns = $crossForestDuplicates[0].PSObject.Properties.Name | Where-Object { $_ -notin @('Severity', 'Recommendations', 'Recommendation') }
-                $crossForestDuplicates |
-                Select-Object -Property $exportColumns |
-                Export-Csv -Path $duplicatePath -NoTypeInformation -Force
-                Write-Host "  [OK] Cross-forest duplicates: $duplicatePath ($($crossForestDuplicates.Count) conflicts)" -ForegroundColor Yellow
+        if ($out.Count -gt 0) {
+            $out | Export-Csv -LiteralPath $OutCsvPath -NoTypeInformation -Force
+        } else {
+            "" | Out-File -LiteralPath $OutCsvPath -Encoding UTF8
+            "DomainFqdn,PolicyType,PolicyName,LeftRole,LeftRunId,RightRole,RightRunId,Property,LeftValue,RightValue,IsDifferent" | Out-File -LiteralPath $OutCsvPath -Append -Encoding UTF8
+        }
+
+        return $out.Count
+    }
+
+    $pwdDiffPath = Join-Path $crossRunDir 'AD__CrossRun__PasswordPolicyDiff.csv'
+
+    $shouldRunPwdDiff = $false
+    if ($runs.Count -ge 2) { $shouldRunPwdDiff = $true }
+
+    if (-not $WhatIf -and $shouldRunPwdDiff) {
+        Write-Host "Generating cross-run password policy diff..." -ForegroundColor Cyan
+        $cnt = New-CrossRunPasswordPolicyDiff -Runs $runs -OutCsvPath $pwdDiffPath -IncludeSourceVsSource:$IncludeSourceVsSource
+        Write-Host "  Wrote: $pwdDiffPath ($cnt diffs)" -ForegroundColor Green
+    }
+
+    # ---------------------------
+    # Workspace index (summary)
+    # ---------------------------
+    $workspaceIndexPath = Join-Path $manifestDir 'Workspace__Index__Workspace.json'
+    if (-not $WhatIf) {
+        $produced = @()
+        if (Test-Path -LiteralPath $identityCollisionsPath) { $produced += @{ name = 'CrossRun.IdentityCollisions'; path = (Split-Path -Leaf $identityCollisionsPath) } }
+        if (Test-Path -LiteralPath $pwdDiffPath) { $produced += @{ name = 'CrossRun.PasswordPolicyDiff'; path = (Split-Path -Leaf $pwdDiffPath) } }
+
+        [pscustomobject]@{
+            schemaVersion    = '1.0'
+            contract         = 'Analysis.Workspace.v1'
+            generatedAtUtc   = (Get-Date).ToUniversalTime().ToString('o')
+            workspaceRoot    = $WorkspaceRoot
+            inputs           = [pscustomobject]@{
+                sourceRunCount = @($runs | Where-Object Role -eq 'Source').Count
+                hasTarget      = [bool](@($runs | Where-Object Role -eq 'Target').Count -gt 0)
             }
-            else {
-                Write-Host "  [OK] No cross-forest duplicate objects detected" -ForegroundColor Green
+            runsManifestPath = '99_manifest/Workspace__Runs__Workspace.json'
+            outputs          = [pscustomobject]@{
+                crossRun = @(
+                    [pscustomobject]@{ name = 'CrossRun.IdentityCollisions'; path = '30_analysis/cross_run/AD__CrossRun__IdentityCollisions.csv' },
+                    [pscustomobject]@{ name = 'CrossRun.PasswordPolicyDiff'; path = '30_analysis/cross_run/AD__CrossRun__PasswordPolicyDiff.csv' }
+                )
             }
-        }
-        else {
-            Write-Host "  [OK] No user/group/computer data found to analyze" -ForegroundColor Yellow
-        }
-    }
-    catch {
-        Write-Warning "Duplicate object analysis failed: $($_.Exception.Message) [Stack: $($_.ScriptStackTrace)]"
-        $crossForestDuplicates = @()
-    }
-    Write-Host ""
-
-    # ========================================
-    # Step 6: Generate migration planning report
-    # ========================================
-    Write-Host "[5/5] Generating migration planning report..." -ForegroundColor Yellow
-    try {
-        $planningReport = New-AdMigrationPlanningReport -DiscoveryOutputPath $SourceRunRoot[0] -OutputPath $planningPath
-        Write-Host "  [OK] Planning report (source): $planningPath" -ForegroundColor Green
-    }
-    catch {
-        Write-Warning "Planning report failed: $_"
-        $planningReport = $null
-    }
-
-    if ($IncludeTargetPlanning) {
-        $targetPlanningPath = Join-Path $OutputRoot "AD__Migration__Planning__Report__Target.html"
-        try {
-            $targetPlanningReport = New-AdMigrationPlanningReport -DiscoveryOutputPath $TargetRunRoot -OutputPath $targetPlanningPath
-            Write-Host "  [OK] Planning report (target): $targetPlanningPath" -ForegroundColor Green
-        }
-        catch {
-            Write-Warning "Target planning report failed: $_"
-        }
-    }
-    Write-Host ""
-
-    # ========================================
-    # Summary
-    # ========================================
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "[COMPLETE] Analysis Complete" -ForegroundColor Green
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host ""
-
-    Write-Host "OUTPUTS GENERATED:" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Assessment Reports:" -ForegroundColor Yellow
-    if ($sourceAssessmentPaths.Count -gt 1) {
-        Write-Host "  Source Assessments ($($sourceAssessmentPaths.Count) forests):" -ForegroundColor White
-        foreach ($path in $sourceAssessmentPaths) {
-            Write-Host "    - $path" -ForegroundColor Gray
-        }
-    }
-    elseif ($sourceAssessmentPaths.Count -eq 1) {
-        Write-Host "  - Source: $($sourceAssessmentPaths[0])" -ForegroundColor White
-    }
-    Write-Host "  - Target: $targetAssessmentPath" -ForegroundColor White
-    Write-Host ""
-    Write-Host "Comprehensive Assessments:" -ForegroundColor Yellow
-    if ($sourceComprehensivePaths.Count -gt 1) {
-        Write-Host "  Source Comprehensive ($($sourceComprehensivePaths.Count) forests):" -ForegroundColor White
-        foreach ($path in $sourceComprehensivePaths) {
-            Write-Host "    - $path" -ForegroundColor Gray
-        }
-    }
-    elseif ($sourceComprehensivePaths.Count -eq 1) {
-        Write-Host "  - Source: $($sourceComprehensivePaths[0])" -ForegroundColor White
-    }
-    Write-Host "  - Target: $targetComprehensivePath" -ForegroundColor White
-    Write-Host ""
-    Write-Host "Comparison:" -ForegroundColor Yellow
-    Write-Host "  - Environment Comparison: $comparisonPath" -ForegroundColor White
-    if ($crossForestDuplicates.Count -gt 0) {
-        Write-Host "  - Cross-Forest Duplicates: $duplicatePath ($($crossForestDuplicates.Count) conflicts)" -ForegroundColor Yellow
-    }
-    Write-Host ""
-    Write-Host "Planning:" -ForegroundColor Yellow
-    Write-Host "  - Planning Report (Source): $planningPath" -ForegroundColor White
-    Write-Host ""
-
-    # Open reports if requested
-    if ($OpenReports) {
-        Write-Host "Opening key reports..." -ForegroundColor Yellow
-        if (Test-Path -LiteralPath $comparisonPath) {
-            Invoke-Item -LiteralPath $comparisonPath
-        }
-        if (Test-Path -LiteralPath $checklistPath) {
-            Start-Sleep -Seconds 2
-            Invoke-Item -LiteralPath $checklistPath
-        }
+        } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $workspaceIndexPath -Encoding UTF8
     }
 
     return [pscustomobject]@{
-        OutputRoot                    = $OutputRoot
-        SourceAssessment              = $sourceAssessmentPath
-        SourceComprehensiveAssessment = $sourceComprehensivePaths
-        TargetAssessment              = $targetAssessmentPath
-        TargetComprehensiveAssessment = $targetComprehensivePath
-        ComparisonReport              = $comparisonPath
-        CrossForestDuplicates         = if ($crossForestDuplicates.Count -gt 0) { $duplicatePath } else { $null }
-        PlanningReport                = $planningPath
-        DuplicateConflictCount        = $crossForestDuplicates.Count
+        WorkspaceRoot         = $WorkspaceRoot
+        RunsManifest          = $runsPath
+        WorkspaceIndex        = $workspaceIndexPath
+        IdentityCollisionsCsv = $identityCollisionsPath
+        PasswordPolicyDiffCsv = $pwdDiffPath
+        RunCount              = $runs.Count
     }
 }
