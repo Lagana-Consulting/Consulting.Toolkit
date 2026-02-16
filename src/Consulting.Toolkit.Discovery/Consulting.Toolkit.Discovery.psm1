@@ -1,86 +1,63 @@
+#Requires -Version 7.2
 Set-StrictMode -Version Latest
 
-$PublicPath = Join-Path $PSScriptRoot 'Public'
-$PrivatePath = Join-Path $PSScriptRoot 'Private'
+$script:ModuleRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# Dot-source Private first
-Get-ChildItem -Path $PrivatePath -Filter *.ps1 -File -ErrorAction SilentlyContinue | ForEach-Object {
-  . $_.FullName
+function Invoke-DotSource {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Path
+  )
+  try {
+    . $Path
+  } catch {
+    throw "Failed dot-sourcing '$Path' in module '$($MyInvocation.MyCommand.ModuleName)'. $($_.Exception.Message)"
+  }
 }
 
-# Dot-source Public
-Get-ChildItem -Path $PublicPath -Filter *.ps1 -File -ErrorAction SilentlyContinue | ForEach-Object {
-  . $_.FullName
+# Load Private first (helpers), then Public (exported functions)
+$privateDir = Join-Path $script:ModuleRoot 'Private'
+$publicDir = Join-Path $script:ModuleRoot 'Public'
+
+if (Test-Path -LiteralPath $privateDir) {
+  Get-ChildItem -LiteralPath $privateDir -Filter '*.ps1' -File -Recurse |
+  Sort-Object FullName |
+  ForEach-Object { Invoke-DotSource $_.FullName }
 }
 
-# Export only public functions
-Export-ModuleMember -Function @(
-  # Discovery orchestration
-  'Invoke-AdDiscovery',
+if (Test-Path -LiteralPath $publicDir) {
+  Get-ChildItem -LiteralPath $publicDir -Filter '*.ps1' -File -Recurse |
+  Sort-Object FullName |
+  ForEach-Object { Invoke-DotSource $_.FullName }
+}
 
-  # Logging / export
-  'New-AdLog',
-  'Write-AdLog',
-  'Export-AdCsvSafe',
-  'Get-AdSchemaDefinitions',
+# Optional module init hook
+$init = Join-Path $privateDir '_Init.ps1'
+if (Test-Path -LiteralPath $init) { Invoke-DotSource $init }
 
-  # Forest + domains
+# ---- Contract surface (what Discovery officially exports) ----
+$exportRequested = @(
+  'Invoke-AdDiscovery',        # legacy wrapper (kept for compatibility)
+  'Invoke-AdDiscoveryExport',  # strict discovery export entrypoint
+
+  # Core discovery primitives / building blocks
   'Get-AdAdForest',
   'Get-AdAdDomains',
-  'Get-AdKnownUpnSuffixes',
+  'Get-AdAdDomainContext',
+  'New-AdRunLayout',
 
-  'Get-AdAdForestSummary',
-  'Get-AdAdForestUpnSuffixes',
-  'Get-AdAdReplicationSites',
-  'Get-AdAdReplicationSubnets',
-  'Get-AdAdReplicationSiteLinks',
-  'Get-AdAdForestTrusts',
+  # Export helpers
+  'Export-AdCsvSafe',
+  'Export-AdSchemas',
 
-  'Get-AdAdDomainSummary',
-  'Get-AdAdDomainControllers',
-  'Get-AdAdDefaultPasswordPolicy',
-  'Get-AdAdFineGrainedPasswordPolicies',
-  'Get-AdAdFineGrainedPasswordPolicyAssignments',
-  'Get-AdAdOrganizationalUnits',
-
-  'Get-AdAdPublishedPrinters',
-  'Get-AdAdPublishedSharedFolders',
-  'Get-AdAdContacts',
-
-  'Get-AdAdGroups',
-  'Get-AdAdUsers',
-  'Get-AdAdComputers',
-  'Get-AdAdSpns',
-
-  'Get-AdAdOuDelegationAcls',
-  'Get-AdGpoInventory',
-  'Get-AdGpoLinks',
-  'Get-AdUsersSidHistory',
-  'Get-AdServiceAccountCandidates',
-  'Get-AdPrivilegedAccounts',
-  'Get-AdRiskSummary',
-  'Get-AdAssessmentSummary',
-  'Get-AdMigrationRiskFlags',
-  'Get-AdMigrationRiskFlagsSummary',
-
-  # Extended assessment / analysis
-  'Get-AdGroupNestingDepth',
-  'Get-AdCrossDomainGroupMembership',
-  'Get-AdWeakPasswordPolicies',
-  'Get-AdEmptyGroups',
-  'Get-AdDuplicateSpns',
-  'Get-AdTopSpnsByType',
-  'Get-AdOuDepthAnalysis',
-  'Get-AdDisabledAccounts',
-  'Get-AdAdminSdHolderImpact',
-  'Get-AdTombstoneLifetime',
-  'Get-AdSiteLinkCostAnalysis',
-  'Get-AdFsmoRoleAvailability',
-  'Get-AdCertificateServicesInventory',
-  'Get-AdDnsZoneInventory',
-  'Get-AdDhcpScopeAnalysis',
-  'Get-AdSysvolSizeAnalysis',
-  'Get-AdGroupTokenBloat',
-  'Get-AdTrustRelationshipMap',
-  'Get-AdGpoPerformanceAnalysis'
+  # Logging
+  'New-AdLog',
+  'Write-AdLog'
 )
+
+# Export only functions that actually exist (avoids surprises if something is renamed)
+$exportResolved = foreach ($name in $exportRequested) {
+  if (Get-Command -Name $name -CommandType Function -ErrorAction SilentlyContinue) { $name }
+}
+
+Export-ModuleMember -Function $exportResolved -Alias @()

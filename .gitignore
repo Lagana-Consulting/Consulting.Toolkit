@@ -9,3 +9,6 @@ dist/
 compare/
 *.zip
 *.7z
+_archive/
+*.tmp
+*.bak
