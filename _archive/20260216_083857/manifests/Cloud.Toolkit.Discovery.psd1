@@ -1,5 +1,5 @@
 @{
-    RootModule        = 'Migration.Toolkit.Cloud.psm1'
+    RootModule        = 'Cloud.Toolkit.Discovery.psm1'
     ModuleVersion     = '0.1.0'
     GUID              = '8a7f6e5d-4c3b-2a1f-0e9d-8c7b6a5f4e3d'
     Author            = 'Lagana Consulting'
