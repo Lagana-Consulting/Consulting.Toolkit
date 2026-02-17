@@ -41,58 +41,29 @@ function Get-AdAdContacts {
   #>
     [CmdletBinding()]
     param(
-        [string]$DomainName,
-        [string]$Server
+        [Parameter(Mandatory)][string]$DomainName,
+        [Parameter(Mandatory)][string]$Server
     )
 
-    if (-not (Get-Command Get-ADObject -ErrorAction SilentlyContinue)) {
-        throw "ActiveDirectory module not available. Install RSAT AD tools / Import-Module ActiveDirectory."
+    Set-StrictMode -Version Latest
+
+    # Base properties that are always safe
+    $baseProps = @(
+        'displayName',
+        'mail',
+        'proxyAddresses'
+    )
+    # Only include Exchange-style attributes if they exist
+    $schemaAttrs = Get-ADObject `
+        -SearchBase (Get-ADRootDSE).schemaNamingContext `
+        -LDAPFilter "(lDAPDisplayName=targetAddress)" `
+        -ErrorAction SilentlyContinue
+
+    if ($schemaAttrs) {
+        $baseProps += 'targetAddress'
     }
 
-    $params = @{
-        Filter     = 'ObjectClass -eq "contact"'
-        Properties = @(
-            'SamAccountName',
-            'mail',
-            'targetAddress',
-            'proxyAddresses',
-            'Created',
-            'Modified',
-            'DistinguishedName',
-            'ObjectGUID',
-            'msExchMailboxGuid'
-        )
-    }
-
-    if ($DomainName) {
-        $params['SearchBase'] = "DC=$($DomainName.Replace('.', ',DC='))"
-    }
-    if ($Server) {
-        $params['Server'] = $Server
-    }
-
-    try {
-        $contacts = Get-ADObject @params -ErrorAction Stop
-
-        return $contacts | ForEach-Object {
-            [pscustomobject]@{
-                Name              = $_.Name
-                SamAccountName    = $_.SamAccountName
-                Mail              = $_.mail
-                TargetAddress     = $_.targetAddress
-                ProxyAddresses    = ($_.proxyAddresses -join '; ')
-                Created           = $_.Created
-                Modified          = $_.Modified
-                DistinguishedName = $_.DistinguishedName
-                ObjectGUID        = $_.ObjectGUID
-                MailEnabled       = (-not [string]::IsNullOrWhiteSpace($_.mail))
-                HasMailboxGuid    = ($null -ne $_.msExchMailboxGuid)
-                ObjectClass       = $_.ObjectClass
-            }
-        }
-    }
-    catch {
-        $target = if ($DomainName) { $DomainName } else { 'current domain' }
-        throw "Failed to query AD contacts from $target. $($_.Exception.Message)"
-    }
+    Get-ADObject -LDAPFilter "(objectClass=contact)" `
+        -Properties $baseProps
 }
+
