@@ -231,7 +231,7 @@ function Invoke-AdDiscovery {
 
     try { (Get-AdAdReplicationSubnets)   | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Subnets__Forest.csv')   -Force -AllowEmpty } catch { Log-ExecutionStatus "Replication Subnets" "FAIL" $_.Exception.Message }
     try { (Get-AdAdReplicationSiteLinks) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__SiteLinks__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Replication SiteLinks" "FAIL" $_.Exception.Message }
-    try { (Get-AdAdForestTrusts -LogPath $layout.LogPath) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Security__Trusts__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Forest Trusts" "FAIL" $_.Exception.Message }
+    try { (Get-AdAdForestTrusts -LogPath $layout.LogPath) | Export-AdCsvSafeWithSchema -Path (Join-Path $forestDir 'AD__Forest__Security__Trusts__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Forest Trusts" "FAIL" $_.Exception.Message }
 
     # -------------------------
     # Domain loop (collector)
@@ -290,6 +290,17 @@ function Invoke-AdDiscovery {
                             $tier0.ProtectedUsers | Export-AdCsvSafe -Path $out3 -Force -AllowEmpty
                         } else {
                             $tier0.ProtectedUsers | Export-AdCsvSafe -Path $out3 -SchemaName $schemaName3 -Force -AllowEmpty
+                        }
+                    }
+
+                    Try-Export -Operation "AdminSDHolder impact (domain)" -Action {
+                        $adminSd = @(Get-AdAdminSdHolderImpact -DomainContext $ctx)
+                        $out = Join-Path $domainDir ("AD__Domain__Security__AdminSdHolderImpact__{0}.csv" -f $scopeTag)
+                        $schemaName = Resolve-AdSchemaNameForCsv -Path $out
+                        if ([string]::IsNullOrWhiteSpace($schemaName)) {
+                            $adminSd | Export-AdCsvSafe -Path $out -Force -AllowEmpty
+                        } else {
+                            $adminSd | Export-AdCsvSafe -Path $out -SchemaName $schemaName -Force -AllowEmpty
                         }
                     }
 

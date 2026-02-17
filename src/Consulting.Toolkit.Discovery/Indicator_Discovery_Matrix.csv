@@ -1,197 +1,197 @@
-Category,Indicator Name,Required Discovery Datasets,Status
-Account Security,Abnormal Password Refresh,AD_Users_Security; AD_WeakPasswordPolicies,Have
-Account Security,AD objects created within the last 10 days,AD_RecentlyCreatedObjects; AD_Users_Security,Missing
-Account Security,Admins with old passwords,AD_PrivilegedPasswordAge; AD_Users_Security; Tier0_PrivilegedGroupMembers,Missing
-Account Security,Built-in domain Administrator account used within the last two weeks,AD_BuiltInAdminSignals; AD_Users_Security,Missing
-Account Security,Built-in domain Administrator account with old password (180 days),AD_BuiltInAdminSignals; AD_PrivilegedPasswordAge; AD_Users_Security; Tier0_PrivilegedGroupMembers,Missing
-Account Security,Changes to PreWindows 2000 Compatible Access Group membership,AD_Groups,Have
-Account Security,Changes to privileged group membership in the last 7 days,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Groups; AD_RecentlyCreatedObjects; Tier0_PrivilegedGroupMembers,Missing
-Account Security,Changes to unprivileged group membership in the last 7 days,AD_Groups; AD_RecentlyCreatedObjects; Tier0_PrivilegedGroupMembers,Missing
-Account Security,Computer accounts in privileged groups,AD_Computers_Security; AD_Groups; AD_Users_Security; Tier0_PrivilegedGroupMembers,Have
-Account Security,Computers with no password set,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security,Have
-Account Security,Distributed COM Users group or Performance Log Users group are not empty,AD_Groups; AD_Users_Security,Have
-Account Security,Enabled admin accounts that are inactive,AD_Users_Security,Have
-Account Security,Ephemeral Admins,AD_Groups; AD_Users_Security,Have
-Account Security,FGPP not applied to Group,AD_Groups; AD_WeakPasswordPolicies,Have
-Account Security,Forest contains more than 50 privileged accounts,AD_Users_Security,Have
-Account Security,Operator Groups that are not empty,AD_Computers_Security; AD_Groups; AD_Users_Security,Have
-Account Security,OU permissions enabling BadSuccessor dMSA escalation,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security; DC_SecuritySignals,Have
-Account Security,Privileged accounts with a password that never expires,AD_AdminSdHolderImpact; AD_Users_Security; Tier0_AdminCountObjects,Have
-Account Security,Privileged users that are disabled,AD_Groups; AD_Users_Security; Tier0_PrivilegedGroupMembers,Have
-Account Security,Privileged users with weak password policy,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; AD_WeakPasswordPolicies,Have
-Account Security,Protected Users group not in use,AD_Groups; AD_Users_Security; Tier0_ProtectedUsers,Have
-Account Security,Recent privileged account creation activity,AD_AdminSdHolderImpact; AD_Groups; AD_RecentlyCreatedObjects; AD_Users_Security; Tier0_AdminCountObjects,Missing
-Account Security,Recent sIDHistory changes on objects,AD_SidHistoryUsers; AD_Users_Security,Have
-Account Security,Shadow Credentials on privileged objects,AD_Users_Security; DC_SecuritySignals,Have
-Account Security,Trust accounts with old passwords,AD_ForestTrusts; AD_PrivilegedPasswordAge; AD_TrustRelationshipMap; AD_Users_Security; Tier0_PrivilegedGroupMembers,Missing
-Account Security,Unprivileged accounts with adminCount=1,AD_AdminSdHolderImpact; AD_Groups; AD_Users_Security; Tier0_AdminCountObjects; Tier0_PrivilegedGroupMembers,Have
-Account Security,Unprivileged principals as DNS Admins,AD_Groups; AD_Users_Security,Have
-Account Security,User accounts that store passwords with reversible encryption,AD_Users_Security,Have
-Account Security,User accounts that use DES encryption,AD_Users_Security,Have
-Account Security,User accounts using Smart Card authentication with old password,AD_Users_Security,Have
-Account Security,User accounts with password not required,AD_Users_Security,Have
-Account Security,Users and computers with non-default Primary Group IDs,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Groups; AD_Users_Security,Have
-Account Security,Users and computers without readable PGID,AD_Computers_Security; AD_Groups; AD_Users_Security,Have
-Account Security,Users with Kerberos pre- authentication disabled,AD_AsrepRoastableUsers; AD_Users_Security; Kerberos_SpnAccounts,Missing
-Account Security,Users with old passwords,AD_Users_Security,Have
-Account Security,Users with Password Never Expires flag set,AD_Users_Security,Have
-AD Delegation,Built-in guest account is enabled,AD_Users_Security,Have
-AD Delegation,Changes to AD display specifiers in the past 90 days,AD_Users_Security,Have
-AD Delegation,Changes to default security descriptor schema in the last 90 days,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs,Have
-AD Delegation,Changes to MS LAPS read permissions,AD_Computers_Security; AD_Users_Security,Have
-AD Delegation,Dangerous delegated rights on Active Directory OUs,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs,Have
-AD Delegation,Domain Controller owner is not an administrator,AD_BuiltInAdminSignals; AD_Computers_Security; AD_Users_Security; DC_SecuritySignals; Tier0_PrivilegedGroupMembers,Missing
-AD Delegation,Enterprise Key Admins with full access to domain,AD_Computers_Security; AD_Groups; DC_SecuritySignals,Have
-AD Delegation,Foreign Security Principals in Privileged Group,AD_AdminSdHolderImpact; AD_Groups; AD_Users_Security; Tier0_AdminCountObjects; Tier0_PrivilegedGroupMembers,Have
-AD Delegation,gMSA not used,AD_Computers_Security; AD_Groups; AD_Users_Security,Have
-AD Delegation,Inheritance enabled on AdminSDHolder object,AD_AdminSdHolderImpact; AD_Groups; AD_Users_Security; Tier0_AdminCountObjects,Have
-AD Delegation,Non-default access to DPAPI key,DC_SecuritySignals,Have
-AD Delegation,Non-default access to gMSA root key,AD_Users_Security,Have
-AD Delegation,Non-default principals with DC Sync rights on the domain,AD_Users_Security; DC_SecuritySignals,Have
-AD Delegation,Non-default value on ms-Mcs-AdmPwd SearchFlags,AD_Users_Security,Have
-AD Delegation,Non-privileged users with access to gMSA passwords,AD_Groups; AD_Users_Security,Have
-AD Delegation,Objects in privileged groups without adminCount=1 (SDProp),AD_AdminSdHolderImpact; AD_Groups; Tier0_AdminCountObjects; Tier0_PrivilegedGroupMembers,Have
-AD Delegation,Objects with Reanimate-Tombstones extended rights,,Missing
-AD Delegation,Permission changes on AdminSDHolder object,,Missing
-AD Delegation,Privileged objects with unprivileged owners,AD_AdminSdHolderImpact; AD_OuDelegationAcls; AD_Users_Security; Tier0_AdminCountObjects,Have
-AD Delegation,Unprivileged users can add computer accounts to domain,AD_Computers_Security; AD_Users_Security,Have
-AD Delegation,Users with permissions to set Server Trust Account,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; DC_SecuritySignals,Have
-AD Infrastructure,AD Certificate Authority with Web Enrollment – ESC8,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security,Have
-AD Infrastructure,Anonymous access to Active Directory enabled,AD_Users_Security,Have
-AD Infrastructure,Anonymous NSPI access to AD enabled,,Missing
-AD Infrastructure,Certificate templates that allow requesters to specify a subjectAltName,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs,Have
-AD Infrastructure,Certificate templates with 3 or more insecure configurations,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs,Have
-AD Infrastructure,Computers with older OS versions,AD_Computers_Security; AD_Users_Security,Have
-AD Infrastructure,Computers with password last set over 90 days ago,AD_Computers_Security; AD_Users_Security,Have
-AD Infrastructure,Dangerous control paths expose certificate containers,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security,Have
-AD Infrastructure,Dangerous control paths expose certificate templates,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security,Have
-AD Infrastructure,Dangerous Trust Attribute Set,AD_ForestTrusts; AD_TrustRelationshipMap,Have
-AD Infrastructure,Domain controllers in an inconsistent state,DC_SecuritySignals,Have
-AD Infrastructure,Domain controllers that have not authenticated to the domain for more than 45 days,DC_SecuritySignals,Have
-AD Infrastructure,Domain controllers with old passwords,AD_Users_Security; DC_SecuritySignals,Have
-AD Infrastructure,Domain trust to a third-party domain without quarantine,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; Tier0_PrivilegedGroupMembers,Have
-AD Infrastructure,Domains with obsolete functional levels,AD_Computers_Security,Have
-AD Infrastructure,Evidence of Mimikatz DCShadow attack,DC_SecuritySignals,Have
-AD Infrastructure,gMSA objects with old passwords,AD_Groups; AD_Users_Security,Have
-AD Infrastructure,LDAP signing is not required on Domain Controllers,AD_Computers_Security; DC_SecuritySignals,Have
-AD Infrastructure,LLMNR enforced by GPO,AD_Groups,Have
-AD Infrastructure,Non-standard schema permissions,AD_ForestTrusts; AD_TrustRelationshipMap; Tier0_PrivilegedGroupMembers,Have
-AD Infrastructure,NTFRS SYSVOL replication,,Missing
-AD Infrastructure,Operator groups no longer protected by AdminSDHolder and SDProp,AD_Groups,Have
-AD Infrastructure,Outbound forest trust with SID History enabled,AD_ForestTrusts; AD_SidHistoryUsers; AD_TrustRelationshipMap,Have
-AD Infrastructure,Print spooler service is enabled on a DC,DC_SecuritySignals,Have
-AD Infrastructure,Privileged user credentials cached on RODC,AD_Users_Security; DC_SecuritySignals,Have
-AD Infrastructure,Query policies that have the attribute of ldap deny list set,,Missing
-AD Infrastructure,Risky RODC credential caching,AD_Users_Security; DC_SecuritySignals,Have
-AD Infrastructure,Smart card password rotation disabled,AD_Computers_Security; AD_Users_Security,Have
-AD Infrastructure,SMB Signing is not required on Domain Controllers,AD_Computers_Security; DC_SecuritySignals,Have
-AD Infrastructure,SMBv1 is enabled on Domain Controllers,DC_SecuritySignals,Have
-AD Infrastructure,Unexpected accounts in Cert Publishers Group,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_ForestTrusts; AD_Groups; AD_TrustRelationshipMap; AD_Users_Security; DC_SecuritySignals,Have
-AD Infrastructure,Unsecured DNS configuration,,Missing
-AD Infrastructure,Weak certificate cipher,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs,Have
-AD Infrastructure,Well-known privileged SIDs in sIDHistory,AD_Groups; AD_SidHistoryUsers; AD_Users_Security; Tier0_PrivilegedGroupMembers,Have
-AD Infrastructure,Zerologon vulnerability,,Missing
-Entra ID,Administrative units are not being used,AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Application expired secrets and certificates,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs,Have
-Entra ID,Application instance property lock disabled,AD_Users_Security; Entra_RoleAssignments; Entra_ServicePrincipals,Missing
-Entra ID,Application Name and Geographic Location additional contexts are disabled on MFA,AD_Users_Security; Entra_AuthMethods,Missing
-Entra ID,Certificate-Based Authentication Persistence,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Check for guests having permission to invite other guests,,Missing
-Entra ID,Check for risky API permissions granted to application service principals,Entra_ServicePrincipals,Missing
-Entra ID,Check for users with weak or no MFA,AD_Users_Security; Entra_AuthMethods,Missing
-Entra ID,Check if legacy authentication is allowed,Entra_ConditionalAccessPolicies,Missing
-Entra ID,Conditional Access policies contain private IP addresses,Entra_ConditionalAccessPolicies,Missing
-Entra ID,Conditional Access policies that contain MFA Trusted IPs,AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; Entra_AuthMethods; Entra_ConditionalAccessPolicies,Missing
-Entra ID,Conditional Access Policy does not require MFA on privileged accounts,AD_Users_Security; Entra_AuthMethods; Entra_ConditionalAccessPolicies; Entra_RoleAssignments,Missing
-Entra ID,Conditional Access Policy that disables admin token persistence,AD_Users_Security; Entra_ConditionalAccessPolicies; Entra_RoleAssignments,Missing
-Entra ID,Conditional Access Policy that does not require a password change from high risk users,AD_Users_Security; Entra_ConditionalAccessPolicies,Missing
-Entra ID,Conditional Access Policy that does not require MFA when sign-in risk has been identified,Entra_AuthMethods; Entra_ConditionalAccessPolicies,Missing
-Entra ID,Conditional Access policy with Continuous Access Evaluation disabled,Entra_ConditionalAccessPolicies,Missing
-Entra ID,Custom banned password protection not in use,AD_Users_Security,Have
-Entra ID,Custom role assigned to unprivileged principals in an app’s scope,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; Entra_RoleAssignments; Entra_ServicePrincipals,Missing
-Entra ID,Detect MFA policy changes for groups and users,AD_Groups; AD_Users_Security; Entra_AuthMethods,Missing
-Entra ID,Dynamic administrative units with self-assignment risk,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security,Have
-Entra ID,Ensure all non-privileged users can complete MFA,AD_Users_Security; Entra_AuthMethods; Entra_RoleAssignments,Missing
-Entra ID,Enterprise applications using SAML for SSO,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; Entra_ServicePrincipals,Missing
-Entra ID,Entra Connect sync account password reset,AD_Users_Security; Entra_ConditionalAccessPolicies,Missing
-Entra ID,Entra custom Roles with risky permissions,Entra_RoleAssignments,Missing
-Entra ID,Entra tenant is susceptible to Hidden Consent Grant attack,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs,Have
-Entra ID,FIDO2 Attestation is not enforced,,Missing
-Entra ID,Global Administrators that signed in during the last 14 days,AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Guest accounts that were inactive for more than 30 days,AD_Users_Security,Have
-Entra ID,Guest invites not accepted in last 30 days,,Missing
-Entra ID,Guest users are not restricted,AD_Groups; AD_Users_Security,Have
-Entra ID,Hybrid-synced privileged role accounts,AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Less than 2 Global Administrators exist,Entra_RoleAssignments,Missing
-Entra ID,List of risky users (medium or high level),AD_Users_Security,Have
-Entra ID,MFA bombing attack occurred in the past day,AD_Users_Security; Entra_AuthMethods; Entra_RoleAssignments,Missing
-Entra ID,MFA not configured for privileged accounts,AD_Users_Security; Entra_AuthMethods; Entra_RoleAssignments,Missing
-Entra ID,More than 10 Privileged Administrators exist,Entra_RoleAssignments,Missing
-Entra ID,More than 5 Global Administrators exist,Entra_RoleAssignments,Missing
-Entra ID,Non-admin users can create tenants,AD_Users_Security,Have
-Entra ID,Non-admin users can register custom applications,AD_Users_Security; Entra_ServicePrincipals,Missing
-Entra ID,Non-synced Entra user that is eligible for a privileged role,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Permanent active privileged role assignment,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Privileged accounts with mailbox,AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Privileged group contains guest account,AD_Groups; AD_Users_Security; Entra_RoleAssignments; Tier0_PrivilegedGroupMembers,Missing
-Entra ID,Prohibited Entra ID roles assigned,Entra_RoleAssignments,Missing
-Entra ID,Report suspicious MFA activity disabled,AD_Users_Security; Entra_AuthMethods,Missing
-Entra ID,s Directory Synchronization Accounts role member,AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Security defaults not enabled,Entra_AuthMethods; Entra_ConditionalAccessPolicies,Missing
-Entra ID,Security questions are in use,AD_Users_Security,Have
-Entra ID,Self-service password reset enabled for privileged roles,AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Suspicious credentials on Microsoft service principals,Entra_ServicePrincipals,Missing
-Entra ID,Unprivileged owner of a privileged group,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Groups; AD_Users_Security; Entra_RoleAssignments; Tier0_PrivilegedGroupMembers,Missing
-Entra ID,Unresolved Entra ID privileged role members,AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Unrestricted user consent allowed,AD_Users_Security,Have
-Entra ID,User consent is allowed for risky applications,AD_Users_Security,Have
-Entra ID,Users are not using their privileged roles,AD_Users_Security; Entra_RoleAssignments,Missing
-Entra ID,Users can create security groups,AD_Groups; AD_Users_Security,Have
-Entra ID,Users or devices inactive for at least 90 days,AD_Users_Security,Have
-Group Policy Security,Changes to Default Domain Policy or Default Domain Controllers Policy in the last 7 days,AD_RecentlyCreatedObjects; DC_SecuritySignals; GPO_Inventory,Missing
-Group Policy Security,Dangerous GPO logon script path,AD_Users_Security; GPO_Delegation; GPO_Inventory,Missing
-Group Policy Security,Dangerous user rights granted by GPO,AD_Users_Security; GPO_Delegation; GPO_Inventory; GPO_UserRightsAssignments,Missing
-Group Policy Security,GPO linking delegation at the AD Site level,AD_Users_Security; DC_SecuritySignals; GPO_Delegation; GPO_Inventory,Missing
-Group Policy Security,GPO linking delegation at the domain controller OU level,AD_Users_Security; DC_SecuritySignals; GPO_Delegation; GPO_Inventory,Missing
-Group Policy Security,GPO linking delegation at the domain level,AD_Computers_Security; AD_Users_Security; GPO_Delegation; GPO_Inventory,Missing
-Group Policy Security,GPO Weak LM Hash storage enabled,AD_Groups; GPO_Inventory,Have
-Group Policy Security,GPO with scheduled tasks configured,AD_Groups; AD_Users_Security; GPO_Delegation; GPO_Inventory,Missing
-Group Policy Security,Reversible passwords found in GPOs,GPO_Inventory,Have
-Group Policy Security,SYSVOL Executable Changes,AD_Users_Security; GPO_Inventory,Have
-Group Policy Security,Writable shortcuts found in GPO,AD_Groups; AD_Users_Security; GPO_Inventory,Have
-Hybrid Security,AAD privileged users that are also privileged in AD,AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers,Missing
-Hybrid Security,Accounts with Kerberos constrained delegation configured to SSO computer account,AD_Computers_Security; AD_Users_Security; Delegation_Constrained; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers,Missing
-Hybrid Security,AD privileged users that are synced to AAD,AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers,Missing
-Hybrid Security,Password hash synchronization is not enabled,AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers,Missing
-Hybrid Security,RC4 or DES encryption is supported by SSO computer account,AD_Computers_Security; AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers,Missing
-Hybrid Security,Resource Based Constrained Delegation applied to AZUREADSSOACC account,AD_Users_Security; Delegation_Constrained; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers,Missing
-Hybrid Security,SSO computer account with password last set over 90 days ago,AD_Computers_Security; AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers,Missing
-Kerberos Security,Accounts with altSecurityIdentities configured,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security,Have
-Kerberos Security,Accounts with Constrained Delegation configured to ghost SPN,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security; Delegation_Constrained; Kerberos_SpnAccounts,Have
-Kerberos Security,Accounts with Constrained Delegation configured to krbtgt,AD_Computers_Security; AD_Users_Security; Delegation_Constrained,Have
-Kerberos Security,Computer account takeover through Kerberos Resource-Based Constrained Delegation (RBCD),ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security; Delegation_RBCD,Have
-Kerberos Security,Computer or user accounts with SPN that have unconstrained delegation,AD_Computers_Security; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; Delegation_Constrained; Delegation_Unconstrained; Kerberos_SpnAccounts,Have
-Kerberos Security,Domain controllers with Resource-Based Constrained Delegation (RBCD) enabled,AD_Users_Security; DC_SecuritySignals; Delegation_RBCD,Have
-Kerberos Security,Kerberos krbtgt account with old password,AD_Users_Security,Have
-Kerberos Security,Kerberos protocol transition delegation configured,Delegation_ProtocolTransition,Have
-Kerberos Security,krbtgt account with Resource-Based Constrained Delegation (RBCD) enabled,AD_Users_Security; Delegation_RBCD,Have
-Kerberos Security,Objects with constrained delegation configured,ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; Delegation_Constrained; Delegation_ProtocolTransition,Have
-Kerberos Security,Primary users with SPN not supporting AES encryption on Kerberos,AD_Users_Security; Kerberos_SpnAccounts,Have
-Kerberos Security,Principals with constrained authentication delegation enabled for a DC service,AD_Computers_Security; AD_Users_Security; DC_SecuritySignals; Delegation_Constrained,Have
-Kerberos Security,Principals with constrained delegation using protocol transition enabled for a DC service,AD_Computers_Security; AD_Users_Security; DC_SecuritySignals; Delegation_Constrained; Delegation_ProtocolTransition,Have
-Kerberos Security,Privileged users with ServicePrincipalNames defined,AD_AdminSdHolderImpact; AD_Users_Security; Kerberos_SpnAccounts; Tier0_AdminCountObjects,Have
-Kerberos Security,RC4 or DES encryption type is supported by Domain Controllers,DC_SecuritySignals,Have
-Kerberos Security,Users with ServicePrincipalName defined,AD_Users_Security; Kerberos_SpnAccounts,Have
-Kerberos Security,Users with the attribute userPassword set,AD_Users_Security,Have
-Kerberos Security,Write access to RBCD on DC,AD_Groups; AD_Users_Security; DC_SecuritySignals; Delegation_RBCD; Tier0_PrivilegedGroupMembers,Have
-Kerberos Security,Write access to RBCD on krbtgt account,AD_Groups; AD_Users_Security; Delegation_RBCD; Tier0_PrivilegedGroupMembers,Have
-Okta,High privileged custom roles,AD_Users_Security; Okta_RolesAndPolicies,Missing
-Okta,New API token was created,AD_RecentlyCreatedObjects; Okta_RolesAndPolicies,Missing
-Okta,New permission has been granted to a group,AD_Groups; AD_RecentlyCreatedObjects; Okta_RolesAndPolicies,Missing
-Okta,New permission has been granted to user,AD_RecentlyCreatedObjects; AD_Users_Security; Okta_RolesAndPolicies,Missing
-Okta,New Super Admin permission has been granted to user,AD_RecentlyCreatedObjects; AD_Users_Security; Okta_RolesAndPolicies,Missing
-Okta,New Super Admin permissions has been granted to a group,AD_Groups; AD_RecentlyCreatedObjects; Okta_RolesAndPolicies,Missing
-Okta,Password policy check,AD_WeakPasswordPolicies; Okta_RolesAndPolicies,Missing
-Okta,User activation in the last 7 days,AD_RecentlyCreatedObjects; AD_Users_Security; Okta_RolesAndPolicies,Missing
-Okta,User deactivation in the last 7 days,AD_RecentlyCreatedObjects; AD_Users_Security; Okta_RolesAndPolicies,Missing
-Okta,Users without Multi- Factor Authentication (MFA),AD_Users_Security; Okta_RolesAndPolicies,Missing
+"Phase","Category","Indicator Name","Required Discovery Datasets","Status"
+"Phase2","Account Security","Abnormal Password Refresh","AD_Users_Security; AD_WeakPasswordPolicies","Have"
+"Phase1","Account Security","AD objects created within the last 10 days","AD_RecentlyCreatedObjects; AD_Users_Security","Have"
+"Phase2","Account Security","Admins with old passwords","AD_PrivilegedPasswordAge; AD_Users_Security; Tier0_PrivilegedGroupMembers","Have"
+"Phase1","Account Security","Built-in domain Administrator account used within the last two weeks","AD_BuiltInAdminSignals; AD_Users_Security","Have"
+"Phase2","Account Security","Built-in domain Administrator account with old password (180 days)","AD_BuiltInAdminSignals; AD_PrivilegedPasswordAge; AD_Users_Security; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","Account Security","Changes to PreWindows 2000 Compatible Access Group membership","AD_Groups","Have"
+"Phase2","Account Security","Changes to privileged group membership in the last 7 days","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Groups; AD_RecentlyCreatedObjects; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","Account Security","Changes to unprivileged group membership in the last 7 days","AD_Groups; AD_RecentlyCreatedObjects; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","Account Security","Computer accounts in privileged groups","AD_Computers_Security; AD_Groups; AD_Users_Security; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","Account Security","Computers with no password set","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security","Have"
+"Phase2","Account Security","Distributed COM Users group or Performance Log Users group are not empty","AD_Groups; AD_Users_Security","Have"
+"Phase2","Account Security","Enabled admin accounts that are inactive","AD_Users_Security","Have"
+"Phase2","Account Security","Ephemeral Admins","AD_Groups; AD_Users_Security","Have"
+"Phase2","Account Security","FGPP not applied to Group","AD_Groups; AD_WeakPasswordPolicies","Have"
+"Phase2","Account Security","Forest contains more than 50 privileged accounts","AD_Users_Security","Have"
+"Phase2","Account Security","Operator Groups that are not empty","AD_Computers_Security; AD_Groups; AD_Users_Security","Have"
+"Phase2","Account Security","OU permissions enabling BadSuccessor dMSA escalation","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security; DC_SecuritySignals","Have"
+"Phase2","Account Security","Privileged accounts with a password that never expires","AD_AdminSdHolderImpact; AD_Users_Security; Tier0_AdminCountObjects","Have"
+"Phase2","Account Security","Privileged users that are disabled","AD_Groups; AD_Users_Security; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","Account Security","Privileged users with weak password policy","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; AD_WeakPasswordPolicies","Have"
+"Phase2","Account Security","Protected Users group not in use","AD_Groups; AD_Users_Security; Tier0_ProtectedUsers","Have"
+"Phase2","Account Security","Recent privileged account creation activity","AD_AdminSdHolderImpact; AD_Groups; AD_RecentlyCreatedObjects; AD_Users_Security; Tier0_AdminCountObjects","Have"
+"Phase2","Account Security","Recent sIDHistory changes on objects","AD_SidHistoryUsers; AD_Users_Security","Have"
+"Phase2","Account Security","Shadow Credentials on privileged objects","AD_Users_Security; DC_SecuritySignals","Have"
+"Phase2","Account Security","Trust accounts with old passwords","AD_ForestTrusts; AD_PrivilegedPasswordAge; AD_TrustRelationshipMap; AD_Users_Security; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","Account Security","Unprivileged accounts with adminCount=1","AD_AdminSdHolderImpact; AD_Groups; AD_Users_Security; Tier0_AdminCountObjects; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","Account Security","Unprivileged principals as DNS Admins","AD_Groups; AD_Users_Security","Have"
+"Phase2","Account Security","User accounts that store passwords with reversible encryption","AD_Users_Security","Have"
+"Phase2","Account Security","User accounts that use DES encryption","AD_Users_Security","Have"
+"Phase2","Account Security","User accounts using Smart Card authentication with old password","AD_Users_Security","Have"
+"Phase2","Account Security","User accounts with password not required","AD_Users_Security","Have"
+"Phase2","Account Security","Users and computers with non-default Primary Group IDs","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Groups; AD_Users_Security","Have"
+"Phase2","Account Security","Users and computers without readable PGID","AD_Computers_Security; AD_Groups; AD_Users_Security","Have"
+"Phase2","Account Security","Users with Kerberos pre- authentication disabled","AD_AsrepRoastableUsers; AD_Users_Security; Kerberos_SpnAccounts","Have"
+"Phase2","Account Security","Users with old passwords","AD_Users_Security","Have"
+"Phase2","Account Security","Users with Password Never Expires flag set","AD_Users_Security","Have"
+"Phase2","AD Delegation","Built-in guest account is enabled","AD_Users_Security","Have"
+"Phase2","AD Delegation","Changes to AD display specifiers in the past 90 days","AD_Users_Security","Have"
+"Phase2","AD Delegation","Changes to default security descriptor schema in the last 90 days","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs","Have"
+"Phase2","AD Delegation","Changes to MS LAPS read permissions","AD_Computers_Security; AD_Users_Security","Have"
+"Phase2","AD Delegation","Dangerous delegated rights on Active Directory OUs","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs","Have"
+"Phase2","AD Delegation","Domain Controller owner is not an administrator","AD_BuiltInAdminSignals; AD_Computers_Security; AD_Users_Security; DC_SecuritySignals; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","AD Delegation","Enterprise Key Admins with full access to domain","AD_Computers_Security; AD_Groups; DC_SecuritySignals","Have"
+"Phase2","AD Delegation","Foreign Security Principals in Privileged Group","AD_AdminSdHolderImpact; AD_Groups; AD_Users_Security; Tier0_AdminCountObjects; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","AD Delegation","gMSA not used","AD_Computers_Security; AD_Groups; AD_Users_Security","Have"
+"Phase2","AD Delegation","Inheritance enabled on AdminSDHolder object","AD_AdminSdHolderImpact; AD_Groups; AD_Users_Security; Tier0_AdminCountObjects","Have"
+"Phase2","AD Delegation","Non-default access to DPAPI key","DC_SecuritySignals","Have"
+"Phase2","AD Delegation","Non-default access to gMSA root key","AD_Users_Security","Have"
+"Phase2","AD Delegation","Non-default principals with DC Sync rights on the domain","AD_Users_Security; DC_SecuritySignals","Have"
+"Phase2","AD Delegation","Non-default value on ms-Mcs-AdmPwd SearchFlags","AD_Users_Security","Have"
+"Phase2","AD Delegation","Non-privileged users with access to gMSA passwords","AD_Groups; AD_Users_Security","Have"
+"Phase2","AD Delegation","Objects in privileged groups without adminCount=1 (SDProp)","AD_AdminSdHolderImpact; AD_Groups; Tier0_AdminCountObjects; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","AD Delegation","Objects with Reanimate-Tombstones extended rights","","Missing"
+"Phase2","AD Delegation","Permission changes on AdminSDHolder object","","Missing"
+"Phase2","AD Delegation","Privileged objects with unprivileged owners","AD_AdminSdHolderImpact; AD_OuDelegationAcls; AD_Users_Security; Tier0_AdminCountObjects","Have"
+"Phase2","AD Delegation","Unprivileged users can add computer accounts to domain","AD_Computers_Security; AD_Users_Security","Have"
+"Phase2","AD Delegation","Users with permissions to set Server Trust Account","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","AD Certificate Authority with Web Enrollment – ESC8","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security","Have"
+"Phase2","AD Infrastructure","Anonymous access to Active Directory enabled","AD_Users_Security","Have"
+"Phase2","AD Infrastructure","Anonymous NSPI access to AD enabled","","Missing"
+"Phase2","AD Infrastructure","Certificate templates that allow requesters to specify a subjectAltName","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs","Have"
+"Phase2","AD Infrastructure","Certificate templates with 3 or more insecure configurations","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs","Have"
+"Phase2","AD Infrastructure","Computers with older OS versions","AD_Computers_Security; AD_Users_Security","Have"
+"Phase2","AD Infrastructure","Computers with password last set over 90 days ago","AD_Computers_Security; AD_Users_Security","Have"
+"Phase2","AD Infrastructure","Dangerous control paths expose certificate containers","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security","Have"
+"Phase2","AD Infrastructure","Dangerous control paths expose certificate templates","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security","Have"
+"Phase2","AD Infrastructure","Dangerous Trust Attribute Set","AD_ForestTrusts; AD_TrustRelationshipMap","Have"
+"Phase2","AD Infrastructure","Domain controllers in an inconsistent state","DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","Domain controllers that have not authenticated to the domain for more than 45 days","DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","Domain controllers with old passwords","AD_Users_Security; DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","Domain trust to a third-party domain without quarantine","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","AD Infrastructure","Domains with obsolete functional levels","AD_Computers_Security","Have"
+"Phase2","AD Infrastructure","Evidence of Mimikatz DCShadow attack","DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","gMSA objects with old passwords","AD_Groups; AD_Users_Security","Have"
+"Phase2","AD Infrastructure","LDAP signing is not required on Domain Controllers","AD_Computers_Security; DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","LLMNR enforced by GPO","AD_Groups","Have"
+"Phase2","AD Infrastructure","Non-standard schema permissions","AD_ForestTrusts; AD_TrustRelationshipMap; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","AD Infrastructure","NTFRS SYSVOL replication","","Missing"
+"Phase2","AD Infrastructure","Operator groups no longer protected by AdminSDHolder and SDProp","AD_Groups","Have"
+"Phase2","AD Infrastructure","Outbound forest trust with SID History enabled","AD_ForestTrusts; AD_SidHistoryUsers; AD_TrustRelationshipMap","Have"
+"Phase2","AD Infrastructure","Print spooler service is enabled on a DC","DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","Privileged user credentials cached on RODC","AD_Users_Security; DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","Query policies that have the attribute of ldap deny list set","","Missing"
+"Phase2","AD Infrastructure","Risky RODC credential caching","AD_Users_Security; DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","Smart card password rotation disabled","AD_Computers_Security; AD_Users_Security","Have"
+"Phase2","AD Infrastructure","SMB Signing is not required on Domain Controllers","AD_Computers_Security; DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","SMBv1 is enabled on Domain Controllers","DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","Unexpected accounts in Cert Publishers Group","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_ForestTrusts; AD_Groups; AD_TrustRelationshipMap; AD_Users_Security; DC_SecuritySignals","Have"
+"Phase2","AD Infrastructure","Unsecured DNS configuration","","Missing"
+"Phase2","AD Infrastructure","Weak certificate cipher","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs","Have"
+"Phase2","AD Infrastructure","Well-known privileged SIDs in sIDHistory","AD_Groups; AD_SidHistoryUsers; AD_Users_Security; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","AD Infrastructure","Zerologon vulnerability","","Missing"
+"Phase3","Entra ID","Administrative units are not being used","AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Application expired secrets and certificates","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs","Have"
+"Phase3","Entra ID","Application instance property lock disabled","AD_Users_Security; Entra_RoleAssignments; Entra_ServicePrincipals","Missing"
+"Phase3","Entra ID","Application Name and Geographic Location additional contexts are disabled on MFA","AD_Users_Security; Entra_AuthMethods","Missing"
+"Phase3","Entra ID","Certificate-Based Authentication Persistence","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Check for guests having permission to invite other guests","","Missing"
+"Phase3","Entra ID","Check for risky API permissions granted to application service principals","Entra_ServicePrincipals","Missing"
+"Phase3","Entra ID","Check for users with weak or no MFA","AD_Users_Security; Entra_AuthMethods","Missing"
+"Phase3","Entra ID","Check if legacy authentication is allowed","Entra_ConditionalAccessPolicies","Missing"
+"Phase3","Entra ID","Conditional Access policies contain private IP addresses","Entra_ConditionalAccessPolicies","Missing"
+"Phase3","Entra ID","Conditional Access policies that contain MFA Trusted IPs","AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; Entra_AuthMethods; Entra_ConditionalAccessPolicies","Missing"
+"Phase3","Entra ID","Conditional Access Policy does not require MFA on privileged accounts","AD_Users_Security; Entra_AuthMethods; Entra_ConditionalAccessPolicies; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Conditional Access Policy that disables admin token persistence","AD_Users_Security; Entra_ConditionalAccessPolicies; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Conditional Access Policy that does not require a password change from high risk users","AD_Users_Security; Entra_ConditionalAccessPolicies","Missing"
+"Phase3","Entra ID","Conditional Access Policy that does not require MFA when sign-in risk has been identified","Entra_AuthMethods; Entra_ConditionalAccessPolicies","Missing"
+"Phase3","Entra ID","Conditional Access policy with Continuous Access Evaluation disabled","Entra_ConditionalAccessPolicies","Missing"
+"Phase3","Entra ID","Custom banned password protection not in use","AD_Users_Security","Have"
+"Phase3","Entra ID","Custom role assigned to unprivileged principals in an app’s scope","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; Entra_RoleAssignments; Entra_ServicePrincipals","Missing"
+"Phase3","Entra ID","Detect MFA policy changes for groups and users","AD_Groups; AD_Users_Security; Entra_AuthMethods","Missing"
+"Phase3","Entra ID","Dynamic administrative units with self-assignment risk","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security","Have"
+"Phase3","Entra ID","Ensure all non-privileged users can complete MFA","AD_Users_Security; Entra_AuthMethods; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Enterprise applications using SAML for SSO","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; Entra_ServicePrincipals","Missing"
+"Phase3","Entra ID","Entra Connect sync account password reset","AD_Users_Security; Entra_ConditionalAccessPolicies","Missing"
+"Phase3","Entra ID","Entra custom Roles with risky permissions","Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Entra tenant is susceptible to Hidden Consent Grant attack","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs","Have"
+"Phase3","Entra ID","FIDO2 Attestation is not enforced","","Missing"
+"Phase3","Entra ID","Global Administrators that signed in during the last 14 days","AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Guest accounts that were inactive for more than 30 days","AD_Users_Security","Have"
+"Phase3","Entra ID","Guest invites not accepted in last 30 days","","Missing"
+"Phase3","Entra ID","Guest users are not restricted","AD_Groups; AD_Users_Security","Have"
+"Phase3","Entra ID","Hybrid-synced privileged role accounts","AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Less than 2 Global Administrators exist","Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","List of risky users (medium or high level)","AD_Users_Security","Have"
+"Phase3","Entra ID","MFA bombing attack occurred in the past day","AD_Users_Security; Entra_AuthMethods; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","MFA not configured for privileged accounts","AD_Users_Security; Entra_AuthMethods; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","More than 10 Privileged Administrators exist","Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","More than 5 Global Administrators exist","Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Non-admin users can create tenants","AD_Users_Security","Have"
+"Phase3","Entra ID","Non-admin users can register custom applications","AD_Users_Security; Entra_ServicePrincipals","Missing"
+"Phase3","Entra ID","Non-synced Entra user that is eligible for a privileged role","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Permanent active privileged role assignment","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Privileged accounts with mailbox","AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Privileged group contains guest account","AD_Groups; AD_Users_Security; Entra_RoleAssignments; Tier0_PrivilegedGroupMembers","Missing"
+"Phase3","Entra ID","Prohibited Entra ID roles assigned","Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Report suspicious MFA activity disabled","AD_Users_Security; Entra_AuthMethods","Missing"
+"Phase3","Entra ID","s Directory Synchronization Accounts role member","AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Security defaults not enabled","Entra_AuthMethods; Entra_ConditionalAccessPolicies","Missing"
+"Phase3","Entra ID","Security questions are in use","AD_Users_Security","Have"
+"Phase3","Entra ID","Self-service password reset enabled for privileged roles","AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Suspicious credentials on Microsoft service principals","Entra_ServicePrincipals","Missing"
+"Phase3","Entra ID","Unprivileged owner of a privileged group","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Groups; AD_Users_Security; Entra_RoleAssignments; Tier0_PrivilegedGroupMembers","Missing"
+"Phase3","Entra ID","Unresolved Entra ID privileged role members","AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Unrestricted user consent allowed","AD_Users_Security","Have"
+"Phase3","Entra ID","User consent is allowed for risky applications","AD_Users_Security","Have"
+"Phase3","Entra ID","Users are not using their privileged roles","AD_Users_Security; Entra_RoleAssignments","Missing"
+"Phase3","Entra ID","Users can create security groups","AD_Groups; AD_Users_Security","Have"
+"Phase3","Entra ID","Users or devices inactive for at least 90 days","AD_Users_Security","Have"
+"Phase2","Group Policy Security","Changes to Default Domain Policy or Default Domain Controllers Policy in the last 7 days","AD_RecentlyCreatedObjects; DC_SecuritySignals; GPO_Inventory","Have"
+"Phase1","Group Policy Security","Dangerous GPO logon script path","AD_Users_Security; GPO_Delegation; GPO_Inventory","Have"
+"Phase1","Group Policy Security","Dangerous user rights granted by GPO","AD_Users_Security; GPO_Delegation; GPO_Inventory; GPO_UserRightsAssignments","Have"
+"Phase2","Group Policy Security","GPO linking delegation at the AD Site level","AD_Users_Security; DC_SecuritySignals; GPO_Delegation; GPO_Inventory","Have"
+"Phase2","Group Policy Security","GPO linking delegation at the domain controller OU level","AD_Users_Security; DC_SecuritySignals; GPO_Delegation; GPO_Inventory","Have"
+"Phase1","Group Policy Security","GPO linking delegation at the domain level","AD_Computers_Security; AD_Users_Security; GPO_Delegation; GPO_Inventory","Have"
+"Phase2","Group Policy Security","GPO Weak LM Hash storage enabled","AD_Groups; GPO_Inventory","Have"
+"Phase1","Group Policy Security","GPO with scheduled tasks configured","AD_Groups; AD_Users_Security; GPO_Delegation; GPO_Inventory","Have"
+"Phase2","Group Policy Security","Reversible passwords found in GPOs","GPO_Inventory","Have"
+"Phase2","Group Policy Security","SYSVOL Executable Changes","AD_Users_Security; GPO_Inventory","Have"
+"Phase2","Group Policy Security","Writable shortcuts found in GPO","AD_Groups; AD_Users_Security; GPO_Inventory","Have"
+"Phase3","Hybrid Security","AAD privileged users that are also privileged in AD","AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers","Missing"
+"Phase3","Hybrid Security","Accounts with Kerberos constrained delegation configured to SSO computer account","AD_Computers_Security; AD_Users_Security; Delegation_Constrained; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers","Missing"
+"Phase3","Hybrid Security","AD privileged users that are synced to AAD","AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers","Missing"
+"Phase3","Hybrid Security","Password hash synchronization is not enabled","AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers","Missing"
+"Phase3","Hybrid Security","RC4 or DES encryption is supported by SSO computer account","AD_Computers_Security; AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers","Missing"
+"Phase3","Hybrid Security","Resource Based Constrained Delegation applied to AZUREADSSOACC account","AD_Users_Security; Delegation_Constrained; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers","Missing"
+"Phase3","Hybrid Security","SSO computer account with password last set over 90 days ago","AD_Computers_Security; AD_Users_Security; Entra_RoleAssignments; Hybrid_AADConnectConfig; Tier0_PrivilegedGroupMembers","Missing"
+"Phase2","Kerberos Security","Accounts with altSecurityIdentities configured","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Users_Security","Have"
+"Phase2","Kerberos Security","Accounts with Constrained Delegation configured to ghost SPN","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security; Delegation_Constrained; Kerberos_SpnAccounts","Have"
+"Phase2","Kerberos Security","Accounts with Constrained Delegation configured to krbtgt","AD_Computers_Security; AD_Users_Security; Delegation_Constrained","Have"
+"Phase2","Kerberos Security","Computer account takeover through Kerberos Resource-Based Constrained Delegation (RBCD)","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_Computers_Security; AD_Users_Security; Delegation_RBCD","Have"
+"Phase2","Kerberos Security","Computer or user accounts with SPN that have unconstrained delegation","AD_Computers_Security; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; Delegation_Constrained; Delegation_Unconstrained; Kerberos_SpnAccounts","Have"
+"Phase2","Kerberos Security","Domain controllers with Resource-Based Constrained Delegation (RBCD) enabled","AD_Users_Security; DC_SecuritySignals; Delegation_RBCD","Have"
+"Phase2","Kerberos Security","Kerberos krbtgt account with old password","AD_Users_Security","Have"
+"Phase2","Kerberos Security","Kerberos protocol transition delegation configured","Delegation_ProtocolTransition","Have"
+"Phase2","Kerberos Security","krbtgt account with Resource-Based Constrained Delegation (RBCD) enabled","AD_Users_Security; Delegation_RBCD","Have"
+"Phase2","Kerberos Security","Objects with constrained delegation configured","ADCS_CertificateTemplatePermissions; ADCS_CertificateTemplates; ADCS_EnrollmentServicesTemplates; ADCS_EnterpriseCAs; AD_ForestTrusts; AD_TrustRelationshipMap; AD_Users_Security; Delegation_Constrained; Delegation_ProtocolTransition","Have"
+"Phase2","Kerberos Security","Primary users with SPN not supporting AES encryption on Kerberos","AD_Users_Security; Kerberos_SpnAccounts","Have"
+"Phase2","Kerberos Security","Principals with constrained authentication delegation enabled for a DC service","AD_Computers_Security; AD_Users_Security; DC_SecuritySignals; Delegation_Constrained","Have"
+"Phase2","Kerberos Security","Principals with constrained delegation using protocol transition enabled for a DC service","AD_Computers_Security; AD_Users_Security; DC_SecuritySignals; Delegation_Constrained; Delegation_ProtocolTransition","Have"
+"Phase2","Kerberos Security","Privileged users with ServicePrincipalNames defined","AD_AdminSdHolderImpact; AD_Users_Security; Kerberos_SpnAccounts; Tier0_AdminCountObjects","Have"
+"Phase2","Kerberos Security","RC4 or DES encryption type is supported by Domain Controllers","DC_SecuritySignals","Have"
+"Phase2","Kerberos Security","Users with ServicePrincipalName defined","AD_Users_Security; Kerberos_SpnAccounts","Have"
+"Phase2","Kerberos Security","Users with the attribute userPassword set","AD_Users_Security","Have"
+"Phase2","Kerberos Security","Write access to RBCD on DC","AD_Groups; AD_Users_Security; DC_SecuritySignals; Delegation_RBCD; Tier0_PrivilegedGroupMembers","Have"
+"Phase2","Kerberos Security","Write access to RBCD on krbtgt account","AD_Groups; AD_Users_Security; Delegation_RBCD; Tier0_PrivilegedGroupMembers","Have"
+"Phase4","Okta","High privileged custom roles","AD_Users_Security; Okta_RolesAndPolicies","Missing"
+"Phase4","Okta","New API token was created","AD_RecentlyCreatedObjects; Okta_RolesAndPolicies","Missing"
+"Phase4","Okta","New permission has been granted to a group","AD_Groups; AD_RecentlyCreatedObjects; Okta_RolesAndPolicies","Missing"
+"Phase4","Okta","New permission has been granted to user","AD_RecentlyCreatedObjects; AD_Users_Security; Okta_RolesAndPolicies","Missing"
+"Phase4","Okta","New Super Admin permission has been granted to user","AD_RecentlyCreatedObjects; AD_Users_Security; Okta_RolesAndPolicies","Missing"
+"Phase4","Okta","New Super Admin permissions has been granted to a group","AD_Groups; AD_RecentlyCreatedObjects; Okta_RolesAndPolicies","Missing"
+"Phase4","Okta","Password policy check","AD_WeakPasswordPolicies; Okta_RolesAndPolicies","Missing"
+"Phase4","Okta","User activation in the last 7 days","AD_RecentlyCreatedObjects; AD_Users_Security; Okta_RolesAndPolicies","Missing"
+"Phase4","Okta","User deactivation in the last 7 days","AD_RecentlyCreatedObjects; AD_Users_Security; Okta_RolesAndPolicies","Missing"
+"Phase4","Okta","Users without Multi- Factor Authentication (MFA)","AD_Users_Security; Okta_RolesAndPolicies","Missing"

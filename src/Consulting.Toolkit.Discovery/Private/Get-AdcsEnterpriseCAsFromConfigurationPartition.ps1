@@ -14,12 +14,14 @@ function Get-AdcsEnterpriseCAsFromConfigurationPartition {
 
     foreach ($ca in $cas) {
         [pscustomobject]@{
-            CAName            = $ca.Name
-            DisplayName       = $ca.displayName
-            DnsHostName       = $ca.dNSHostName
-            DistinguishedName = $ca.DistinguishedName
-            TemplateCount     = @($ca.certificateTemplates).Count
-            Templates         = (@($ca.certificateTemplates) -join ';')
+            ForestName             = [string]$Forest.Name
+            CAName                 = [string]$ca.Name
+            DnsHostName            = [string]$ca.dNSHostName
+            DistinguishedName      = [string]$ca.DistinguishedName
+            CertificateSubject     = [string]$ca.cACertificateDN
+            CertificateSerialNumber = $null
+            ValidityNotAfterUtc    = $null
+            PublishedTemplates     = (@($ca.certificateTemplates) -join ';')
         }
     }
 }

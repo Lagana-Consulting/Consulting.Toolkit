@@ -477,6 +477,25 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'AnyPurpose'; Type = 'bool'; Description = 'EKU any purpose'; Example = 'false'; Notes = '' }
     [pscustomobject]@{ Column = 'RequiresManagerApproval'; Type = 'bool'; Description = 'Manager approval required'; Example = 'false'; Notes = '' }
     [pscustomobject]@{ Column = 'AuthorizedSignatures'; Type = 'int'; Description = 'Authorized signatures required'; Example = '0'; Notes = '' }
+    [pscustomobject]@{ Column = 'SANRequirements'; Type = 'string'; Description = 'Subject/SAN requirement mode'; Example = 'EnrolleeSuppliesSubject'; Notes = 'ESC-path relevant signal' }
+    [pscustomobject]@{ Column = 'AuthenticationRequirements'; Type = 'string'; Description = 'Additional auth/approval requirements'; Example = 'ManagerApproval;AuthorizedSignatures=1'; Notes = 'Best-effort summary' }
+  )
+
+  # Forest: Trust hardening signals
+  $schemas['Forest_Security_Trusts'] = @(
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Trust object name'; Example = 'fabrikam.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Source'; Type = 'string'; Description = 'Source domain/forest'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Target'; Type = 'string'; Description = 'Target domain/forest'; Example = 'fabrikam.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Direction'; Type = 'string'; Description = 'Trust direction'; Example = 'Bidirectional'; Notes = '' }
+    [pscustomobject]@{ Column = 'TrustType'; Type = 'string'; Description = 'Trust type'; Example = 'External'; Notes = '' }
+    [pscustomobject]@{ Column = 'TrustAttributes'; Type = 'string'; Description = 'Raw trust attributes'; Example = 'FOREST_TRANSITIVE'; Notes = '' }
+    [pscustomobject]@{ Column = 'ForestTransitive'; Type = 'bool'; Description = 'Forest transitive'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'SelectiveAuthentication'; Type = 'bool'; Description = 'Selective authentication enabled'; Example = 'false'; Notes = '' }
+    [pscustomobject]@{ Column = 'SIDFilteringForestAware'; Type = 'bool'; Description = 'Forest-aware SID filtering'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'SIDFilteringQuarantined'; Type = 'bool'; Description = 'Quarantine SID filtering'; Example = 'false'; Notes = '' }
+    [pscustomobject]@{ Column = 'SIDFilteringStatus'; Type = 'string'; Description = 'Derived SID filtering status'; Example = 'ForestAware'; Notes = '' }
+    [pscustomobject]@{ Column = 'UsesAESKeys'; Type = 'bool'; Description = 'Trust uses AES keys'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'UsesRC4Encryption'; Type = 'bool'; Description = 'Trust uses RC4'; Example = 'false'; Notes = '' }
   )
 
   # Forest: ADCS Template Permissions (flattened ACEs)

@@ -26,11 +26,13 @@ function Resolve-AdSchemaNameForCsv {
         @{ Pattern = '^AD__Forest__Security__ADCS__EnrollmentServicesTemplates__Forest\.csv$'; Schema = 'Forest_Security_ADCS_EnrollmentServicesTemplates' }
         @{ Pattern = '^AD__Forest__Security__ADCS__CertificateTemplates__Forest\.csv$'; Schema = 'Forest_Security_ADCS_CertificateTemplates' }
         @{ Pattern = '^AD__Forest__Security__ADCS__CertificateTemplatePermissions__Forest\.csv$'; Schema = 'Forest_Security_ADCS_CertificateTemplatePermissions' }
+        @{ Pattern = '^AD__Forest__Security__Trusts__Forest\.csv$'; Schema = 'Forest_Security_Trusts' }
 
         # --- Domain Security Tier0 / Privileged ---
         @{ Pattern = '^AD__Domain__Security__PrivilegedGroupMembers__Domain-.*\.csv$'; Schema = 'Domain_Security_PrivilegedGroupMembers' }
         @{ Pattern = '^AD__Domain__Security__AdminCountObjects__Domain-.*\.csv$'; Schema = 'Domain_Security_AdminCountObjects' }
         @{ Pattern = '^AD__Domain__Security__ProtectedUsers__Domain-.*\.csv$'; Schema = 'Domain_Security_ProtectedUsers' }
+        @{ Pattern = '^AD__Domain__Security__AdminSdHolderImpact__Domain-.*\.csv$'; Schema = 'AdminSdHolderImpact' }
 
         # --- Domain Security Phase 1 ---
         @{ Pattern = '^AD__Domain__Security__RecentlyCreatedObjects__Domain-.*\.csv$'; Schema = 'Domain_Security_RecentlyCreatedObjects' }

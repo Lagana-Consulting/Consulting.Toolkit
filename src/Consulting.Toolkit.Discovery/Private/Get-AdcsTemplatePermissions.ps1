@@ -23,15 +23,20 @@ function Get-AdcsTemplatePermissions {
         }
 
         foreach ($ace in $sd.Access) {
+            $principal = [string]$ace.IdentityReference.Value
+            $principalSid = $null
+            if ($principal -match '^S-\d-\d+-.+') {
+                $principalSid = $principal
+            }
+
             $rows += [pscustomobject]@{
-                TemplateName        = $t.Name
-                DisplayName         = $t.displayName
-                Identity            = $ace.IdentityReference.Value
-                AccessType          = [string]$ace.AccessControlType
-                Rights              = [string]$ace.ActiveDirectoryRights
-                Inherited           = [bool]$ace.IsInherited
-                ObjectType          = [string]$ace.ObjectType
-                InheritedObjectType = [string]$ace.InheritedObjectType
+                ForestName   = [string]$Forest.Name
+                TemplateName = [string]$t.Name
+                Principal    = $principal
+                PrincipalSid = $principalSid
+                Right        = [string]$ace.ActiveDirectoryRights
+                AccessType   = [string]$ace.AccessControlType
+                Inherited    = [bool]$ace.IsInherited
             }
         }
     }

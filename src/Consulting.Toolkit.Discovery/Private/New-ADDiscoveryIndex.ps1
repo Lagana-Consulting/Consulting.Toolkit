@@ -67,6 +67,12 @@ function New-ADDiscoveryIndex {
             '^20_domains/Domain-[^/]+/AD__Domain__Security__PasswordPolicyFgpp__.+\.csv$' { return 'Domain.PasswordPolicy.FGPP' }
             '^20_domains/Domain-[^/]+/AD__Domain__GPO__Inventory__.+\.csv$' { return 'Domain.GPO.Inventory' }
             '^20_domains/Domain-[^/]+/AD__Domain__GPO__Links__.+\.csv$' { return 'Domain.GPO.Links' }
+            '^20_domains/Domain-[^/]+/AD__Domain__GPO__Delegation__.+\.csv$' { return 'Domain.GPO.Delegation' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Security__RecentlyCreatedObjects__.+\.csv$' { return 'Domain.Security.RecentlyCreatedObjects' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Security__BuiltInAdministratorSignals__.+\.csv$' { return 'Domain.Security.BuiltInAdministratorSignals' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Security__AsrepRoastableUsers__.+\.csv$' { return 'Domain.Security.AsrepRoastableUsers' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Security__PrivilegedPasswordAge__.+\.csv$' { return 'Domain.Security.PrivilegedPasswordAge' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Security__AdminSdHolderImpact__.+\.csv$' { return 'Domain.Security.AdminSdHolderImpact' }
 
             default {
                 $stem = [System.IO.Path]::GetFileNameWithoutExtension($p)

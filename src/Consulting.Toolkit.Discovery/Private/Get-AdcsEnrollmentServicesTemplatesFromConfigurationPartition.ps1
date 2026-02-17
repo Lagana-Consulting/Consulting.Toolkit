@@ -16,10 +16,11 @@ function Get-AdcsEnrollmentServicesTemplatesFromConfigurationPartition {
     foreach ($ca in $cas) {
         foreach ($t in @($ca.certificateTemplates)) {
             $rows += [pscustomobject]@{
-                CAName              = $ca.Name
-                DnsHostName         = $ca.dNSHostName
-                TemplateName        = $t
-                EnrollmentServiceDn = $ca.DistinguishedName
+                ForestName            = [string]$Forest.Name
+                EnrollmentServiceName = [string]$ca.Name
+                EnrollmentServiceDn   = [string]$ca.DistinguishedName
+                TemplateName          = [string]$t
+                TemplateOid           = $null
             }
         }
     }

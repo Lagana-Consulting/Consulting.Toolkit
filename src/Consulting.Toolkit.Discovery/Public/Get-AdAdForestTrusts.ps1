@@ -29,19 +29,30 @@ function Get-AdAdForestTrusts {
   }
 
   $rows = foreach ($t in $trusts) {
+    $sidFilteringStatus = if ($t.SIDFilteringQuarantined -eq $true) {
+      'Quarantined'
+    } elseif ($t.SIDFilteringForestAware -eq $true) {
+      'ForestAware'
+    } elseif ($t.SIDFilteringForestAware -eq $false -or $t.SIDFilteringQuarantined -eq $false) {
+      'DisabledOrUnknown'
+    } else {
+      'Unknown'
+    }
+
     [pscustomobject]@{
-      Name               = [string]$t.Name
-      Source             = [string]$t.Source
-      Target             = [string]$t.Target
-      Direction          = [string]$t.Direction
-      TrustType          = [string]$t.TrustType
-      TrustAttributes    = [string]$t.TrustAttributes
-      ForestTransitive   = $t.ForestTransitive
-      SelectiveAuthentication = $t.SelectiveAuthentication
-      SIDFilteringForestAware = $t.SIDFilteringForestAware
-      SIDFilteringQuarantined = $t.SIDFilteringQuarantined
-      UsesAESKeys        = $t.UsesAESKeys
-      UsesRC4Encryption  = $t.UsesRC4Encryption
+      Name                     = [string]$t.Name
+      Source                   = [string]$t.Source
+      Target                   = [string]$t.Target
+      Direction                = [string]$t.Direction
+      TrustType                = [string]$t.TrustType
+      TrustAttributes          = [string]$t.TrustAttributes
+      ForestTransitive         = [bool]$t.ForestTransitive
+      SelectiveAuthentication  = [bool]$t.SelectiveAuthentication
+      SIDFilteringForestAware  = if ($null -ne $t.SIDFilteringForestAware) { [bool]$t.SIDFilteringForestAware } else { $null }
+      SIDFilteringQuarantined  = if ($null -ne $t.SIDFilteringQuarantined) { [bool]$t.SIDFilteringQuarantined } else { $null }
+      SIDFilteringStatus       = $sidFilteringStatus
+      UsesAESKeys              = if ($null -ne $t.UsesAESKeys) { [bool]$t.UsesAESKeys } else { $null }
+      UsesRC4Encryption        = if ($null -ne $t.UsesRC4Encryption) { [bool]$t.UsesRC4Encryption } else { $null }
     }
   }
 
