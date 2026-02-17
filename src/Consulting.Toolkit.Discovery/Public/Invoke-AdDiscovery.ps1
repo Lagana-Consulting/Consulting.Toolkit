@@ -151,7 +151,62 @@ function Invoke-AdDiscovery {
 
     if ($IncludeSecurity) {
         Write-Host "Exporting security datasets (forest)..." -ForegroundColor Cyan
-        Invoke-AdSecurityDiscoveryExport -Forest $forest -ForestDir $forestDir -ScopeTag 'Forest' -LogPath $layout.LogPath
+        # Inline: Forest-level (ADCS) security exports
+        if ($forestDir -and (Test-Path -LiteralPath $forestDir)) {
+            function Try-Export {
+                param([scriptblock]$Action, [string]$Operation)
+                try {
+                    & $Action
+                    Write-Host "    [OK] $Operation" -ForegroundColor Green
+                } catch {
+                    Write-Host "    [WARN] $Operation : $($_.Exception.Message)" -ForegroundColor Yellow
+                }
+            }
+
+            Try-Export -Operation "ADCS Enterprise CAs (forest)" -Action {
+                $cas = @(Get-AdSecurityAdcsInventory -Forest $forest -Mode EnterpriseCAs)
+                $out = Join-Path $forestDir "AD__Forest__Security__ADCS__EnterpriseCAs__Forest.csv"
+                $schemaName = Resolve-AdSchemaNameForCsv -Path $out
+                if ([string]::IsNullOrWhiteSpace($schemaName)) {
+                    $cas | Export-AdCsvSafe -Path $out -Force -AllowEmpty
+                } else {
+                    $cas | Export-AdCsvSafe -Path $out -SchemaName $schemaName -Force -AllowEmpty
+                }
+            }
+
+            Try-Export -Operation "ADCS Enrollment Services Templates (forest)" -Action {
+                $map = @(Get-AdSecurityAdcsInventory -Forest $forest -Mode EnrollmentServicesTemplates)
+                $out = Join-Path $forestDir "AD__Forest__Security__ADCS__EnrollmentServicesTemplates__Forest.csv"
+                $schemaName = Resolve-AdSchemaNameForCsv -Path $out
+                if ([string]::IsNullOrWhiteSpace($schemaName)) {
+                    $map | Export-AdCsvSafe -Path $out -Force -AllowEmpty
+                } else {
+                    $map | Export-AdCsvSafe -Path $out -SchemaName $schemaName -Force -AllowEmpty
+                }
+            }
+
+            Try-Export -Operation "ADCS Certificate Templates (forest)" -Action {
+                $templates = @(Get-AdSecurityCertificateTemplates -Forest $forest -Mode Templates)
+                $out = Join-Path $forestDir "AD__Forest__Security__ADCS__CertificateTemplates__Forest.csv"
+                $schemaName = Resolve-AdSchemaNameForCsv -Path $out
+                if ([string]::IsNullOrWhiteSpace($schemaName)) {
+                    $templates | Export-AdCsvSafe -Path $out -Force -AllowEmpty
+                } else {
+                    $templates | Export-AdCsvSafe -Path $out -SchemaName $schemaName -Force -AllowEmpty
+                }
+            }
+
+            Try-Export -Operation "ADCS Certificate Template Permissions (forest)" -Action {
+                $perms = @(Get-AdSecurityCertificateTemplates -Forest $forest -Mode TemplatePermissions)
+                $out = Join-Path $forestDir "AD__Forest__Security__ADCS__CertificateTemplatePermissions__Forest.csv"
+                $schemaName = Resolve-AdSchemaNameForCsv -Path $out
+                if ([string]::IsNullOrWhiteSpace($schemaName)) {
+                    $perms | Export-AdCsvSafe -Path $out -Force -AllowEmpty
+                } else {
+                    $perms | Export-AdCsvSafe -Path $out -SchemaName $schemaName -Force -AllowEmpty
+                }
+            }
+        }
     }
 
     # -------------------------
@@ -199,7 +254,103 @@ function Invoke-AdDiscovery {
 
             if ($IncludeSecurity) {
                 Write-Host "  - Security discovery (tier0/delegation/adcs signals)" -ForegroundColor Gray
-                Invoke-AdSecurityDiscoveryExport -Forest $forest -ForestDir $forestDir -DomainContext $ctx -DomainDir $domainDir -ScopeTag $scopeTag -LogPath $layout.LogPath
+                # Inline: Domain-level security exports
+                if ($domainDir -and (Test-Path -LiteralPath $domainDir)) {
+                    function Try-Export {
+                        param([scriptblock]$Action, [string]$Operation)
+                        try {
+                            & $Action
+                            Write-Host "    [OK] $Operation" -ForegroundColor Green
+                        } catch {
+                            Write-Host "    [WARN] $Operation : $($_.Exception.Message)" -ForegroundColor Yellow
+                        }
+                    }
+
+                    Try-Export -Operation "Tier0 inventory (domain)" -Action {
+                        $tier0 = Get-AdSecurityTier0Inventory -DomainContext $ctx
+                        $out1 = Join-Path $domainDir ("AD__Domain__Security__PrivilegedGroupMembers__{0}.csv" -f $scopeTag)
+                        $schemaName1 = Resolve-AdSchemaNameForCsv -Path $out1
+                        if ([string]::IsNullOrWhiteSpace($schemaName1)) {
+                            $tier0.PrivilegedGroupMembers | Export-AdCsvSafe -Path $out1 -Force -AllowEmpty
+                        } else {
+                            $tier0.PrivilegedGroupMembers | Export-AdCsvSafe -Path $out1 -SchemaName $schemaName1 -Force -AllowEmpty
+                        }
+
+                        $out2 = Join-Path $domainDir ("AD__Domain__Security__AdminCountObjects__{0}.csv" -f $scopeTag)
+                        $schemaName2 = Resolve-AdSchemaNameForCsv -Path $out2
+                        if ([string]::IsNullOrWhiteSpace($schemaName2)) {
+                            $tier0.AdminCountObjects | Export-AdCsvSafe -Path $out2 -Force -AllowEmpty
+                        } else {
+                            $tier0.AdminCountObjects | Export-AdCsvSafe -Path $out2 -SchemaName $schemaName2 -Force -AllowEmpty
+                        }
+
+                        $out3 = Join-Path $domainDir ("AD__Domain__Security__ProtectedUsers__{0}.csv" -f $scopeTag)
+                        $schemaName3 = Resolve-AdSchemaNameForCsv -Path $out3
+                        if ([string]::IsNullOrWhiteSpace($schemaName3)) {
+                            $tier0.ProtectedUsers | Export-AdCsvSafe -Path $out3 -Force -AllowEmpty
+                        } else {
+                            $tier0.ProtectedUsers | Export-AdCsvSafe -Path $out3 -SchemaName $schemaName3 -Force -AllowEmpty
+                        }
+                    }
+
+                    Try-Export -Operation "Delegation inventory (domain)" -Action {
+                        $del = Get-AdSecurityDelegationInventory -DomainContext $ctx
+
+                        $outU = Join-Path $domainDir ("AD__Domain__Security__DelegationUnconstrained__{0}.csv" -f $scopeTag)
+                        $schemaNameU = Resolve-AdSchemaNameForCsv -Path $outU
+                        if ([string]::IsNullOrWhiteSpace($schemaNameU)) {
+                            $del.Unconstrained | Export-AdCsvSafe -Path $outU -Force -AllowEmpty
+                        } else {
+                            $del.Unconstrained | Export-AdCsvSafe -Path $outU -SchemaName $schemaNameU -Force -AllowEmpty
+                        }
+
+                        $outC = Join-Path $domainDir ("AD__Domain__Security__DelegationConstrained__{0}.csv" -f $scopeTag)
+                        $schemaNameC = Resolve-AdSchemaNameForCsv -Path $outC
+                        if ([string]::IsNullOrWhiteSpace($schemaNameC)) {
+                            $del.Constrained | Export-AdCsvSafe -Path $outC -Force -AllowEmpty
+                        } else {
+                            $del.Constrained | Export-AdCsvSafe -Path $outC -SchemaName $schemaNameC -Force -AllowEmpty
+                        }
+
+                        $outP = Join-Path $domainDir ("AD__Domain__Security__DelegationProtocolTransition__{0}.csv" -f $scopeTag)
+                        $schemaNameP = Resolve-AdSchemaNameForCsv -Path $outP
+                        if ([string]::IsNullOrWhiteSpace($schemaNameP)) {
+                            $del.ProtocolTransition | Export-AdCsvSafe -Path $outP -Force -AllowEmpty
+                        } else {
+                            $del.ProtocolTransition | Export-AdCsvSafe -Path $outP -SchemaName $schemaNameP -Force -AllowEmpty
+                        }
+
+                        $outR = Join-Path $domainDir ("AD__Domain__Security__DelegationRBCD__{0}.csv" -f $scopeTag)
+                        $schemaNameR = Resolve-AdSchemaNameForCsv -Path $outR
+                        if ([string]::IsNullOrWhiteSpace($schemaNameR)) {
+                            $del.RBCD | Export-AdCsvSafe -Path $outR -Force -AllowEmpty
+                        } else {
+                            $del.RBCD | Export-AdCsvSafe -Path $outR -SchemaName $schemaNameR -Force -AllowEmpty
+                        }
+                    }
+
+                    Try-Export -Operation "SPN Accounts inventory (domain)" -Action {
+                        $spn = @(Get-AdSecuritySpnAccounts -DomainContext $ctx)
+                        $out = Join-Path $domainDir ("AD__Domain__Security__SpnAccounts__{0}.csv" -f $scopeTag)
+                        $schemaName = Resolve-AdSchemaNameForCsv -Path $out
+                        if ([string]::IsNullOrWhiteSpace($schemaName)) {
+                            $spn | Export-AdCsvSafe -Path $out -Force -AllowEmpty
+                        } else {
+                            $spn | Export-AdCsvSafe -Path $out -SchemaName $schemaName -Force -AllowEmpty
+                        }
+                    }
+
+                    Try-Export -Operation "Domain Controller security signals (best effort)" -Action {
+                        $signals = @(Get-AdSecurityDomainControllerSignals -DomainContext $ctx)
+                        $out = Join-Path $domainDir ("AD__Domain__Security__DomainControllerSecuritySignals__{0}.csv" -f $scopeTag)
+                        $schemaName = Resolve-AdSchemaNameForCsv -Path $out
+                        if ([string]::IsNullOrWhiteSpace($schemaName)) {
+                            $signals | Export-AdCsvSafe -Path $out -Force -AllowEmpty
+                        } else {
+                            $signals | Export-AdCsvSafe -Path $out -SchemaName $schemaName -Force -AllowEmpty
+                        }
+                    }
+                }
             }
 
             # Domain summary / infrastructure

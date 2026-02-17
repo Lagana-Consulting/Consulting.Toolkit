@@ -62,7 +62,11 @@ function Export-AdCsvSafe {
                 throw "Unknown SchemaName '$SchemaName'. Known schemas: $known"
             }
 
+            # Normalize schema columns to strings if schema definitions are objects
             $schemaColumns = @($schemas[$SchemaName])
+            if ($schemaColumns -and $schemaColumns[0] -is [object] -and $schemaColumns[0].PSObject.Properties['Column']) {
+                $schemaColumns = @($schemaColumns | Select-Object -ExpandProperty Column)
+            }
         }
 
         $enc = if ($Encoding -eq 'Ascii') { 'ASCII' } else { 'UTF8' }

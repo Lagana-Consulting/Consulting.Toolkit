@@ -71,6 +71,10 @@ function Invoke-AdDiscoveryExport {
         $invokeParams.Server = $Server
     }
 
+    if ($IncludeSecurity) {
+        $invokeParams.IncludeSecurity = $true
+    }
+
     # Capture ALL pipeline output
     $raw = @(Invoke-AdDiscovery @invokeParams)
 

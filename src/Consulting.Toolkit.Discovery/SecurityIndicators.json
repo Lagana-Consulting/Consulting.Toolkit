@@ -1,0 +1,5582 @@
+{
+  "schemaVersion": 1,
+  "generatedUtc": "2026-02-17T14:35:09Z",
+  "categories": [
+    {
+      "id": "AccountSecurity",
+      "displayName": "Account Security",
+      "order": 10
+    },
+    {
+      "id": "ADDelegation",
+      "displayName": "AD Delegation",
+      "order": 20
+    },
+    {
+      "id": "ADInfrastructure",
+      "displayName": "AD Infrastructure",
+      "order": 30
+    },
+    {
+      "id": "EntraID",
+      "displayName": "Entra ID",
+      "order": 40
+    },
+    {
+      "id": "GroupPolicySecurity",
+      "displayName": "Group Policy Security",
+      "order": 50
+    },
+    {
+      "id": "HybridSecurity",
+      "displayName": "Hybrid Security",
+      "order": 60
+    },
+    {
+      "id": "KerberosSecurity",
+      "displayName": "Kerberos Security",
+      "order": 70
+    },
+    {
+      "id": "Okta",
+      "displayName": "Okta",
+      "order": 80
+    }
+  ],
+  "indicators": [
+    {
+      "id": "AccountSecurity_abnormal_password_refresh",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Abnormal Password Refresh",
+      "description": "Looks for user accounts with a recent pwdLastSet change without a corresponding password replication. If the “User must change password at next logon” option is set and then later cleared, could indicate an administrative error or an attempt to bypass the organization’s password policy.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Persistence"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "AD_WeakPasswordPolicies"
+      ]
+    },
+    {
+      "id": "AccountSecurity_ad_objects_created_within_the_last_10_days",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "AD objects created within the last 10 days",
+      "description": "Looks for any AD objects that were recently created. Allows you to spot unknown or illegitimate accounts. Meant to be used for threat hunting, post-breach investigation, or compromise validation.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Persistence"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_RecentlyCreatedObjects",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_admins_with_old_passwords",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Admins with old passwords",
+      "description": "Looks for Admin accounts whose password has not changed in over 180 days. If Admin account passwords are not changed on a regular basis, these accounts could be ripe for password guessing attacks.",
+      "severity": "Warning",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Discovery"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_password_ change_priv"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_PrivilegedPasswordAge",
+        "AD_Users_Security",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "AccountSecurity_built_in_domain_administrator_account_used_within_the_last_two_w",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Built-in domain Administrator account used within the last two weeks",
+      "description": "Checks to see if the lastLogonTimestamp for the built-in Domain Administrator account has been recently updated. Could indicate that the user has been compromised.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Credential Compromise Scope Analysis",
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_BuiltInAdminSignals",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_built_in_domain_administrator_account_with_old_password_180_days",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Built-in domain Administrator account with old password (180 days)",
+      "description": "Checks to see if the pwdLastSet attribute on the built-in Domain Administrator account has been changed within the last 180 days. If this password is not changed on a regular basis, this account can be vulnerable to brute force password attacks.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_password_ change_priv"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_BuiltInAdminSignals",
+        "AD_PrivilegedPasswordAge",
+        "AD_Users_Security",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "AccountSecurity_changes_to_prewindows_2000_compatible_access_group_membership",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Changes to PreWindows 2000 Compatible Access Group membership",
+      "description": "Looks for changes to the built-in “Pre-Windows 2000 Compatible Access” group. It is best to ensure this group does not contain the “Anonymous Logon” or “Everyone” groups.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups"
+      ]
+    },
+    {
+      "id": "AccountSecurity_changes_to_privileged_group_membership_in_the_last_7_days",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Changes to privileged group membership in the last 7 days",
+      "description": "Looks for recent changes to the built-in-privileged groups. Could indicate attempts to escalate privilege.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Groups",
+        "AD_RecentlyCreatedObjects",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "AccountSecurity_changes_to_unprivileged_group_membership_in_the_last_7_days",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Changes to unprivileged group membership in the last 7 days",
+      "description": "Looks for unprivileged groups with memberships changes made during the last 7 days. Membership changes to unprivileged groups may give access to resources using group privileges.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_RecentlyCreatedObjects",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "AccountSecurity_computer_accounts_in_privileged_groups",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Computer accounts in privileged groups",
+      "description": "Looks for computer accounts that are a member of a domain privileged group. If a computer account is a member of the domain privileged group, then anyone that compromises that computer account can act as a member of that group.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Groups",
+        "AD_Users_Security",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "AccountSecurity_computers_with_no_password_set",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Computers with no password set",
+      "description": "Checks for computer objects that did not join the domain and most likely have no password set. In many organizations, automated scripts or legacy tools like “dsadd” are used to pre-create computer accounts. When tools like “dsadd” are used, the computer object is created with a blank (unset) password. This password is intended to remain empty until the actual computer joins the domain. However, if the computer never joins the domain, it remains in a vulnerable state with no password set. Attackers can exploit these pre-created, unused computer accounts for lateral movement and privilege escalation within the domain.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden- Credential Hardening"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Computers_Security",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_distributed_com_users_group_or_performance_log_users_group_are_n",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Distributed COM Users group or Performance Log Users group are not empty",
+      "description": "Checks for non-privileged users that cannot complete the MFA process based on the authentication details they enter. MFA adds an extra layer of security to the sign-in process, which helps protect your organization against security breaches. Users who use MFA are less likely to fall victim to phishing attacks.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_enabled_admin_accounts_that_are_inactive",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Enabled admin accounts that are inactive",
+      "description": "Looks for admin accounts that are enabled, but have not log in for the past 90 days. Attackers who can compromise these accounts will be able to operate unnoticed.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_user_accounts_ dormant"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Evict – Account Locking"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_ephemeral_admins",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Ephemeral Admins",
+      "description": "Looks for users that were added and removed from an Admin group within a 48-hour period. Such short-lived accounts may indicate malicious activity.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy",
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_fgpp_not_applied_to_group",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "FGPP not applied to Group",
+      "description": "Looks for fine-grained password policy (FGPP) targeted to a Universal or Domain Local group. Changing a group’s scope setting from Global to Universal or Domain Local, results in FGPP settings no longer applying to that group, thus decreasing its password security controls.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Persistence"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_WeakPasswordPolicies"
+      ]
+    },
+    {
+      "id": "AccountSecurity_forest_contains_more_than_50_privileged_accounts",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Forest contains more than 50 privileged accounts",
+      "description": "Counts the number of privileged accounts defined in the forest. In general, the more privileged accounts you have, the more opportunities there are for attackers to compromise one of these accounts.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation",
+            "Reconnaissance"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_privileged_members"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_operator_groups_that_are_not_empty",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Operator Groups that are not empty",
+      "description": "Looks for operator groups (Account Operators, Server Operators, Backup Operators, Print Operators) that contain members. These groups have write access to critical resources on the domain; attackers that are members of these groups can take indirect control of the domain.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_ou_permissions_enabling_badsuccessor_dmsa_escalation",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "OU permissions enabling BadSuccessor dMSA escalation",
+      "description": "Checks for excessive permissions to create delegated Managed Service Accounts (dMSAs) within Active Directory organizational units (OU) or the Naming Context (NC) head across domains that contain Windows Server 2025 domain controllers. The indicator identifies non-privileged identities that have been granted CreateChild, GenericAll, WriteDACL, or WriteOwner permissions on OUs or the NC head, which could enable the execution of the “BadSuccessor” Privilege Escalation attack. The “BadSuccessor” attack is a technique that exploits vulnerabilities in Microsoft’s Active Directory and enables domain takeover leveraging dMSAs.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Model- Access Modeling"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "AccountSecurity_privileged_accounts_with_a_password_that_never_expires",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Privileged accounts with a password that never expires",
+      "description": "Identifies privileged accounts (adminCount = 1) where the “Password Never Expires” flag is set. User accounts whose passwords never expire are ripe targets for brute force password guessing. If these accounts are also administrative or privileged accounts, this makes them more of a target.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_dont_expire_priv"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_AdminSdHolderImpact",
+        "AD_Users_Security",
+        "Tier0_AdminCountObjects"
+      ]
+    },
+    {
+      "id": "AccountSecurity_privileged_users_that_are_disabled",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Privileged users that are disabled",
+      "description": "Looks for privileged user accounts that are disabled. If a privileged account is disabled, it should be removed from its privileged group(s) to prevent inadvertent misuse.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "AccountSecurity_privileged_users_with_weak_password_policy",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Privileged users with weak password policy",
+      "description": "Looks for privileged users in each domain that do not have a strong password policy enforced, according to ANSSI framework . It checks both the Fine-Grained Password Policy (FGPP) and the password policy applied to the domain. A strong password defined by ANSSI is at least eight characters long and updated no later than every three years. Weak passwords are easier to crack via brute-force attacks and can provide attackers opportunities for moving laterally or escalating privileges. The risk is even higher for privileged accounts, for when compromised they improve the attacker’s chance to quickly advance within the network.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Discovery"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_privileged_mem- bers_password"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Users_Security",
+        "AD_WeakPasswordPolicies"
+      ]
+    },
+    {
+      "id": "AccountSecurity_protected_users_group_not_in_use",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Protected Users group not in use",
+      "description": "Detects when privileged users are not a member of the Protected Users group. The Protected Users group provides privileged users with additional protection from direct credential theft attacks.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln3_protected_users"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security",
+        "Tier0_ProtectedUsers"
+      ]
+    },
+    {
+      "id": "AccountSecurity_recent_privileged_account_creation_activity",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Recent privileged account creation activity",
+      "description": "Looks for any privileged users or groups (adminCount = 1) that were recently created. Allows you to spot privileged accounts and groups that were created without prior knowledge. Informational",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_AdminSdHolderImpact",
+        "AD_Groups",
+        "AD_RecentlyCreatedObjects",
+        "AD_Users_Security",
+        "Tier0_AdminCountObjects"
+      ]
+    },
+    {
+      "id": "AccountSecurity_recent_sidhistory_changes_on_objects",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Recent sIDHistory changes on objects",
+      "description": "Detects any recent changes to the sIDHistory on objects, including changes to non-privileged accounts where privileged SIDs are added. Attackers need privileged access to AD to be able to write to sIDHistory, but if such rights exist then writing privileged SIDs to regular user accounts is a stealthy way of creating backdoor accounts.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_sidhistory_dan- gerous vuln3_sidhistory_present"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_SidHistoryUsers",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_shadow_credentials_on_privileged_objects",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Shadow Credentials on privileged objects",
+      "description": "Looks for users with write access to the msDS-KeyCredentialLink attribute of privileged users and domain controllers. Users who can write to these privileged objects and Kerberos PKINIT is enabled can elevate privileges to these objects.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "AccountSecurity_trust_accounts_with_old_passwords",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Trust accounts with old passwords",
+      "description": "Looks for trust accounts whose password has not changed within the last year. Trust accounts facilitate authentication across trusts and should be protected like privileged user accounts. Normally, trust account passwords are rotated automatically, so a trust account without a recent password change could indicate an orphaned trust account.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_trusts_accounts"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_ForestTrusts",
+        "AD_PrivilegedPasswordAge",
+        "AD_TrustRelationshipMap",
+        "AD_Users_Security",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "AccountSecurity_unprivileged_accounts_with_admincount_1",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Unprivileged accounts with adminCount=1",
+      "description": "Looks for any users or groups that may be under the control of SDProp (adminCount=1) but are no longer members of privileged groups. Might be evidence of an attacker that attempted to cover their tracks and remove a user they used for compromise.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_AdminSdHolderImpact",
+        "AD_Groups",
+        "AD_Users_Security",
+        "Tier0_AdminCountObjects",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "AccountSecurity_unprivileged_principals_as_dns_admins",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Unprivileged principals as DNS Admins",
+      "description": "Looks for any member of the DNS Admins group that is not a privileged user. Members of this group can be delegated to non-AD administrators (e.g. Admins with networking responsibilities, such as DNS, DHCP, etc.), which can result in these accounts being prime targets for compromise.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Execution",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_dnsadmins",
+            "vuln1_permissions_msdn"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_user_accounts_that_store_passwords_with_reversible_encryption",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "User accounts that store passwords with reversible encryption",
+      "description": "Identifies accounts with the “ENCRYPTED_TEXT_PWD_ALLOWED” flag enabled. Attackers may be able to derive these users’ passwords from the ciphertext and take over these accounts.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln3_reversible_password"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_user_accounts_that_use_des_encryption",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "User accounts that use DES encryption",
+      "description": "Identifies user accounts with the “Use Kerberos DES encryption types for this account” flag set. Attackers can easily crack DES passwords using widely available tools, making these accounts ripe for takeover.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_kerberos_properties_deskey"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_user_accounts_using_smart_card_authentication_with_old_password",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "User accounts using Smart Card authentication with old password",
+      "description": "Looks for user accounts that are using Smart Card authentication whose password has not changed in the last 90 days. A user may use a Smart Card for authentication instead of a password. By default, accounts with the “Smart Card required” flag enabled have disabled password rotation. This static password hash is used for signing Kerberos tickets, and if compromised, may lead to credential-theft-based attacks such as Silver Ticket attacks.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden- Credential Rotation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_user_accounts_with_password_not_required",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "User accounts with password not required",
+      "description": "Identifies user accounts where a password is not required. Accounts with weak access controls are often targeted to move laterally or gain a persistence foothold with the environment.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_users_and_computers_with_non_default_primary_group_ids",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Users and computers with non-default Primary Group IDs",
+      "description": "Returns a list of all users and computers whose Primary Group IDs (PGIDs) are not the defaults for domain users and computers. Modifying the Primary Group ID is a stealthy way for an attacker to escalate privileges without triggering member attribute auditing for group membership changes.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_primary_group_ id_1000",
+            "vuln3_primary_group_ id_nochange"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Computers_Security",
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_users_and_computers_without_readable_pgid",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Users and computers without readable PGID",
+      "description": "Finds users and computers that can not read the Primary Group ID (PGID). May be caused by removing the default Read permission, which could indicate an attempt to hide the user (in combination with removal of the memberOf attribute).",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_users_with_kerberos_pre_authentication_disabled",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Users with Kerberos pre- authentication disabled",
+      "description": "Looks for users with Kerberos pre-authentication disabled. These users can be targeted for ASREP-Roasting attacks (like “Kerberoasting”).",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_kerberos_prop- erties_preauth_priv",
+            "vuln2_kerberos_prop- erties_preauth"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_AsrepRoastableUsers",
+        "AD_Users_Security",
+        "Kerberos_SpnAccounts"
+      ]
+    },
+    {
+      "id": "AccountSecurity_users_with_old_passwords",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Users with old passwords",
+      "description": "Looks for user accounts whose password has not changed in over 180 days. These accounts could be ripe for password guessing attacks.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Persistence"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "AccountSecurity_users_with_password_never_expires_flag_set",
+      "categoryId": "AccountSecurity",
+      "indicatorName": "Users with Password Never Expires flag set",
+      "description": "Identifies user accounts where the “Password Never Expires” flag is set. These accounts can be potential targets for brute force password attacks.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_dont_expire"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADDelegation_built_in_guest_account_is_enabled",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Built-in guest account is enabled",
+      "description": "Checks to ensure that the built-in AD “guest” account is disabled. An enabled guest account allows for passwordless access to the domain, which could present a security risk.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Discovery",
+            "Reconnaissance"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_guest"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Evict – Account Locking"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADDelegation_changes_to_ad_display_specifiers_in_the_past_90_days",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Changes to AD display specifiers in the past 90 days",
+      "description": "Looks for recent changes made to the adminContextMenu attribute on AD display specifiers. Modifying this attribute can potentially allow attackers to utilize context menus to get users to run arbitrary code.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Execution"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADDelegation_changes_to_default_security_descriptor_schema_in_the_last_90_days",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Changes to default security descriptor schema in the last 90 days",
+      "description": "Detects recent schema attribute changes made on the default security descriptor. If an attacker gets access to the schema instance in a forest, any changes made can propagate to newly created objects in AD, potentially weakening AD security posture.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs"
+      ]
+    },
+    {
+      "id": "ADDelegation_changes_to_ms_laps_read_permissions",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Changes to MS LAPS read permissions",
+      "description": "Looks for permissions on computer accounts that could allow inadvertent exposure of local administrator accounts in environments that use Microsoft LAPS. Attackers may use this capability to laterally move through a domain using compromised local administrator accounts.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADDelegation_dangerous_delegated_rights_on_active_directory_ous",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Dangerous delegated rights on Active Directory OUs",
+      "description": "Identifies Organizational Units (OUs) in Active Directory that have been delegated powerful permissions, which could lead to security risks or unauthorized privilege escalation. Powerful permissions delegated on Organizational Units (OUs) in Active Directory can bypass standard security controls and pose a high risk if assigned inappropriately. This indicator focuses on the Reanimate_Tombstone, Unexpire_Password, and SID_History permissions.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions",
+            "Harden- Credential Hardening",
+            "Isolate- Access Mediation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs"
+      ]
+    },
+    {
+      "id": "ADDelegation_domain_controller_owner_is_not_an_administrator",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Domain Controller owner is not an administrator",
+      "description": "Looks for Domain Controller computer accounts whose owner is not a Domain Admins, Enterprise Admins, or built-in Administrator account. Gaining control of DC machine accounts allows for an easy path to compromising the domain.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_permissions_dc"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – System Configuration Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_BuiltInAdminSignals",
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "DC_SecuritySignals",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "ADDelegation_enterprise_key_admins_with_full_access_to_domain",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Enterprise Key Admins with full access to domain",
+      "description": "Looks for evidence of a bug in certain versions of Windows Server 2016 Adprep that granted undue access to the Enterprise Key Admins group. This issue was corrected in a subsequent release of Windows 2016; however, if this fix has not been applied, this bug grants this group the ability to replicate all changes from AD (DCSync attack).",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_adupdate_bad"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Groups",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADDelegation_foreign_security_principals_in_privileged_group",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Foreign Security Principals in Privileged Group",
+      "description": "Looks for members of built-in protected groups which are Foreign Security Principals. Special care should be taken when including accounts from other domains as members of privileged groups. Foreign Security Principals do not have the adminCount attribute and therefore may not be detected by some security auditing tools. Additionally, an attacker may add a privileged account and attempt to hide it using this method.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Persistence"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_AdminSdHolderImpact",
+        "AD_Groups",
+        "AD_Users_Security",
+        "Tier0_AdminCountObjects",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "ADDelegation_gmsa_not_used",
+      "categoryId": "ADDelegation",
+      "indicatorName": "gMSA not used",
+      "description": "Checks for enabled group Managed Service Accounts (gMSA) objects in the domain. The gMSA feature in Windows Server 2016 allows automatic rotation of passwords for service accounts, making them much more difficult for attackers to compromise.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADDelegation_inheritance_enabled_on_adminsdholder_object",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Inheritance enabled on AdminSDHolder object",
+      "description": "Checks for inheritance being enabled on the Access Control List (ACL) of the AdminSDHolder object, which could indicate an attempt to modify permissions on privileged objects that are subject to AdminSDHolder (for example, users or groups with adminCount=1). Changes to the AdminSDHolder object are very rare. Administrators should know that a change was made and be able to articulate the reason for the change. If the change was not intentional, the likelihood of compromise is very high.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_AdminSdHolderImpact",
+        "AD_Groups",
+        "AD_Users_Security",
+        "Tier0_AdminCountObjects"
+      ]
+    },
+    {
+      "id": "ADDelegation_non_default_access_to_dpapi_key",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Non-default access to DPAPI key",
+      "description": "Checks domain controllers for non-default principals that are permitted to retrieve the domain DPAPI backup key(using LsaRetrievePrivateData). With these permissions, an attacker could recover all domain data encrypted via DPAPI.",
+      "severity": "Warning",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_permissions_dc"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADDelegation_non_default_access_to_gmsa_root_key",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Non-default access to gMSA root key",
+      "description": "Looks for non-default principals with permissions to read the msKds-RootKeyData attribute on the KDS root key. Users with read permissions to this property could compromise every gMSA account in the forest.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_permissions_ gmsa_keys",
+            "vuln2_permissions_ gmsa_keys"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADDelegation_non_default_principals_with_dc_sync_rights_on_the_domain",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Non-default principals with DC Sync rights on the domain",
+      "description": "Looks for security principals with Replicating Changes All or Replicating Directory Changes permissions on the domain naming context object. Security principals with these permissions on the domain naming context object can potentially retrieve password hashes for users in an AD domain (DCSync attack).",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_permissions_naming_context"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADDelegation_non_default_value_on_ms_mcs_admpwd_searchflags",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Non-default value on ms-Mcs-AdmPwd SearchFlags",
+      "description": "Looks for changes to the default searchFlags on the ms-Mcs-AdmPwd schema. Some flags may inadvertently cause the password to be visible to unintended users allowing an attacker to use it as a stealthy backdoor.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADDelegation_non_privileged_users_with_access_to_gmsa_passwords",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Non-privileged users with access to gMSA passwords",
+      "description": "Looks for principals listed within the MSDS-groupMSAmembership that are not in the built-in admin groups. An attacker that controls access to the gMSA account can retrieve passwords for resources managed with gMSA.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_permissions_ gmsa_keys",
+            "vuln2_permissions_gmsa_keys"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADDelegation_objects_in_privileged_groups_without_admincount_1_sdprop",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Objects in privileged groups without adminCount=1 (SDProp)",
+      "description": "Looks for objects in built-in privileged groups whose adminCount attribute is not set to 1. If an object within these groups has an adminCount not equal to 1, they could signify that the DACLs were manually set (no inheritance) or that there is an issue with SDProp.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Persistence"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_AdminSdHolderImpact",
+        "AD_Groups",
+        "Tier0_AdminCountObjects",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "ADDelegation_objects_with_reanimate_tombstones_extended_rights",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Objects with Reanimate-Tombstones extended rights",
+      "description": "Checks if there are any non-default principals with the Reanimate-Tombstones extended rights configured. It is recommended to only delegate this right to domain administrators, since tombstone reanimation is an uncommon and highly privileged operation.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Isolate- User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "ADDelegation_permission_changes_on_adminsdholder_object",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Permission changes on AdminSDHolder object",
+      "description": "Looks for Access Control List (ACL) changes on the AdminSDHolder object. Could indicate an attempt to modify permissions on privileged objects that are subject to AdminSDHolder.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "since tombstone reanimation is an uncommon and highly privileged operation.",
+            "vuln1_permissions_ adminsdholder",
+            "vuln1_privileged_members_perm",
+            "vuln2_privileged_members_perm"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "ADDelegation_privileged_objects_with_unprivileged_owners",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Privileged objects with unprivileged owners",
+      "description": "Looks for privileged objects (adminCount =1) that are owned by an unprivileged account. Any compromise of an unprivileged account could result in a privileged object’s delegation being modified.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_permissions_ adminsdholder",
+            "vuln2_permissions_adminsdholder"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_AdminSdHolderImpact",
+        "AD_OuDelegationAcls",
+        "AD_Users_Security",
+        "Tier0_AdminCountObjects"
+      ]
+    },
+    {
+      "id": "ADDelegation_unprivileged_users_can_add_computer_accounts_to_domain",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Unprivileged users can add computer accounts to domain",
+      "description": "Checks to see if unprivileged domain members are allowed to add computer accounts to a domain. Having the ability to add computer accounts to a domain can be abused by Kerberos-based attacks.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln4_user_accounts_machineaccountquota"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADDelegation_users_with_permissions_to_set_server_trust_account",
+      "categoryId": "ADDelegation",
+      "indicatorName": "Users with permissions to set Server Trust Account",
+      "description": "Checks the domain NC head permissions to see if the Server_Trust_Account flag is set on computer objects. An attacker that can seed authenticated users with these permissions can utilize their access to promote any computer they control to Domain Controller status, enabling privilege escalation to AD services and carrying out credential access attacks such as DCSync.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Computers_Security",
+        "AD_ForestTrusts",
+        "AD_TrustRelationshipMap",
+        "AD_Users_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_ad_certificate_authority_with_web_enrollment_esc8",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "AD Certificate Authority with Web Enrollment – ESC8",
+      "description": "Identifies AD CS servers in the domain that accept NTLM authentication to Web Enrollment. Attackers may abuse a flaw in AD CS Web Enrollment that enables NTLM relay attacks to authenticate as a privileged user.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Computers_Security",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_anonymous_access_to_active_directory_enabled",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Anonymous access to Active Directory enabled",
+      "description": "Looks for the presence of the flag that enables anonymous access. Anonymous access would allow unauthenticated users to query AD.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Initial Access",
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_compatible_2000_ anonymous"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_anonymous_nspi_access_to_ad_enabled",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Anonymous NSPI access to AD enabled",
+      "description": "Detects when anonymous name service provider interface (NSPI) access is enabled. Allows anonymous RPC-based binds to AD. NSPI is rarely enabled, so if it is found to be enabled it should be a cause for concern.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_dsheuristics_bad",
+            "vuln2_dsheuristics_bad; vuln3_dsheuristics_bad"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "ADInfrastructure_certificate_templates_that_allow_requesters_to_specify_a_subjec",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Certificate templates that allow requesters to specify a subjectAltName",
+      "description": "Checks if certificate templates are enabling requesters to specify a subjectAltName in the CSR. When certificate templates allow requesters to specify a subjectAltName in the CSR, the result is that they can request a certificate as anyone (for example, a domain admin). When that is combined with an authentication EKU present in the certificate template, it can become extremely dangerous.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_adcs_template_auth_enroll_with_name"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Certificate Analysis"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_certificate_templates_with_3_or_more_insecure_configurations",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Certificate templates with 3 or more insecure configurations",
+      "description": "Checks if certificate templates in the forest have a minimum of three insecure configurations: Manager approval is disabled, No authorized signatures are required, SAN enabled, Authentication EKU present. Each of these configurations can be exploited by adversaries to gain access.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_adcs_template_auth_enroll_with_name"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Certificate Analysis"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_computers_with_older_os_versions",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Computers with older OS versions",
+      "description": "Looks for machine accounts that are running versions of Windows older than Windows Server 2012 R2 and Windows 8.1. Computers running older and unsupported OS versions could be targeted with known or unpatched exploits.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Persistence"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Software Update"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_computers_with_password_last_set_over_90_days_ago",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Computers with password last set over 90 days ago",
+      "description": "Looks for computer accounts that have not automatically rotated their passwords. Computer accounts should automatically rotate their passwords every 30 days; objects that are not doing this could show evidence of tampering.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_password_ change_server_no_ change_90"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_dangerous_control_paths_expose_certificate_containers",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Dangerous control paths expose certificate containers",
+      "description": "Looks for non-default principals with permissions on the NTAuthCertificates container, which holds the intermediate CA certificates used to authenticate to Active Directory. Unprivileged users with permissions on the NTAuthCerticates container have the ability to escalate their access and make the domain trust a rogue CA.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_adcs_control"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Credential Transmission Scoping"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_ForestTrusts",
+        "AD_TrustRelationshipMap",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_dangerous_control_paths_expose_certificate_templates",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Dangerous control paths expose certificate templates",
+      "description": "Looks for non-default principals with the ability to write properties on a certificate template. Unprivileged users with write properties on certificate templates have the ability to escalate their access and create vulnerable certificates to enroll.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_adcs_template_ control"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Certificate Analysis"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_dangerous_trust_attribute_set",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Dangerous Trust Attribute Set",
+      "description": "Identifies trusts with either of the following attributes set: TRUST_ATTRIBUTE_ CROSS_ORGANIZATION_ENABLE_TGT_DELEGATION or TRUST_ATTRIBUTE_ PIM_TRUST. Setting these attributes will either allow a Kerberos ticket to be delegated or reduce the protection that SID filtering provides.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_trusts_domain_notfiltered; vuln3_trusts_tgt_deleg"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Domain Trust Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_ForestTrusts",
+        "AD_TrustRelationshipMap"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_domain_controllers_in_an_inconsistent_state",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Domain controllers in an inconsistent state",
+      "description": "Looks for domain controllers that may be in an inconsistent state, indicating a possible rogue or otherwise non-functional DC. Illegitimate machines acting as DCs could indicate someone has compromised the environment (e.g., using DCShadow or similar DC spoofing attack).",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation",
+            "Resource Development"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_dc_inconsistent_ uac"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_domain_controllers_that_have_not_authenticated_to_the_domain_fo",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Domain controllers that have not authenticated to the domain for more than 45 days",
+      "description": "Looks for domain controllers that have not authenticated to the domain in over 45 days. Lack of domain authentication reveals out-of-sync machines. If an attacker compromises an offline DC and cracks the credentials or re-connects to the domain, they may be able to introduce unwanted changes to Active Directory.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_password_ change_inactive_dc"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Isolate – Execution Isolation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_domain_controllers_with_old_passwords",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Domain controllers with old passwords",
+      "description": "Looks for domain controller machine accounts whose password has not been reset in over 45 days. Machine accounts with older passwords could indicate a DC that is no longer functioning in the domain. In addition, DCs with older machine account passwords could be more easily taken over.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation",
+            "Resource Development"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_password_ change_dc_no_change"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_domain_trust_to_a_third_party_domain_without_quarantine",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Domain trust to a third-party domain without quarantine",
+      "description": "Looks for outbound forest trusts that have the Quarantine flag set to false. An attacker that has compromised the remote domain can create a “spoofable” account to gain access to every resource on the local domain. If a dangerous control path is exposed, any “spoofable” account could also escalate his privileges up to Domain Admins and compromise the entire forest.”",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_trusts_domain_ notfiltered"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Domain Trust Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_ForestTrusts",
+        "AD_TrustRelationshipMap",
+        "AD_Users_Security",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_domains_with_obsolete_functional_levels",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Domains with obsolete functional levels",
+      "description": "Looks for AD domains that have a domain functional level set to Windows Server 2012 or lower. Lower functional levels mean that newer security features available in AD cannot be leveraged.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Reconnaissance"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_functional_level",
+            "vuln2_functional_level",
+            "vuln3_functional_level"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Software Update"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_evidence_of_mimikatz_dcshadow_attack",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Evidence of Mimikatz DCShadow attack",
+      "description": "Looks for evidence that a machine has been used to inject arbitrary changes into AD using a “fake” domain controller. These changes bypass the security event log and cannot be spotted using standard monitoring tools.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring",
+            "Isolate – Execution Isolation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_gmsa_objects_with_old_passwords",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "gMSA objects with old passwords",
+      "description": "Looks for group managed service accounts (gMSA) that have not automatically rotated their passwords. Objects that are not rotating their passwords regularly could show evidence of tampering.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_ldap_signing_is_not_required_on_domain_controllers",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "LDAP signing is not required on Domain Controllers",
+      "description": "Looks for domain controllers where LDAP signing is not required. Unsigned network traffic is exposed to MITM (Man-in-the-Middle) attacks, where attackers alter packets and forward them to the LDAP server, causing the server to make decisions based on forged requests from the LDAP client.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_llmnr_enforced_by_gpo",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "LLMNR enforced by GPO",
+      "description": "Checks if any Group Policy Objects (GPOs) explicitly enforce Link-Local Multicast Name Resolution (LLMNR) settings via registry policy entries. If LLMNR is not explicitly disabled in the environment, it creates an opportunity for attackers to perform LLMNR/NBNS poisoning attacks. These attacks can be used to intercept authentication requests and capture NTLMv2 hashes, which can then be cracked offline or used in relay attacks. This is a common tactic in lateral movement during internal network penetration tests and real-world breaches.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Collection",
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect- DNS Traffic Analysis",
+            "Harden – Strong Password Policy",
+            "Model- Network Mapping"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_non_standard_schema_permissions",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Non-standard schema permissions",
+      "description": "Looks for additional principals with any permissions beyond generic Read to the schema partitions. By default, modification permissions on the schema are limited to Schema Admins. These permissions grant the trusted principal complete control over the Active Directory.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_permissions_ schema",
+            "vuln2_permissions_schema"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – System Configuration Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_ForestTrusts",
+        "AD_TrustRelationshipMap",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_ntfrs_sysvol_replication",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "NTFRS SYSVOL replication",
+      "description": "Looks for indication of usage of FRS for SYSVOL replication. NTFRS is an older protocol that has been replaced by DFSR. Attackers that can manipulate NTFRS vulnerabilities to compromise SYSVOL can potentially change GPOs and logon scripts to propagate malware and move laterally across the environment.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Collection"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_sysvol_ntfrs"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "ADInfrastructure_operator_groups_no_longer_protected_by_adminsdholder_and_sdprop",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Operator groups no longer protected by AdminSDHolder and SDProp",
+      "description": "Checks if dwAdminSDExMask on dsHeurstics has been set, which indicates a change to the SDProp behavior that could compromise security. A change to the AdminSDHolder SDProp behavior could indicate an attempt at defense evasion.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_dsheuristics_bad",
+            "vuln2_dsheuristics_bad",
+            "vuln3_dsheuristics_bad"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_outbound_forest_trust_with_sid_history_enabled",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Outbound forest trust with SID History enabled",
+      "description": "Looks for outbound forest trusts that have the TRUST_ATTRIBUTE_TREAT_AS_ EXTERNAL flag set to true. If this flag is set, a cross-forest trust to a domain is treated as an external trust for the purposes of SID filtering. This attribute relaxes the more stringent filtering performed on cross-forest trusts.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_trusts_forest_sid- history"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Domain Trust Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_ForestTrusts",
+        "AD_SidHistoryUsers",
+        "AD_TrustRelationshipMap"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_print_spooler_service_is_enabled_on_a_dc",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Print spooler service is enabled on a DC",
+      "description": "Looks for domain controllers that have the print spooler service running, which is enabled by default. Several critical flaws were found in Windows Print Spooler services, which directly affect Print spoolers installed on domain controllers, enabling remote code execution.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Execution",
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Software Update"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_privileged_user_credentials_cached_on_rodc",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Privileged user credentials cached on RODC",
+      "description": "Looks for privileged users with credentials that are cached on RODCs. While not immediately indicative of an attack, privileged user accounts are sensitive and should not be cached on RODCs since their physical security is not as robust as a full DC.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_query_policies_that_have_the_attribute_of_ldap_deny_list_set",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Query policies that have the attribute of ldap deny list set",
+      "description": "Checks for LDAP IP deny lists (ldapipdenylist attribute) across multiple domains in an AD environment. Unauthorized or unexpected entries in the LDAP IP deny list could suggest a security breach or an attempt to limit access to critical resources maliciously.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Impact"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "ADInfrastructure_risky_rodc_credential_caching",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Risky RODC credential caching",
+      "description": "Looks for a Password Replication Policy that allows privileged objects. If privileged users are in the allow list, they can be exposed to credential theft on an RODC.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_rodc_priv_ revealed"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_smart_card_password_rotation_disabled",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Smart card password rotation disabled",
+      "description": "Checks whether the mcDS-ExpirePasswordsOnSmartCardOnlyAccounts attribute is disabled. This attribute determines if smart card-only accounts must follow regular password rotation schedules. When this attribute is disabled, smart card-only accounts can maintain the same password indefinitely, which can potentially create a security vulnerability. This security feature is available in domains operating at Windows Server 2016 functional level or higher.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln4_smartcard_expire_passwords"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_smb_signing_is_not_required_on_domain_controllers",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "SMB Signing is not required on Domain Controllers",
+      "description": "Looks for domain controllers where SMB signing is not required. Unsigned network traffic is susceptible to attacks abusing the NTLM challenge-response protocol. A common example of such attacks is SMB Relay, where an attacker is positioned between the client and the server in order to capture data packets transmitted between the two, thus gaining unauthorized access to the server or other servers on the network.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_smbv1_is_enabled_on_domain_controllers",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "SMBv1 is enabled on Domain Controllers",
+      "description": "Looks for domain controllers where SMBv1 protocol is enabled. SMBv1 is an old protocol (deprecated by Microsoft in 2014), which is considered unsafe and susceptible to all kinds of attacks.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_unexpected_accounts_in_cert_publishers_group",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Unexpected accounts in Cert Publishers Group",
+      "description": "Checks to see if the Cert Publishers Group contains members that aren’t expected to be there. Individuals belonging to the Cert Publishers Group have the ability to introduce a potentially harmful Certificate Authority (CA) within an ADCS environment that will be trusted by all clients.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_ForestTrusts",
+        "AD_Groups",
+        "AD_TrustRelationshipMap",
+        "AD_Users_Security",
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_unsecured_dns_configuration",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Unsecured DNS configuration",
+      "description": "Looks for DNS zones configure with ZONE_UPDATE_UNSECURE, which allows updating a DSN record anonymously. An attacker could leverage this exposure to add a new DSN record or replace an existing DNS record to spoof a management interface, then wait for incoming connections in order to steal credentials.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_dnszone_bad_ prop",
+            "vuln3_dnszone_bad_prop"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "ADInfrastructure_weak_certificate_cipher",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Weak certificate cipher",
+      "description": "Looks for certificates stored in Active Directory with keysize smaller than 2048 bits or using DSA encryption. Weak certificates can be abused by attackers to gain access to systems who use certificate authentication.",
+      "severity": "Warning",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_certificates_vuln"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Certificate-based Authentication"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_well_known_privileged_sids_in_sidhistory",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Well-known privileged SIDs in sIDHistory",
+      "description": "Looks for security principals that contain specific SIDs of accounts from built-in privileged groups within the sIDHistory attribute. Allows those security principals to have the same privileges as those privileged accounts, but in a way that is not obvious to monitor (e.g., through group membership).",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_sidhistory_dan- gerous vuln3_sidhistory_present"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_SidHistoryUsers",
+        "AD_Users_Security",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "ADInfrastructure_zerologon_vulnerability",
+      "categoryId": "ADInfrastructure",
+      "indicatorName": "Zerologon vulnerability",
+      "description": "Looks for security vulnerability to CVE-2020-1472, which was patched by Microsoft in August 2020. Without this patch, an unauthenticated attacker can exploit CVE-2020-1472 to elevate their privileges and get administrative access on the domain.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "EntraID_administrative_units_are_not_being_used",
+      "categoryId": "EntraID",
+      "indicatorName": "Administrative units are not being used",
+      "description": "Checks for the use of administrative units in the Entra tenant. Administrative units are an Entra ID feature that allow for restricting administrative scope of privileged users. Organizations that leverage administrative units can have more granularity in role assignment.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_application_expired_secrets_and_certificates",
+      "categoryId": "EntraID",
+      "indicatorName": "Application expired secrets and certificates",
+      "description": "Checks for certificates or secrets that have reached their expiration dates. This indicator does not indicate a direct risk or likelihood of compromise.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs"
+      ]
+    },
+    {
+      "id": "EntraID_application_instance_property_lock_disabled",
+      "categoryId": "EntraID",
+      "indicatorName": "Application instance property lock disabled",
+      "description": "This indicator checks for applications that have the application instance property lock disabled. Application instance property lock is a feature in Entra ID that restricts the ability to add or modify sensitive properties on service principals. Attackers can look for privileged service principals and attempt to use them to move laterally by adding credentials to the existing service principal if they gain access to a user with the ability to do so.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Impact",
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Application Configuration Hardening"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments",
+        "Entra_ServicePrincipals"
+      ]
+    },
+    {
+      "id": "EntraID_application_name_and_geographic_location_additional_contexts_are_disable",
+      "categoryId": "EntraID",
+      "indicatorName": "Application Name and Geographic Location additional contexts are disabled on MFA",
+      "description": "Checks if the application name and geographic location additional contexts are disabled on multi-factor authentication (MFA). Enabling the application name and geographic location additional contexts on MFA provides an additional level of security for a user sign-in.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Multi-factor Authentication"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_AuthMethods"
+      ]
+    },
+    {
+      "id": "EntraID_certificate_based_authentication_persistence",
+      "categoryId": "EntraID",
+      "indicatorName": "Certificate-Based Authentication Persistence",
+      "description": "Assesses the presence of specific Entra ID Microsoft graph app roles and permissions, that when combined can enable a user to establish persistence through certificate-based authentication (CBA).",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_check_for_guests_having_permission_to_invite_other_guests",
+      "categoryId": "EntraID",
+      "indicatorName": "Check for guests having permission to invite other guests",
+      "description": "Check for guest invite permissions. It is not recommended to allow guests to send guest invitations. o prevent unauthorized guests from inviting others into the organization, consider updating the “Guest invite settings” to restrict this ability.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "EntraID_check_for_risky_api_permissions_granted_to_application_service_principal",
+      "categoryId": "EntraID",
+      "indicatorName": "Check for risky API permissions granted to application service principals",
+      "description": "Checks for API permissions that could be risky if not properly planned and approved. Malicious application administrators could use these permissions to grant administrative privileges to themselves or others.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_ServicePrincipals"
+      ]
+    },
+    {
+      "id": "EntraID_check_for_users_with_weak_or_no_mfa",
+      "categoryId": "EntraID",
+      "indicatorName": "Check for users with weak or no MFA",
+      "description": "Checks all users for multi-factor authentication (MFA) registration and the methods configured. Due to the lack of uniform security measures within mobile networks, SMS and Voice are considered less secure than mobile applications and FIDO. A malicious user can vish/smish codes and trick users into providing authentication.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access",
+            "Lateral Movement"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_AuthMethods"
+      ]
+    },
+    {
+      "id": "EntraID_check_if_legacy_authentication_is_allowed",
+      "categoryId": "EntraID",
+      "indicatorName": "Check if legacy authentication is allowed",
+      "description": "Checks whether legacy authentication is blocked, either using conditional access policies or security defaults. Allowing legacy authentication increases the risk that an attacker will logon using previously compromised credentials.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_ConditionalAccessPolicies"
+      ]
+    },
+    {
+      "id": "EntraID_conditional_access_policies_contain_private_ip_addresses",
+      "categoryId": "EntraID",
+      "indicatorName": "Conditional Access policies contain private IP addresses",
+      "description": "Checks if any Conditional Access policies contain named locations with private IP addresses. Having private IP addresses in named locations associated with Conditional Access policies could result in an undesired security posture.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_ConditionalAccessPolicies"
+      ]
+    },
+    {
+      "id": "EntraID_conditional_access_policies_that_contain_mfa_trusted_ips",
+      "categoryId": "EntraID",
+      "indicatorName": "Conditional Access policies that contain MFA Trusted IPs",
+      "description": "Checks if any enabled Conditional Access policies contain references to MFA Trusted IPs. MFA Trusted IPs is a legacy mechanism originally designed for specifying IP addresses to exclude from per-user MFA. Organizations should review the MFA Trusted IPs settings to determine if the desired addresses can be created as Named Locations.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_ForestTrusts",
+        "AD_TrustRelationshipMap",
+        "AD_Users_Security",
+        "Entra_AuthMethods",
+        "Entra_ConditionalAccessPolicies"
+      ]
+    },
+    {
+      "id": "EntraID_conditional_access_policy_does_not_require_mfa_on_privileged_accounts",
+      "categoryId": "EntraID",
+      "indicatorName": "Conditional Access Policy does not require MFA on privileged accounts",
+      "description": "Checks whether Conditional Access policies require multi-factor authentication (MFA) for privileged accounts. Users who hold privileged roles in Entra ID are high-value targets for an attacker. It is critical for organizations to require MFA for all users holding privileged roles.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_AuthMethods",
+        "Entra_ConditionalAccessPolicies",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_conditional_access_policy_that_disables_admin_token_persistence",
+      "categoryId": "EntraID",
+      "indicatorName": "Conditional Access Policy that disables admin token persistence",
+      "description": "Looks for Conditional Access policies that disable token persistence for users with admin roles and have a sign-in frequency that is less than or equal to nine hours. When an admin login has their token cached on the client, they are vulnerable for a Primary Refresh Token related attack.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_ConditionalAccessPolicies",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_conditional_access_policy_that_does_not_require_a_password_change_from_h",
+      "categoryId": "EntraID",
+      "indicatorName": "Conditional Access Policy that does not require a password change from high risk users",
+      "description": "Checks whether a Conditional Access policy exists that requires a password change if the user is determined to be high risk by the Entra ID Identity Protection user risk API. A high user risk represents a high probability that an account has been compromised.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_ConditionalAccessPolicies"
+      ]
+    },
+    {
+      "id": "EntraID_conditional_access_policy_that_does_not_require_mfa_when_sign_in_risk_ha",
+      "categoryId": "EntraID",
+      "indicatorName": "Conditional Access Policy that does not require MFA when sign-in risk has been identified",
+      "description": "Checks whether a Conditional Access policy exists that requires MFA if the authentication request risk is determined to be medium or high by the Entra ID. Identity Protection sign-in risk API. A medium or high sign-in risk represents a medium to high probability that an unauthorized authentication request was made.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_AuthMethods",
+        "Entra_ConditionalAccessPolicies"
+      ]
+    },
+    {
+      "id": "EntraID_conditional_access_policy_with_continuous_access_evaluation_disabled",
+      "categoryId": "EntraID",
+      "indicatorName": "Conditional Access policy with Continuous Access Evaluation disabled",
+      "description": "Checks for Conditional Access policies that have the Continuous Access Evaluation feature disabled. The Continuous Access Evaluation feature allows you to revoke the access token for Microsoft applications and limit the time an attacker has access to company data.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_ConditionalAccessPolicies"
+      ]
+    },
+    {
+      "id": "EntraID_custom_banned_password_protection_not_in_use",
+      "categoryId": "EntraID",
+      "indicatorName": "Custom banned password protection not in use",
+      "description": "Checks if custom banned password protection is enabled in Entra ID. Custom banned password protection allows organizations to specify customer banned words, helping to prevent users from creating weak passwords that may contain words relative to the organization.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Initial Access"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_custom_role_assigned_to_unprivileged_principals_in_an_app_s_scope",
+      "categoryId": "EntraID",
+      "indicatorName": "Custom role assigned to unprivileged principals in an app’s scope",
+      "description": "Identifies cases where a privileged custom role is assigned to an unprivileged user or service principal, scoped to a specific application. Assigning a privileged custom role to an unprivileged principal within the scope of a specific application can introduce a stealthy privilege escalation vector. These assignments are often overlooked because they do not involve built-in directory roles, making them harder to detect through standard RBAC reviews.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access",
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Users_Security",
+        "Entra_RoleAssignments",
+        "Entra_ServicePrincipals"
+      ]
+    },
+    {
+      "id": "EntraID_detect_mfa_policy_changes_for_groups_and_users",
+      "categoryId": "EntraID",
+      "indicatorName": "Detect MFA policy changes for groups and users",
+      "description": "Looks for changes (removal of users and groups) from MFA policies. MFA policies are considered a sensitive asset in the identity security of the organization. In cases of changes in membership of users and groups in MFA policies, there may be a malicious compromise of users.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security",
+        "Entra_AuthMethods"
+      ]
+    },
+    {
+      "id": "EntraID_dynamic_administrative_units_with_self_assignment_risk",
+      "categoryId": "EntraID",
+      "indicatorName": "Dynamic administrative units with self-assignment risk",
+      "description": "Detects cases where a user assigned to manage a dynamic administrative unit (AU) also has permissions to modify the attribute(s) used to determine AU membership. Entra ID supports dynamic AUs, where user membership is automatically determined by property-based rules such as department or job title. If this is misconfigured, this setup can be abused to bypass scoping restrictions and escalate privileges.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Application Configuration Hardening",
+            "Isolate- User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_ensure_all_non_privileged_users_can_complete_mfa",
+      "categoryId": "EntraID",
+      "indicatorName": "Ensure all non-privileged users can complete MFA",
+      "description": "Checks for non-privileged users that cannot complete the MFA process based on the authentication details they enter. MFA adds an extra layer of security to the sign-in process, which helps protect your organization against security breaches. Users who use MFA are less likely to fall victim to phishing attacks.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_AuthMethods",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_enterprise_applications_using_saml_for_sso",
+      "categoryId": "EntraID",
+      "indicatorName": "Enterprise applications using SAML for SSO",
+      "description": "Checks for enterprise applications (service principals) in Entra ID configured to use SAML for SSO. Applications using SAML can be prone to Silver SAML, a type of SAML response forging, if an attacker is able to obtain the signing certificate used by Entra ID.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "Entra_ServicePrincipals"
+      ]
+    },
+    {
+      "id": "EntraID_entra_connect_sync_account_password_reset",
+      "categoryId": "EntraID",
+      "indicatorName": "Entra Connect sync account password reset",
+      "description": "Checks for Conditional Access policies that have the Continuous Access Evaluation feature disabled. The Continuous Access Evaluation feature allows you to revoke the access token for Microsoft applications and limit the time an attacker has access to company data.",
+      "severity": "Warning",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_ConditionalAccessPolicies"
+      ]
+    },
+    {
+      "id": "EntraID_entra_custom_roles_with_risky_permissions",
+      "categoryId": "EntraID",
+      "indicatorName": "Entra custom Roles with risky permissions",
+      "description": "Checks if a custom role contains risky permissions. Potentially, custom roles can be used to gain access to sensitive information or perform malicious actions.",
+      "severity": "Medium",
+      "ioeIoc": [],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_entra_tenant_is_susceptible_to_hidden_consent_grant_attack",
+      "categoryId": "EntraID",
+      "indicatorName": "Entra tenant is susceptible to Hidden Consent Grant attack",
+      "description": "Checks app permissions and settings to determine if the Entra tenant is susceptible to Hidden Consent Grant attacks. A Hidden Consent Grant attack is a type of phishing attack where a malicious actor who controls an application with Directory.ReadWrite.All permissions gains access to an application and exploits granted permissions to escalate his privileges.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs"
+      ]
+    },
+    {
+      "id": "EntraID_fido2_attestation_is_not_enforced",
+      "categoryId": "EntraID",
+      "indicatorName": "FIDO2 Attestation is not enforced",
+      "description": "Checks if FIDO2 security key attestation is enforced in Entra ID. FIDO2 security key attestation provides assurance during key registration that a key is a specific make and model. If FIDO2 enforcement is disabled, there is a lower level of assurance of the key being registered",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "EntraID_global_administrators_that_signed_in_during_the_last_14_days",
+      "categoryId": "EntraID",
+      "indicatorName": "Global Administrators that signed in during the last 14 days",
+      "description": "Looks for Global Administrators that have signed in during the past 14 days. Users that hold the Global Administrator role are the most privileged users in Entra ID. An attacker will find users with the Global Administrator role as high-valued, and a compromised Global Administrator can lead to several attacks against the organization.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Credential Compromise Scope Analysis"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_guest_accounts_that_were_inactive_for_more_than_30_days",
+      "categoryId": "EntraID",
+      "indicatorName": "Guest accounts that were inactive for more than 30 days",
+      "description": "Checks for guest accounts that have not signed in, using an interactive or non-interactive sign in, during the past 30 days. Inactive guest accounts leave an open gate to your Azure tenant.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_guest_invites_not_accepted_in_last_30_days",
+      "categoryId": "EntraID",
+      "indicatorName": "Guest invites not accepted in last 30 days",
+      "description": "Checks for guest invites that were not accepted within 30 days of the invitation. Stale guest invitations pose a security risk and should be deleted.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": []
+    },
+    {
+      "id": "EntraID_guest_users_are_not_restricted",
+      "categoryId": "EntraID",
+      "indicatorName": "Guest users are not restricted",
+      "description": "Checks guest users are restricted in the tenant. Attackers may use unrestricted guest users to perform enumeration of users and groups in the tenant.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Reconnaissance"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_hybrid_synced_privileged_role_accounts",
+      "categoryId": "EntraID",
+      "indicatorName": "Hybrid-synced privileged role accounts",
+      "description": "Detects privileged role accounts (excluding Global Administrators) that are synchronized from on-premises Active Directory. According to Microsoft’s security guidance, privileged role accounts should be cloud-only to minimize exposure and prevent compromise through on-premises infrastructure.",
+      "severity": "Medium",
+      "ioeIoc": [],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_less_than_2_global_administrators_exist",
+      "categoryId": "EntraID",
+      "indicatorName": "Less than 2 Global Administrators exist",
+      "description": "Checks for the presence of less than two Global Administrators. This indicator aligns with Microsoft recommendations that customers should have at least two Global Administrators in the tenant.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_list_of_risky_users_medium_or_high_level",
+      "categoryId": "EntraID",
+      "indicatorName": "List of risky users (medium or high level)",
+      "description": "Checks for risky users in the tenant with medium or high level of risk. Risky users are individuals or accounts exhibiting behaviors increasing the likelihood of security incidents or breaches, such as weak authentication practices, susceptibility to phishing, unusual activity patterns, accessing resources from unsecured devices or networks, or holding elevated privileges. These users pose significant risks, potentially leading to credential compromises, data breaches, or insider threats.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_mfa_bombing_attack_occurred_in_the_past_day",
+      "categoryId": "EntraID",
+      "indicatorName": "MFA bombing attack occurred in the past day",
+      "description": "Monitors user login activity to detect MFA bombing attempts on privileged accounts. It looks for unusual patterns in login activity of more than five failed MFA attempts within the last day. Note that this indicator will not detect activity of users using passwordless authentication. MFA bombing is a tactic where an attacker spams the user with MFA requests, and the user unknowingly or unwillingly accepts the request.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Multi-factor Authentication"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_AuthMethods",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_mfa_not_configured_for_privileged_accounts",
+      "categoryId": "EntraID",
+      "indicatorName": "MFA not configured for privileged accounts",
+      "description": "Checks whether Multi-Factor Authentication (MFA) is enabled for users with administrative rights. Accounts with privileged access are more vulnerable targets to attackers. A compromise of a privileged user represents a significant risk and therefore requires extra protection.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_AuthMethods",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_more_than_10_privileged_administrators_exist",
+      "categoryId": "EntraID",
+      "indicatorName": "More than 10 Privileged Administrators exist",
+      "description": "Checks for the presence of 10 or more Privileged Assigned Roles. This indicator aligns with Microsoft recommendations that customers have no more than 10 privileged role assignments.",
+      "severity": "Warning",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_more_than_5_global_administrators_exist",
+      "categoryId": "EntraID",
+      "indicatorName": "More than 5 Global Administrators exist",
+      "description": "Checks for the presence of five or more Global Administrators. Global Administrators control your Azure AD environment and have access to all administrative features and full control of Azure AD.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_non_admin_users_can_create_tenants",
+      "categoryId": "EntraID",
+      "indicatorName": "Non-admin users can create tenants",
+      "description": "Checks if non-admin users are allowed to create Entra tenants. By default, all users are allowed to create additional Entra tenants from an existing Entra tenant. Organizations should restrict non-admin users from creating tenants.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access",
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Model- Access Modeling"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_non_admin_users_can_register_custom_applications",
+      "categoryId": "EntraID",
+      "indicatorName": "Non-admin users can register custom applications",
+      "description": "Checks for an authorization policy that enables non-admin users to register custom applications. If non-admin users are allowed to register custom-developed enterprise applications, attackers might use that loophole to register nefarious applications, which they can then leverage to gain additional permissions.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_ServicePrincipals"
+      ]
+    },
+    {
+      "id": "EntraID_non_synced_entra_user_that_is_eligible_for_a_privileged_role",
+      "categoryId": "EntraID",
+      "indicatorName": "Non-synced Entra user that is eligible for a privileged role",
+      "description": "Checks for Entra ID users that are eligible for a high-privilege role and have the proxyAddress attribute but are not synchronized with an AD account. An attacker might use SMTP matching to synchronize controlled AD users with Entra users that are eligible for high-privilege roles. This process overwrites the AAD password and could result in privilege escalation over AAD.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_permanent_active_privileged_role_assignment",
+      "categoryId": "EntraID",
+      "indicatorName": "Permanent active privileged role assignment",
+      "description": "Checks for the presence of permanent active privileged role assignments. Privileged roles in Microsoft Entra Privileged Identity Management (PIM) that are assigned as “permanently active” pose significant security risks. This configuration allows users continuous access to elevated privileges, increasing the risk of privilege escalation and potential exploitation.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Model- Access Modeling"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_privileged_accounts_with_mailbox",
+      "categoryId": "EntraID",
+      "indicatorName": "Privileged accounts with mailbox",
+      "description": "Searches for privileged accounts in the Entra tenant that have an associated mailbox. Privileged accounts in the tenant that have a mailbox may be prime targets for attackers. Attackers may try to use the mailbox address of privileged users to achieve tokens to gain access, obtain sensitive data, or move laterally through the environment.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Execution",
+            "Initial Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_privileged_group_contains_guest_account",
+      "categoryId": "EntraID",
+      "indicatorName": "Privileged group contains guest account",
+      "description": "Checks whether any privileged roles have been assigned to guest accounts. External attackers covet privileged accounts, as they provide a fast track to an organization’s most critical systems. Guest accounts represent an external entity that does not undergo the same security as users in your tenant; therefore, assigning privileged roles to them poses a heightened risk.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security",
+        "Entra_RoleAssignments",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "EntraID_prohibited_entra_id_roles_assigned",
+      "categoryId": "EntraID",
+      "indicatorName": "Prohibited Entra ID roles assigned",
+      "description": "Checks for the assignment of roles in Entra ID that are deprecated or prohibited from use. Deprecated roles or roles marked as “never use” can pose significant security risks if assigned. These roles may have unintended permissions or may not be properly maintained, potentially leading to security vulnerabilities.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_report_suspicious_mfa_activity_disabled",
+      "categoryId": "EntraID",
+      "indicatorName": "Report suspicious MFA activity disabled",
+      "description": "Checks the “Report suspicious activity” authentication method setting. Enabling the “Report suspicious activity” setting allows users to report suspicious MFA activity, which can help organizations detect social engineering attacks such as MFA fatigue.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Multi-factor Authentication"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_AuthMethods"
+      ]
+    },
+    {
+      "id": "EntraID_s_directory_synchronization_accounts_role_member",
+      "categoryId": "EntraID",
+      "indicatorName": "s Directory Synchronization Accounts role member",
+      "description": "Checks for users who are assigned the Directory Synchronization Accounts role that are not the default Entra Connect users. The Directory Synchronization Accounts role in Entra ID is reserved for accounts used for Entra Connect. This directory role is highly privileged and is not meant for assignment to users",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_security_defaults_not_enabled",
+      "categoryId": "EntraID",
+      "indicatorName": "Security defaults not enabled",
+      "description": "When there are no conditional access policies configured, this indicator checks whether security defaults are enabled. It is recommended that security defaults be used for tenants that have no conditional access policies configured. Security defaults will require MFA, block legacy authentication, and require additional authentication when accessing the Azure portal, Azure PowerShell, and the Azure CLI.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Initial Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_AuthMethods",
+        "Entra_ConditionalAccessPolicies"
+      ]
+    },
+    {
+      "id": "EntraID_security_questions_are_in_use",
+      "categoryId": "EntraID",
+      "indicatorName": "Security questions are in use",
+      "description": "Checks if security questions are being used for Entra self-service password reset. Security questions, also known as knowledge-based authentication (KBA), can be used for authentication flows during a self-service password reset scenario. Organizations that rely on KBA as a means of authentication for self-service password reset are at a greater risk of an attacker using this to compromise users",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Initial Access"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_self_service_password_reset_enabled_for_privileged_roles",
+      "categoryId": "EntraID",
+      "indicatorName": "Self-service password reset enabled for privileged roles",
+      "description": "Checks whether users in privileged roles in Entra ID can use self-service password reset. Self-service password reset (SSPR) is beneficial in organizations for end users but has security trade-offs for privileged accounts.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_suspicious_credentials_on_microsoft_service_principals",
+      "categoryId": "EntraID",
+      "indicatorName": "Suspicious credentials on Microsoft service principals",
+      "description": "Checks if certain Microsoft service principals have secrets assigned to them. In Entra ID it is possible to assign credentials such as secrets or keys to service principals for Microsoft applications. In certain scenarios, this would then allow you to act with the same rights the application has using OAuth 2.0 client credential grant flows against Microsoft Graph API.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Entra_ServicePrincipals"
+      ]
+    },
+    {
+      "id": "EntraID_unprivileged_owner_of_a_privileged_group",
+      "categoryId": "EntraID",
+      "indicatorName": "Unprivileged owner of a privileged group",
+      "description": "Checks for the presence of an unprivileged owner of a group with privileged roles. Assigning roles to a group instead of individual principals streamlines the process of adding or removing users and ensures consistent permissions for all group members. However, group owner can add themselves to the group at any time, posing a privilege escalation risk if the owner is an unprivileged principal.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Persistence"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Groups",
+        "AD_Users_Security",
+        "Entra_RoleAssignments",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "EntraID_unresolved_entra_id_privileged_role_members",
+      "categoryId": "EntraID",
+      "indicatorName": "Unresolved Entra ID privileged role members",
+      "description": "Identifies privileged role assignments where the member cannot be found, either due to deleted eligible users or hidden GDAP partner relationships. Deleted eligible users that remain in role assignments can create confusion and complicate role management. GDAP partner relationships, while legitimate, need to be properly tracked and managed to maintain security oversight.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_unrestricted_user_consent_allowed",
+      "categoryId": "EntraID",
+      "indicatorName": "Unrestricted user consent allowed",
+      "description": "Checks if users are allowed to add application from unverified publishers. When users are allowed to consent to any third-party applications, there is considerable risk that an allowed application will take intrusive or risky actions.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Persistence"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_user_consent_is_allowed_for_risky_applications",
+      "categoryId": "EntraID",
+      "indicatorName": "User consent is allowed for risky applications",
+      "description": "Checks for an Entra ID authorization policy that allows users to grant consent for risky applications. To enhance security, it is recommended to set the allowUserConsentForRiskyApps property to false. This prevents users from granting consent to risky applications independently.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access",
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Model- Access Modeling"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_users_are_not_using_their_privileged_roles",
+      "categoryId": "EntraID",
+      "indicatorName": "Users are not using their privileged roles",
+      "description": "Checks for users who have not activated a role assigned to them for over 30 days. Users holding excessive privileges that are not used expand an organization’s attack surface area.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments"
+      ]
+    },
+    {
+      "id": "EntraID_users_can_create_security_groups",
+      "categoryId": "EntraID",
+      "indicatorName": "Users can create security groups",
+      "description": "Checks if non-admin users can create security groups. By default, users can create security groups in the Entra tenant. Entra ID does not require unique group names, and an attacker may create malicious security groups with duplicate names of valid groups, in an effort to have the malicious group assigned further privileges",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Model- Access Modeling"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "EntraID_users_or_devices_inactive_for_at_least_90_days",
+      "categoryId": "EntraID",
+      "indicatorName": "Users or devices inactive for at least 90 days",
+      "description": "Checks for users or devices that have not signed in during the past 90 days. Users or devices that have been inactive for 90 days or more are likely no longer in use and leave an open gate to the Azure AD tenant.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_changes_to_default_domain_policy_or_default_domain_controlle",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "Changes to Default Domain Policy or Default Domain Controllers Policy in the last 7 days",
+      "description": "Looks for recent changes to the Default Domain Policy and Default Domain Controllers Policy GPOs. These GPOs control domain-wide and domain controller-wide security settings and can be misused to gain privileged access to AD.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Persistence"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_RecentlyCreatedObjects",
+        "DC_SecuritySignals",
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_dangerous_gpo_logon_script_path",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "Dangerous GPO logon script path",
+      "description": "Looks for logon script paths to scripts that do not exist and where a low-privileged user has permissions on their parent folder. It also checks for logon script paths to existing scripts that give less-privileged users permissions to modify the script. By inserting a new script or changing an existing script that gives a normal user permission to change the script or access to their parent folder, an attacker can remotely run code on a larger part of the network without special privileges.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect- File Creation Analysis",
+            "Detect- Script Execution Analysis"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "GPO_Delegation",
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_dangerous_user_rights_granted_by_gpo",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "Dangerous user rights granted by GPO",
+      "description": "Looks for non-privileged users who are granted elevated permissions through GPO. An attacker can potentially exploit the user rights granted by a GPO to gain access to systems, steal sensitive information, or cause other types of damage.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect- Local Account Monitoring",
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "GPO_Delegation",
+        "GPO_Inventory",
+        "GPO_UserRightsAssignments"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_gpo_linking_delegation_at_the_ad_site_level",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "GPO linking delegation at the AD Site level",
+      "description": "Looks for non-privileged principals who have write permissions on the GPLink attribute or Write DACL/Write Owner on the object. When non-privileged users can link GPOs at the AD Site level, they have the ability to effect change on domain controllers. They can potentially elevate access and change domain-wide security posture.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Execution",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_permissions_gpo_ priv"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "DC_SecuritySignals",
+        "GPO_Delegation",
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_gpo_linking_delegation_at_the_domain_controller_ou_level",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "GPO linking delegation at the domain controller OU level",
+      "description": "Looks for non-privileged principals who have write permissions on the GPLink attribute or Write DAC/Write Owner on the object. When non-privileged users can link GPOs at the domain controller OU level, they have the ability to effect change on domain controllers. They can potentially elevate access and change domain-wide security posture.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Execution",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_permissions_gpo_ priv"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "DC_SecuritySignals",
+        "GPO_Delegation",
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_gpo_linking_delegation_at_the_domain_level",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "GPO linking delegation at the domain level",
+      "description": "Looks for non-privileged principals who have write permissions on the GPLink attribute or Write DACL/Write Owner on the object. When non-privileged users can link GPOs at the domain level, they have the ability to effect change across all users and computers in the domain. They can potentially elevate access and change domain-wide security posture.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_permissions_gpo_ priv"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "GPO_Delegation",
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_gpo_weak_lm_hash_storage_enabled",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "GPO Weak LM Hash storage enabled",
+      "description": "Detects when the “Network security: Do not store LAN Manager hash value on next password change” Group Policy Object setting is disabled within the Windows operating system. When this setting is disabled, LAN Manager (LM) hashes, which are vulnerable to password cracking techniques, continue to be stored during password changes. Enabling this setting strengthens security by preventing the storage of weak LM hashes and prompting the use of stronger password storage mechanisms.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_gpo_with_scheduled_tasks_configured",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "GPO with scheduled tasks configured",
+      "description": "When a scheduled task launches an executable, this indicator checks to see if low privilege users have permissions to modify GPOs. Scheduled tasks configured through group policies can be risky if not set up correctly. They can cause unintended problems and potential security vulnerabilities.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect- File Creation Analysis",
+            "Detect- Script Execution Analysis"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security",
+        "GPO_Delegation",
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_reversible_passwords_found_in_gpos",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "Reversible passwords found in GPOs",
+      "description": "Looks in the SYSVOL for GPOs that contain passwords that can be easily decrypted by an attacker (so-called “Cpassword” entries). This area is one of the first things attackers look for when they’ve gained access to an AD environment.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Emulated File Analysis"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_sysvol_executable_changes",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "SYSVOL Executable Changes",
+      "description": "Looks for modifications to executable files within SYSVOL. Changes to the executable files within SYSVOL should be accounted for or investigated to look for potential security posture weakening.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Execution",
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – File Analysis"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "GroupPolicySecurity_writable_shortcuts_found_in_gpo",
+      "categoryId": "GroupPolicySecurity",
+      "indicatorName": "Writable shortcuts found in GPO",
+      "description": "Looks for shortcuts within Group Policy Objects (GPOs) that are writable by low privileged users. When low privileged users have the ability to modify shortcuts within GPOs, it could potentially lead to security risks and unauthorized modifications.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect- File Creation Analysis",
+            "Detect- Script Execution Analysis"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security",
+        "GPO_Inventory"
+      ]
+    },
+    {
+      "id": "HybridSecurity_aad_privileged_users_that_are_also_privileged_in_ad",
+      "categoryId": "HybridSecurity",
+      "indicatorName": "AAD privileged users that are also privileged in AD",
+      "description": "Checks for Azure AD privileged users that are also privileged users in on-premises AD. A compromise of an account that is privileged in both AD and AAD can result in both environments being compromised.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments",
+        "Hybrid_AADConnectConfig",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "HybridSecurity_accounts_with_kerberos_constrained_delegation_configured_to_sso_c",
+      "categoryId": "HybridSecurity",
+      "indicatorName": "Accounts with Kerberos constrained delegation configured to SSO computer account",
+      "description": "Looks for accounts that have constrained delegation configured to the SSO computer account, AZUREADSSOACC. If an account in Active Directory has Kerberos constrained delegation configured to the AZUREADSSOACC computer account, an attacker can use this to generate Ticket Granting Service (TGS) tickets",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "Delegation_Constrained",
+        "Entra_RoleAssignments",
+        "Hybrid_AADConnectConfig",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "HybridSecurity_ad_privileged_users_that_are_synced_to_aad",
+      "categoryId": "HybridSecurity",
+      "indicatorName": "AD privileged users that are synced to AAD",
+      "description": "Checks for AD privileged users that are synchronized to AAD. When a privileged AD user is synchronized to AAD, a compromise of the AAD user can result in the on-premises environment being compromised as well.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments",
+        "Hybrid_AADConnectConfig",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "HybridSecurity_password_hash_synchronization_is_not_enabled",
+      "categoryId": "HybridSecurity",
+      "indicatorName": "Password hash synchronization is not enabled",
+      "description": "Checks whether password hash synchronization is enabled in the Entra tenant. Password hash synchronization is used to sync user password hashes from an on-premise Active Directory instance to a cloud-based Entra ID instance. This synchronization helps protect against leaked credentials being replayed from previous attacks.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Entra_RoleAssignments",
+        "Hybrid_AADConnectConfig",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "HybridSecurity_rc4_or_des_encryption_is_supported_by_sso_computer_account",
+      "categoryId": "HybridSecurity",
+      "indicatorName": "RC4 or DES encryption is supported by SSO computer account",
+      "description": "Checks if RC4 or DES encryption is supported by the SSO computer account, AZUREADSSOACC. RC4 and DES are considered insecure forms of encryption and are susceptible to various cryptographic attacks.",
+      "severity": "Medium",
+      "ioeIoc": [],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden- Credential Hardening"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "Entra_RoleAssignments",
+        "Hybrid_AADConnectConfig",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "HybridSecurity_resource_based_constrained_delegation_applied_to_azureadssoacc_ac",
+      "categoryId": "HybridSecurity",
+      "indicatorName": "Resource Based Constrained Delegation applied to AZUREADSSOACC account",
+      "description": "Looks for Resource Based Constrained Delegation configured for the Azure SSO account, AZUREADSSOACC. An account with Resource Based Constrained Delegation would allow that principal to generate a Ticket Granting Service (TGS) request to the Azure tenant on behalf of the AZUREADSSOACC account as any user and impersonate that user.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Lateral Movement"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Delegation_Constrained",
+        "Entra_RoleAssignments",
+        "Hybrid_AADConnectConfig",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "HybridSecurity_sso_computer_account_with_password_last_set_over_90_days_ago",
+      "categoryId": "HybridSecurity",
+      "indicatorName": "SSO computer account with password last set over 90 days ago",
+      "description": "Checks the Azure SSO computer account (AZUREADSSOACC) to determine if the password has been rotated in the last 90 days. The password for the Azure SSO computer account is not automatically changed every 30 days. If the password for this account is compromised, an attacker could generate a Ticket Granting Service (TGS) request to the AZUREADSSOACC account as any user, which has the effect of generating a ticket to Azure and impersonating that user.",
+      "severity": "High",
+      "ioeIoc": [],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_password_ change_server_no_ change_90"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "Entra_RoleAssignments",
+        "Hybrid_AADConnectConfig",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_accounts_with_altsecurityidentities_configured",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Accounts with altSecurityIdentities configured",
+      "description": "Checks for accounts with the altSecurityIdentities attribute configured. The altSecurityIdentities attribute is a multi-valued attribute used to create mappings for X.509 certificates and external Kerberos accounts. When configured, it is possible to add values that essentially impersonate that account.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_delegation_a2d2"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_accounts_with_constrained_delegation_configured_to_ghost_spn",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Accounts with Constrained Delegation configured to ghost SPN",
+      "description": "Looks for accounts that have Constrained Delegation configured to ghost SPNs. When computers are decommissioned, their delegation configuration is not always cleaned up. Such a delegation could allow an attacker that has the privileges to write to the ServicePrincipalName attribute of another service account, to escalate privileges on those services.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_delegation_a2d2"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "Delegation_Constrained",
+        "Kerberos_SpnAccounts"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_accounts_with_constrained_delegation_configured_to_krbtgt",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Accounts with Constrained Delegation configured to krbtgt",
+      "description": "Looks for accounts that have Constrained Delegation configured to the krbtgt service. Creating a Kerberos delegation to the krbtgt account itself allows that principal (user or computer) to generate a Ticket Granting Service (TGS) request to the krbtgt account as any user, which has the effect of generating a Ticket Granting Ticket (TGT) similar to a Golden Ticket.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_delegation_a2d2"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "Delegation_Constrained"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_computer_account_takeover_through_kerberos_resource_based_const",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Computer account takeover through Kerberos Resource-Based Constrained Delegation (RBCD)",
+      "description": "Looks for the msDS-Allowed-ToActOnBehalfOfOtherIdentity attribute on computer objects. Attackers could use Kerberos RBCD configuration to escalate privileges through a computer they control if that computer has delegation to the target system.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "Delegation_RBCD"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_computer_or_user_accounts_with_spn_that_have_unconstrained_dele",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Computer or user accounts with SPN that have unconstrained delegation",
+      "description": "Looks for computer or user accounts with SPN that are trusted for unconstrained Kerberos delegation. These accounts store users’ Kerberos TGT locally to authenticate to other systems on their behalf. Computers and users trusted with unconstrained delegation are easily targeted for Kerberos-based attacks.",
+      "severity": "Warning",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Lateral Movement"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_delegation_t4d"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_ForestTrusts",
+        "AD_TrustRelationshipMap",
+        "AD_Users_Security",
+        "Delegation_Constrained",
+        "Delegation_Unconstrained",
+        "Kerberos_SpnAccounts"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_domain_controllers_with_resource_based_constrained_delegation_r",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Domain controllers with Resource-Based Constrained Delegation (RBCD) enabled",
+      "description": "Detects a configuration that grants certain accounts with complete delegation to domain controllers.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Defense Evasion",
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_delegation_sour- cedeleg"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "DC_SecuritySignals",
+        "Delegation_RBCD"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_kerberos_krbtgt_account_with_old_password",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Kerberos krbtgt account with old password",
+      "description": "Looks for a krbtgt user account whose password has not changed in the past 180 days. If the krbtgt account’s password is compromised, Golden Ticket attacks can be performed to obtain access to any resource in an AD domain.",
+      "severity": "Warning",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln2_krbtgt"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – Strong Password Policy"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_kerberos_protocol_transition_delegation_configured",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Kerberos protocol transition delegation configured",
+      "description": "Looks for services that have been configured to allow Kerberos protocol transition, which basically says that a delegated service can use any available authentication protocol. Compromised services can reduce the quality of their authentication protocol that is more easily compromised (e.g., NTLM).",
+      "severity": "Warning",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "Delegation_ProtocolTransition"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_krbtgt_account_with_resource_based_constrained_delegation_rbcd_",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "krbtgt account with Resource-Based Constrained Delegation (RBCD) enabled",
+      "description": "Looks for a krbtgt account that has Resource-Based Constrained Delegation (RBCD) defined. Normally, delegations should not be created on the krbtgt account; if found, they could represent significant risk and should be mitigated quickly.",
+      "severity": "Critical",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_delegation_a2d2"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Delegation_RBCD"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_objects_with_constrained_delegation_configured",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Objects with constrained delegation configured",
+      "description": "Looks for any objects that have values in the msDS-AllowedToDelegateTo attribute (i.e., constrained delegation) and does not have the UserAccountControl bit for protocol transition set. Attackers may use delegations to move laterally or escalate privileges if they compromise a service that is trusted to delegate.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Lateral Movement",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "ADCS_CertificateTemplatePermissions",
+        "ADCS_CertificateTemplates",
+        "ADCS_EnrollmentServicesTemplates",
+        "ADCS_EnterpriseCAs",
+        "AD_ForestTrusts",
+        "AD_TrustRelationshipMap",
+        "AD_Users_Security",
+        "Delegation_Constrained",
+        "Delegation_ProtocolTransition"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_primary_users_with_spn_not_supporting_aes_encryption_on_kerbero",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Primary users with SPN not supporting AES encryption on Kerberos",
+      "description": "Shows all primary users with servicePrincipalNames (SPNs) that do not support AES-128 or AES-256 encryption type. AES encryption is stronger than RC4 encryption. Configuring primary users with SPNs that support AES encryption will not mitigate attacks such as kerberoasting. However, it does force AES encryption by default, meaning that it is possible to monitor for encryption downgrade attacks to RC4 (kerberoasting attacks).",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln3_kerberos_properties_encryption"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Kerberos_SpnAccounts"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_principals_with_constrained_authentication_delegation_enabled_f",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Principals with constrained authentication delegation enabled for a DC service",
+      "description": "Looks for computers and users that have constrained delegation enabled for a service running on a DC. If an attacker can create such a delegation, they can authenticate to that service using any user that is not protected against delegation.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "DC_SecuritySignals",
+        "Delegation_Constrained"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_principals_with_constrained_delegation_using_protocol_transitio",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Principals with constrained delegation using protocol transition enabled for a DC service",
+      "description": "Looks for computers and users that have constrained delegation using protocol transition defined against a service running on a DC. If an attacker can create such a delegation for a service that they can control or compromise an existing service, they can effectively gain a TGS for any user with privileges to the DC.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_delegation_t2a4d"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Computers_Security",
+        "AD_Users_Security",
+        "DC_SecuritySignals",
+        "Delegation_Constrained",
+        "Delegation_ProtocolTransition"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_privileged_users_with_serviceprincipalnames_defined",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Privileged users with ServicePrincipalNames defined",
+      "description": "Looks for accounts with the adminCount attribute set to 1 AND ServicePrincipalNames (SPNs) defined on the account. Privileged accounts that have an SPN defined are targets for Kerberos-based attacks that can elevate privileges to those accounts.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_spn_priv"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_AdminSdHolderImpact",
+        "AD_Users_Security",
+        "Kerberos_SpnAccounts",
+        "Tier0_AdminCountObjects"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_rc4_or_des_encryption_type_is_supported_by_domain_controllers",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "RC4 or DES encryption type is supported by Domain Controllers",
+      "description": "Checks if RC4 or DES encryption is supported by domain controllers. RC4 and DES are considered an insecure form of encryption, susceptible to various cryptographic attacks. Multiple vulnerabilities in the RC4 or DES algorithm allow MITM (Man-in-the-Middle) and deciphering attacks.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "ANSSI",
+          "items": [
+            "vuln1_dc_crypto",
+            "vuln3_dc_crypto",
+            "vuln4_dc_crypto"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "DC_SecuritySignals"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_users_with_serviceprincipalname_defined",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Users with ServicePrincipalName defined",
+      "description": "Provides a way to visually inventory all user accounts that have ServicePrincipalNames (SPNs) defined. Generally, SPNs are only defined for “Kerberized” services; other accounts with an SPN may be cause for concern.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOC",
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Kerberos_SpnAccounts"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_users_with_the_attribute_userpassword_set",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Users with the attribute userPassword set",
+      "description": "Checks if the userPassword attribute exists on accounts. The userPassword attribute saves passwords in clear text and can be queried using LDAP, which can potentially expose passwords.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Detect – Domain Account Monitoring"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_write_access_to_rbcd_on_dc",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Write access to RBCD on DC",
+      "description": "Looks for users who are not in Domain Admins, Enterprise Admins, or Built-in Admins groups that have write access on Resource-Based Constrained Delegation (RBCD) for domain controllers. Attackers that can gain write access to RBCD for a resource can cause the resource to impersonate any user (except where delegation is explicitly disallowed).",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security",
+        "DC_SecuritySignals",
+        "Delegation_RBCD",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "KerberosSecurity_write_access_to_rbcd_on_krbtgt_account",
+      "categoryId": "KerberosSecurity",
+      "indicatorName": "Write access to RBCD on krbtgt account",
+      "description": "Looks for users who are not in Domain Admins, Enterprise Admins, or Built-in Admins groups that have write access on Resource-Based Constrained Delegation (RBCD) for the krbtgt account. Attackers that can gain write access to RBCD for a resource can cause the resource to impersonate any user (except where delegation is explicitly disallowed).",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_Users_Security",
+        "Delegation_RBCD",
+        "Tier0_PrivilegedGroupMembers"
+      ]
+    },
+    {
+      "id": "Okta_high_privileged_custom_roles",
+      "categoryId": "Okta",
+      "indicatorName": "High privileged custom roles",
+      "description": "Checks for custom roles that grant elevated privileges to allow a user to perform actions on other users’ passwords and MFA. Custom roles grant elevated privileges and potentially pose a significant security risk if not properly managed.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Okta_RolesAndPolicies"
+      ]
+    },
+    {
+      "id": "Okta_new_api_token_was_created",
+      "categoryId": "Okta",
+      "indicatorName": "New API token was created",
+      "description": "Checks if a new API token has been created in the last 7 days. API tokens with high privileges allow unauthorized access and actions in Okta. If an attacker gains access to the token’s password, they can leverage it to query and perform actions potentially leading to persistence and compromising the environment.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_RecentlyCreatedObjects",
+        "Okta_RolesAndPolicies"
+      ]
+    },
+    {
+      "id": "Okta_new_permission_has_been_granted_to_a_group",
+      "categoryId": "Okta",
+      "indicatorName": "New permission has been granted to a group",
+      "description": "Checks if any permissions have been granted to a group in the last 7 days. Members of a group with high privileges can perform significant actions in Okta. Therefore, it is important to know which groups grant strong privileges.",
+      "severity": "Low",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_RecentlyCreatedObjects",
+        "Okta_RolesAndPolicies"
+      ]
+    },
+    {
+      "id": "Okta_new_permission_has_been_granted_to_user",
+      "categoryId": "Okta",
+      "indicatorName": "New permission has been granted to user",
+      "description": "Checks if any permissions have been granted to a user in the last 7 days. Users with high privileges can perform significant actions in Okta. Therefore, it is important to identify and monitor users who have been granted elevated privileges to mitigate the risk of unauthorized access and potential misuse of sensitive data.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_RecentlyCreatedObjects",
+        "AD_Users_Security",
+        "Okta_RolesAndPolicies"
+      ]
+    },
+    {
+      "id": "Okta_new_super_admin_permission_has_been_granted_to_user",
+      "categoryId": "Okta",
+      "indicatorName": "New Super Admin permission has been granted to user",
+      "description": "Checks for users who were granted “Super Admin” permissions in the last 7 days. Users with “Super Admin” privileges have extensive privileges and control over critical aspects of the Okta environment. Unauthorized or excessive granting of the “Super Admin” permission can significantly increase the risk of compromise and unauthorized access to Okta.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_RecentlyCreatedObjects",
+        "AD_Users_Security",
+        "Okta_RolesAndPolicies"
+      ]
+    },
+    {
+      "id": "Okta_new_super_admin_permissions_has_been_granted_to_a_group",
+      "categoryId": "Okta",
+      "indicatorName": "New Super Admin permissions has been granted to a group",
+      "description": "Checks for groups where “Super Admin” permissions have been granted in the last 7 days. Members in a group with “Super Admin” privileges have extensive access and can perform significant actions in Okta. Therefore, it is important to closely monitor and control which groups are granted these strong privileges to prevent unauthorized access and potential compromise of the Okta environment.",
+      "severity": "Warning",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence",
+            "Privilege Escalation"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Groups",
+        "AD_RecentlyCreatedObjects",
+        "Okta_RolesAndPolicies"
+      ]
+    },
+    {
+      "id": "Okta_password_policy_check",
+      "categoryId": "Okta",
+      "indicatorName": "Password policy check",
+      "description": "Evaluates all password policies and verifies they adhere to Okta’s recommendations. A strong password policy is crucial in preventing unauthorized access to the environment through brute force attacks.",
+      "severity": "Medium",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Credential Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_WeakPasswordPolicies",
+        "Okta_RolesAndPolicies"
+      ]
+    },
+    {
+      "id": "Okta_user_activation_in_the_last_7_days",
+      "categoryId": "Okta",
+      "indicatorName": "User activation in the last 7 days",
+      "description": "Checks for users who were activated in the past 7 days. Activated users have the ability to authenticate and perform actions within the Okta environment. Therefore, it is important to monitor and verify the activation status of users to ensure that only authorized individuals have access.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Persistence"
+          ]
+        },
+        {
+          "name": "MITRE D3FEND",
+          "items": [
+            "Harden – User Account Permissions"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_RecentlyCreatedObjects",
+        "AD_Users_Security",
+        "Okta_RolesAndPolicies"
+      ]
+    },
+    {
+      "id": "Okta_user_deactivation_in_the_last_7_days",
+      "categoryId": "Okta",
+      "indicatorName": "User deactivation in the last 7 days",
+      "description": "Checks for users who were deactivated in the past 7 days. Deactivated users no longer have the ability to authenticate and perform actions within the Okta environment. However, an attacker may intentionally deactivate a user to disrupt the functioning of the environment or to hide their activities. It is important to monitor and verify the deactivation status of users to ensure it aligns with the intended access controls.",
+      "severity": "Informational",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [],
+      "requiredDatasets": [
+        "AD_RecentlyCreatedObjects",
+        "AD_Users_Security",
+        "Okta_RolesAndPolicies"
+      ]
+    },
+    {
+      "id": "Okta_users_without_multi_factor_authentication_mfa",
+      "categoryId": "Okta",
+      "indicatorName": "Users without Multi- Factor Authentication (MFA)",
+      "description": "Checks all users to identity those who have not registered for Multi-Factor Authentication (MFA). Users who are not configured with MFA are at a high risk of being compromised. This poses a significant threat not only to the user but also the entire environment.",
+      "severity": "High",
+      "ioeIoc": [
+        "IOE"
+      ],
+      "framework": [
+        {
+          "name": "MITRE ATT&CK",
+          "items": [
+            "Initial Access"
+          ]
+        }
+      ],
+      "requiredDatasets": [
+        "AD_Users_Security",
+        "Okta_RolesAndPolicies"
+      ]
+    }
+  ]
+}
