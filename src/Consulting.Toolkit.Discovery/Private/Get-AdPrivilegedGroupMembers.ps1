@@ -20,15 +20,18 @@ function Get-AdPrivilegedGroupMembers {
             continue
         }
 
-        $members = @(Get-AdGroupMembersRecursive -GroupDn $g.DistinguishedName -Server $server)
+        $members = @(Get-ADGroupMember -Identity $g.DistinguishedName -Recursive -Server $server -ErrorAction Stop)
 
         foreach ($m in $members) {
             $rows += [pscustomobject]@{
                 DomainFqdn           = $domain
-                PrivilegedGroupName  = $gName
+                GroupName            = $gName
+                GroupDn              = [string]$g.DistinguishedName
                 MemberSamAccountName = $m.SamAccountName
                 MemberDn             = $m.DistinguishedName
                 MemberObjectClass    = $m.objectClass
+                IsDirectMember       = $null
+                MembershipPath       = $null
             }
         }
     }

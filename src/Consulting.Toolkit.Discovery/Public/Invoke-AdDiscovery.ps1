@@ -423,12 +423,45 @@ function Invoke-AdDiscovery {
             (Get-AdPrivilegedAccounts -DomainContext $ctx) |
             Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Security__PrivilegedAccounts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
+            if ($IncludeSecurity) {
+                # -------------------------
+                # Phase 1 Security exports (raw facts only)
+                # -------------------------
+                Write-Host "  - Security (Phase 1: account/kerberos/gpo raw facts)" -ForegroundColor DarkGray
+
+                try {
+                    (Get-AdRecentlyCreatedObjects -DomainContext $ctx -Days 10 -IncludeGpo -LogPath $layout.LogPath) |
+                    Export-AdCsvSafeWithSchema -Path (Join-Path $domainDir ("AD__Domain__Security__RecentlyCreatedObjects__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+                } catch { Log-ExecutionStatus "Recently Created Objects ($d)" "FAIL" $_.Exception.Message }
+
+                try {
+                    (Get-AdBuiltInAdministratorSignals -DomainContext $ctx) |
+                    Export-AdCsvSafeWithSchema -Path (Join-Path $domainDir ("AD__Domain__Security__BuiltInAdministratorSignals__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+                } catch { Log-ExecutionStatus "Built-in Administrator Signals ($d)" "FAIL" $_.Exception.Message }
+
+                try {
+                    (Get-AdAsrepRoastableUsers -DomainContext $ctx) |
+                    Export-AdCsvSafeWithSchema -Path (Join-Path $domainDir ("AD__Domain__Security__AsrepRoastableUsers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+                } catch { Log-ExecutionStatus "AS-REP Roastable Users ($d)" "FAIL" $_.Exception.Message }
+
+                try {
+                    (Get-AdPrivilegedPasswordAge -DomainContext $ctx) |
+                    Export-AdCsvSafeWithSchema -Path (Join-Path $domainDir ("AD__Domain__Security__PrivilegedPasswordAge__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+                } catch { Log-ExecutionStatus "Privileged Password Age ($d)" "FAIL" $_.Exception.Message }
+
+                try {
+                    $gpoDelegation = @(Get-AdGpoDelegation -DomainContext $ctx -LogPath $layout.LogPath)
+                    $gpoDelegation |
+                    Export-AdCsvSafeWithSchema -Path (Join-Path $domainDir ("AD__Domain__GPO__Delegation__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
+                } catch { Log-ExecutionStatus "GPO Delegation ($d)" "FAIL" $_.Exception.Message }
+            }
+
             # GPO inventory + links (collector)
             Write-Host "  - Group Policy Objects" -ForegroundColor Gray
             $gpos = @(Get-AdGpoInventory -DomainContext $ctx -LogPath $layout.LogPath)
             $gpos | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__GPO__Inventory__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
-            (Get-AdGpoLinks -DomainContext $ctx -Scope OneLevel) |
+            (Get-AdGpoLinks -DomainContext $ctx -Scope Subtree -LogPath $layout.LogPath) |
             Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__GPO__Links__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
             Log-ExecutionStatus "Domain Processing ($d)" "OK"

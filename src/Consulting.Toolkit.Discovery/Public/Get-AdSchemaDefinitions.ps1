@@ -578,5 +578,70 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'Evidence'; Type = 'string'; Description = 'Optional evidence/source'; Example = 'Registry/Policy'; Notes = 'If you capture it' }
   )
 
+  # Domain: recently created objects (users/groups/computers)
+  $schemas['Domain_Security_RecentlyCreatedObjects'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'user/group/computer/gpo'; Example = 'user'; Notes = '' }
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Object name'; Example = 'SQL Service'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'sAMAccountName'; Example = 'svc_sql'; Notes = 'Blank for some objects' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=...,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectGuid'; Type = 'string'; Description = 'Object GUID'; Example = '...'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Creation time'; Example = '2026-02-01T12:00:00'; Notes = '' }
+    [pscustomobject]@{ Column = 'LookbackDays'; Type = 'int'; Description = 'Lookback window days'; Example = '10'; Notes = '' }
+  )
+
+  # Domain: built-in Administrator signals (RID 500)
+  $schemas['Domain_Security_BuiltInAdministratorSignals'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'sAMAccountName'; Example = 'Administrator'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=Administrator,CN=Users,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectGuid'; Type = 'string'; Description = 'Object GUID'; Example = '...'; Notes = '' }
+    [pscustomobject]@{ Column = 'Enabled'; Type = 'bool'; Description = 'Enabled flag'; Example = 'false'; Notes = '' }
+    [pscustomobject]@{ Column = 'UserAccountControl'; Type = 'int'; Description = 'UAC flags integer'; Example = '512'; Notes = '' }
+    [pscustomobject]@{ Column = 'PasswordLastSet'; Type = 'datetime'; Description = 'Password last set'; Example = '2026-01-01T00:00:00'; Notes = '' }
+    [pscustomobject]@{ Column = 'PwdLastSetRaw'; Type = 'string'; Description = 'Raw pwdLastSet'; Example = '133...'; Notes = '' }
+    [pscustomobject]@{ Column = 'LastLogonDate'; Type = 'datetime'; Description = 'Replicated last logon date'; Example = '2026-02-10T00:00:00'; Notes = 'From lastLogonTimestamp-derived field' }
+    [pscustomobject]@{ Column = 'LastLogonTimestamp'; Type = 'string'; Description = 'Raw lastLogonTimestamp'; Example = '133...'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Creation time'; Example = '...'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Changed time'; Example = '...'; Notes = '' }
+  )
+
+  # Domain: AS-REP roastable users
+  $schemas['Domain_Security_AsrepRoastableUsers'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'sAMAccountName'; Example = 'user1'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=...,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectGuid'; Type = 'string'; Description = 'Object GUID'; Example = '...'; Notes = '' }
+    [pscustomobject]@{ Column = 'Enabled'; Type = 'bool'; Description = 'Enabled flag'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'UserAccountControl'; Type = 'int'; Description = 'UAC flags integer'; Example = '...'; Notes = '' }
+    [pscustomobject]@{ Column = 'PasswordLastSet'; Type = 'datetime'; Description = 'Password last set'; Example = '...'; Notes = '' }
+    [pscustomobject]@{ Column = 'IsAsrepRoastable'; Type = 'bool'; Description = 'Always true'; Example = 'true'; Notes = '' }
+  )
+
+  # Domain: privileged accounts password age
+  $schemas['Domain_Security_PrivilegedPasswordAge'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'sAMAccountName'; Example = 'adm_jdoe'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=...,DC=...'; Notes = '' }
+    [pscustomobject]@{ Column = 'ObjectGuid'; Type = 'string'; Description = 'Object GUID'; Example = '...'; Notes = '' }
+    [pscustomobject]@{ Column = 'Enabled'; Type = 'bool'; Description = 'Enabled flag'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'InPrivGroups'; Type = 'bool'; Description = 'In privileged groups'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'PrivGroups'; Type = 'string'; Description = 'Privileged groups'; Example = 'Domain Admins;Administrators'; Notes = 'Semicolon-delimited' }
+    [pscustomobject]@{ Column = 'AdminCount'; Type = 'bool'; Description = 'adminCount-derived flag'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'PasswordLastSet'; Type = 'datetime'; Description = 'Password last set'; Example = '...'; Notes = '' }
+    [pscustomobject]@{ Column = 'PasswordAgeDays'; Type = 'int'; Description = 'Password age in days'; Example = '180'; Notes = '' }
+  )
+
+  # Domain: GPO delegation/permissions
+  $schemas['Domain_GPO_Delegation'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'GpoDisplayName'; Type = 'string'; Description = 'GPO display name'; Example = 'Default Domain Policy'; Notes = '' }
+    [pscustomobject]@{ Column = 'GpoId'; Type = 'string'; Description = 'GPO GUID'; Example = '{...}'; Notes = '' }
+    [pscustomobject]@{ Column = 'Trustee'; Type = 'string'; Description = 'Trustee name'; Example = 'CONTOSO\\Domain Admins'; Notes = '' }
+    [pscustomobject]@{ Column = 'TrusteeType'; Type = 'string'; Description = 'Trustee type'; Example = 'Group'; Notes = '' }
+    [pscustomobject]@{ Column = 'Permission'; Type = 'string'; Description = 'Permission'; Example = 'GpoEditDeleteModifySecurity'; Notes = '' }
+    [pscustomobject]@{ Column = 'Inherited'; Type = 'bool'; Description = 'Inherited'; Example = 'false'; Notes = 'May be null depending on platform' }
+  )
+
   return $schemas
 }

@@ -8,17 +8,17 @@ function Get-AdDelegationRBCD {
 
     $props = @('msDS-AllowedToActOnBehalfOfOtherIdentity', 'distinguishedName', 'samAccountName', 'name', 'objectClass')
     $objs = @(Get-ADObject -LDAPFilter '(msDS-AllowedToActOnBehalfOfOtherIdentity=*)' `
-            -SearchBase $baseDn -Server $server -Properties $props -ErrorAction SilentlyContinue)
+            -SearchBase $baseDn -Server $server -Properties $props -ErrorAction Stop)
 
     foreach ($o in $objs) {
-        # We don't expand the security descriptor here (collector-only). Just signal presence.
+        # Collector-only: we do not fully expand RBCD ACEs here.
         [pscustomobject]@{
             DomainFqdn        = $domain
-            Name              = $o.Name
-            SamAccountName    = $o.SamAccountName
-            ObjectClass       = $o.ObjectClass
-            DistinguishedName = $o.DistinguishedName
-            RBCDPresent       = $true
+            TargetName        = $o.Name
+            TargetDn          = $o.DistinguishedName
+            AllowedPrincipal  = $null
+            AllowedPrincipalSid = $null
+            AccessType        = $null
         }
     }
 }

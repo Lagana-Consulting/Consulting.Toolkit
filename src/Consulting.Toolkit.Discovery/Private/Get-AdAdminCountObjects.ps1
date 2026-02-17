@@ -13,7 +13,7 @@ function Get-AdAdminCountObjects {
     $objs = @()
     try {
         $objs = @(Get-ADObject -LDAPFilter '(adminCount=1)' -SearchBase $baseDn -Server $server `
-                -Properties objectClass, adminCount, distinguishedName, name -ErrorAction Stop)
+                -Properties objectClass, adminCount, distinguishedName, name, samAccountName -ErrorAction Stop)
     } catch {
         $objs = @()
     }
@@ -21,10 +21,11 @@ function Get-AdAdminCountObjects {
     foreach ($o in $objs) {
         [pscustomobject]@{
             DomainFqdn        = $domain
-            Name              = $o.Name
             ObjectClass       = $o.ObjectClass
+            SamAccountName    = $o.SamAccountName
             DistinguishedName = $o.DistinguishedName
             AdminCount        = $o.adminCount
+            IsProtectedByAdminSDHolder = $null
         }
     }
 }

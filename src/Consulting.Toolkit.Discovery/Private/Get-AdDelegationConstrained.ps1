@@ -8,7 +8,7 @@ function Get-AdDelegationConstrained {
 
     $props = @('msDS-AllowedToDelegateTo', 'distinguishedName', 'samAccountName', 'name', 'objectClass')
     $objs = @(Get-ADObject -LDAPFilter '(msDS-AllowedToDelegateTo=*)' `
-            -SearchBase $baseDn -Server $server -Properties $props -ErrorAction SilentlyContinue)
+            -SearchBase $baseDn -Server $server -Properties $props -ErrorAction Stop)
 
     foreach ($o in $objs) {
         $targets = @($o.'msDS-AllowedToDelegateTo')

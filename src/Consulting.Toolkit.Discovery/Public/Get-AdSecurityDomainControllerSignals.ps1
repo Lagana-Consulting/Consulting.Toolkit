@@ -20,19 +20,22 @@ function Get-AdSecurityDomainControllerSignals {
     }
 
     foreach ($dc in $dcs) {
-        # Best-effort signals from AD-visible properties
-        [pscustomobject]@{
-            DomainFqdn      = $domain
-            Name            = $dc.Name
-            HostName        = $dc.HostName
-            Site            = $dc.Site
-            IPv4Address     = $dc.IPv4Address
-            IsGlobalCatalog = [bool]$dc.IsGlobalCatalog
-            IsReadOnly      = [bool]$dc.IsReadOnly
-            OperatingSystem = $dc.OperatingSystem
-            OSVersion       = $dc.OperatingSystemVersion
-            Forest          = $dc.Forest
-            Domain          = $dc.Domain
+        $dcName = if ($dc.HostName) { [string]$dc.HostName } else { [string]$dc.Name }
+        foreach ($signal in @(
+            @{ N = 'IsGlobalCatalog'; V = [string][bool]$dc.IsGlobalCatalog; E = 'Get-ADDomainController' }
+            @{ N = 'IsReadOnly';      V = [string][bool]$dc.IsReadOnly;      E = 'Get-ADDomainController' }
+            @{ N = 'OperatingSystem'; V = [string]$dc.OperatingSystem;       E = 'Get-ADDomainController' }
+            @{ N = 'OSVersion';       V = [string]$dc.OperatingSystemVersion;E = 'Get-ADDomainController' }
+            @{ N = 'Site';            V = [string]$dc.Site;                  E = 'Get-ADDomainController' }
+            @{ N = 'IPv4Address';     V = [string]$dc.IPv4Address;           E = 'Get-ADDomainController' }
+        )) {
+            [pscustomobject]@{
+                DomainFqdn       = $domain
+                DomainController = $dcName
+                Signal           = $signal.N
+                Value            = $signal.V
+                Evidence         = $signal.E
+            }
         }
     }
 }

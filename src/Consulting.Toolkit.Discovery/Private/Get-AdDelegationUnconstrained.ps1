@@ -8,7 +8,7 @@ function Get-AdDelegationUnconstrained {
 
     $props = @('userAccountControl', 'distinguishedName', 'samAccountName', 'name', 'objectClass', 'servicePrincipalName')
     $objs = @(Get-ADObject -LDAPFilter '(&(userAccountControl:1.2.840.113556.1.4.803:=524288))' `
-            -SearchBase $baseDn -Server $server -Properties $props -ErrorAction SilentlyContinue)
+            -SearchBase $baseDn -Server $server -Properties $props -ErrorAction Stop)
 
     foreach ($o in $objs) {
         [pscustomobject]@{
@@ -17,6 +17,7 @@ function Get-AdDelegationUnconstrained {
             SamAccountName    = $o.SamAccountName
             ObjectClass       = $o.ObjectClass
             DistinguishedName = $o.DistinguishedName
+            TrustedForDelegation = $true
             SPNCount          = @($o.servicePrincipalName).Count
         }
     }

@@ -32,6 +32,13 @@ function Resolve-AdSchemaNameForCsv {
         @{ Pattern = '^AD__Domain__Security__AdminCountObjects__Domain-.*\.csv$'; Schema = 'Domain_Security_AdminCountObjects' }
         @{ Pattern = '^AD__Domain__Security__ProtectedUsers__Domain-.*\.csv$'; Schema = 'Domain_Security_ProtectedUsers' }
 
+        # --- Domain Security Phase 1 ---
+        @{ Pattern = '^AD__Domain__Security__RecentlyCreatedObjects__Domain-.*\.csv$'; Schema = 'Domain_Security_RecentlyCreatedObjects' }
+        @{ Pattern = '^AD__Domain__Security__BuiltInAdministratorSignals__Domain-.*\.csv$'; Schema = 'Domain_Security_BuiltInAdministratorSignals' }
+        @{ Pattern = '^AD__Domain__Security__AsrepRoastableUsers__Domain-.*\.csv$'; Schema = 'Domain_Security_AsrepRoastableUsers' }
+        @{ Pattern = '^AD__Domain__Security__PrivilegedPasswordAge__Domain-.*\.csv$'; Schema = 'Domain_Security_PrivilegedPasswordAge' }
+        @{ Pattern = '^AD__Domain__GPO__Delegation__Domain-.*\.csv$'; Schema = 'Domain_GPO_Delegation' }
+
         # --- Domain Security Delegation ---
         @{ Pattern = '^AD__Domain__Security__DelegationUnconstrained__Domain-.*\.csv$'; Schema = 'Domain_Security_DelegationUnconstrained' }
         @{ Pattern = '^AD__Domain__Security__DelegationConstrained__Domain-.*\.csv$'; Schema = 'Domain_Security_DelegationConstrained' }
