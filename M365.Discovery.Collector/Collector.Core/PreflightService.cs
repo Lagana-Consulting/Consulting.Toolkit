@@ -7,6 +7,7 @@ public sealed class PreflightService
 {
     private readonly ResilientGraphClient _graphClient;
     private CapabilityMatrix? _cachedMatrix;
+    private TokenInfo? _cachedTokenInfo;
 
     public PreflightService(ResilientGraphClient graphClient)
     {
@@ -20,6 +21,7 @@ public sealed class PreflightService
     {
         var detector = new PermissionDetector(tokenInfo);
         _cachedMatrix = detector.DetectCapabilities();
+        _cachedTokenInfo = tokenInfo;
 
         // Sanity check: call /organization
         var orgTestResult = await TestOrganizationEndpointAsync(cancellationToken);
@@ -47,6 +49,24 @@ public sealed class PreflightService
         }
 
         var status = _cachedMatrix.GetStatus(workloadKey);
+        var source = _cachedMatrix.GetSource(workloadKey);
+        var requiredPermissions = _cachedMatrix.GetRequiredPermissionsForCapability(workloadKey);
+        var requiredDisplay = requiredPermissions.Length > 0
+            ? string.Join("; ", requiredPermissions)
+            : "No mapping available";
+        var missingTokens = _cachedMatrix.GetMissingPermissionTokens(workloadKey);
+        var missingTokenDisplay = missingTokens.Length > 0
+            ? string.Join(", ", missingTokens)
+            : "none";
+        var sourceDisplay = source switch
+        {
+            CapabilityPermissionSource.Delegated => "delegated",
+            CapabilityPermissionSource.Application => "application",
+            CapabilityPermissionSource.Both => "delegated+application",
+            _ => "unknown"
+        };
+        var reasonCode = GetReasonCode(status, source, missingTokens);
+
         var preflightStatus = status switch
         {
             CapabilityStatus.Available => PreflightStatus.Available,
@@ -57,11 +77,17 @@ public sealed class PreflightService
 
         var message = status switch
         {
-            CapabilityStatus.Available => "✅ Capability available",
-            CapabilityStatus.Partial => "⚠ Partial access - limited data available",
-            CapabilityStatus.Blocked => $"❌ Blocked - missing required scopes",
+            CapabilityStatus.Available => $"✅ Capability available (source: {sourceDisplay})",
+            CapabilityStatus.Partial => $"⚠ Partial access (reason: {reasonCode}, source: {sourceDisplay}) - likely missing: {requiredDisplay} | missing tokens: {missingTokenDisplay}",
+            CapabilityStatus.Blocked => $"❌ Blocked (reason: {reasonCode}, source: {sourceDisplay}) - missing permissions: {requiredDisplay} | missing tokens: {missingTokenDisplay}",
             _ => "Unknown capability status"
         };
+
+        if (workloadKey.Equals("hybrid.aadConnectConfig", StringComparison.OrdinalIgnoreCase) &&
+            _cachedTokenInfo?.AuthMode == AuthMode.InteractiveDelegated)
+        {
+            message += " | note: delegated path also requires a supported Entra admin role for /directory/onPremisesSynchronization.";
+        }
 
         return Task.FromResult(new PreflightResult(preflightStatus, message));
     }
@@ -94,6 +120,38 @@ public sealed class PreflightService
         {
             return (false, $"❌ Unexpected error: {ex.Message}");
         }
+    }
+
+    private string GetReasonCode(CapabilityStatus status, CapabilityPermissionSource source, string[] missingTokens)
+    {
+        if (status == CapabilityStatus.Available)
+        {
+            return "available";
+        }
+
+        if (_cachedTokenInfo == null)
+        {
+            return "unknown";
+        }
+
+        if (_cachedTokenInfo.AuthMode == AuthMode.AppOnly && _cachedTokenInfo.ApplicationRoles.Length == 0)
+        {
+            return "consent_not_granted";
+        }
+
+        if (_cachedTokenInfo.AuthMode == AuthMode.InteractiveDelegated &&
+            _cachedTokenInfo.DelegatedScopes.Length == 0 &&
+            source == CapabilityPermissionSource.Unknown)
+        {
+            return "mode_mismatch";
+        }
+
+        if (missingTokens.Length > 0)
+        {
+            return "missing_permissions";
+        }
+
+        return "unknown";
     }
 }
 

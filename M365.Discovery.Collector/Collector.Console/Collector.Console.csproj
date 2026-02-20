@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Collector.Console</AssemblyName>
+    <RootNamespace>Collector.ConsoleApp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Collector.Core\Collector.Core.csproj" />
+    <ProjectReference Include="..\Collector.Graph\Collector.Graph.csproj" />
+  </ItemGroup>
+</Project>

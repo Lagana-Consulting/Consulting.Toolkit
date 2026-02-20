@@ -1,0 +1,26 @@
+M365 Discovery Collector CLI
+----------------------------
+Run Name: Discovery_20260219_123413
+Output:   C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\CollectorOutput\Discovery_20260219_123413
+Role:     Operator
+Mode:     AppOnly
+Workloads (14): entra.users, entra.groups, entra.applications, entra.servicePrincipals, entra.roles, entra.conditionalAccess, entra.crossTenantAccess, entra.guests, entra.groupInventoryPlus, entra.appCredentials, entra.appAssignments, entra.directorySettings, m365.groups, org.organization
+
+Preflight check started.
+  Γ£à Connected to organization: Quest PM PSO NAM Test Tenant 17 - 5116720
+  Users: Γ£à Capability available (source: application)
+  Groups: Γ£à Capability available (source: application)
+  Application Registrations: Γ£à Capability available (source: application)
+  Service Principals: Γ£à Capability available (source: application)
+  Directory Roles: Γ£à Capability available (source: application)
+  Conditional Access Policies: Γ£à Capability available (source: application)
+  Cross-Tenant Access: Γ£à Capability available (source: application)
+  Guest Users: Γ£à Capability available (source: application)
+  Group Details: Γ£à Capability available (source: application)
+  App Credentials: Γ£à Capability available (source: application)
+  App Permissions: Γ£à Capability available (source: application)
+  Directory Settings: Γ£à Capability available (source: application)
+  M365 Groups: Γ£à Capability available (source: application)
+  Organization Info: Γ£à Capability available (source: application)
+Preflight completed.
+

@@ -1,0 +1,27 @@
+{
+  "organizationId": "623ad972-a938-44d6-9df8-54f9d0f6b09e",
+  "displayName": "Quest PM PSO NAM Test Tenant 17 - 5116720",
+  "verifiedDomains": [
+    "QuestpmpsoNAM17.onmicrosoft.com",
+    "QuestpmpsoNAM17.mail.onmicrosoft.com"
+  ],
+  "allDomains": [
+    "QuestpmpsoNAM17.onmicrosoft.com",
+    "QuestpmpsoNAM17.mail.onmicrosoft.com"
+  ],
+  "technicalNotificationMails": [
+    "Paul.Lagana@quest.com"
+  ],
+  "createdDateTime": "2025-08-01T13:02:04+00:00",
+  "licenseSkus": [
+    {
+      "skuId": "06ebc4ee-1bb5-47dd-8120-11324bc54e06",
+      "skuPartNumber": "SPE_E5",
+      "consumedUnits": 1,
+      "prepaidUnitsEnabled": 5,
+      "prepaidUnitsSuspended": 0,
+      "prepaidUnitsWarning": 0,
+      "capabilityStatus": "Enabled"
+    }
+  ]
+}

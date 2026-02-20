@@ -1,0 +1,26 @@
+﻿PrincipalId,PrincipalDisplayName,PrincipalType,ResourceId,ResourceDisplayName,AppRoleId,CreatedDateTime,IsGraphAssignment
+3f5f2691-df5e-4c8d-8ba0-807886bb7a23,M365 Discovery Collector,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,5b567255-7703-4780-807c-7be8301ae99b,2026-02-17 18:23:15,True
+3f5f2691-df5e-4c8d-8ba0-807886bb7a23,M365 Discovery Collector,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,7ab1d382-f21e-4acd-a863-ba3e13f7da61,2026-02-17 18:23:15,True
+3f5f2691-df5e-4c8d-8ba0-807886bb7a23,M365 Discovery Collector,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,df021288-bdef-4463-88db-98f22de89214,2026-02-17 18:23:15,True
+3f5f2691-df5e-4c8d-8ba0-807886bb7a23,M365 Discovery Collector,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,498476ce-e0fe-48b0-b801-37ba7e2685c6,2026-02-17 18:23:15,True
+3f5f2691-df5e-4c8d-8ba0-807886bb7a23,M365 Discovery Collector,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,b0afded3-3588-46d8-8b3d-9842eff778da,2026-02-17 18:23:16,True
+3f5f2691-df5e-4c8d-8ba0-807886bb7a23,M365 Discovery Collector,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,246dd0d5-5bd0-4def-940b-0421030a5b68,2026-02-17 18:23:15,True
+3f5f2691-df5e-4c8d-8ba0-807886bb7a23,M365 Discovery Collector,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,9a5d68dd-52b0-4cc2-bd40-abcf44ac3a30,2026-02-17 18:23:15,True
+3f5f2691-df5e-4c8d-8ba0-807886bb7a23,M365 Discovery Collector,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,230c1aed-a721-4c5d-9cb4-a90514e508ef,2026-02-17 18:23:16,True
+5c3a1947-20b3-4bd4-b0fd-d77eff0bd0e5,M365 Discovery Collector - 20260217,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,bb70e231-92dc-4729-aff5-697b3f04be95,2026-02-19 14:45:21,True
+5c3a1947-20b3-4bd4-b0fd-d77eff0bd0e5,M365 Discovery Collector - 20260217,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,5b567255-7703-4780-807c-7be8301ae99b,2026-02-17 18:39:20,True
+5c3a1947-20b3-4bd4-b0fd-d77eff0bd0e5,M365 Discovery Collector - 20260217,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,7ab1d382-f21e-4acd-a863-ba3e13f7da61,2026-02-17 18:39:20,True
+5c3a1947-20b3-4bd4-b0fd-d77eff0bd0e5,M365 Discovery Collector - 20260217,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,df021288-bdef-4463-88db-98f22de89214,2026-02-17 18:39:19,True
+5c3a1947-20b3-4bd4-b0fd-d77eff0bd0e5,M365 Discovery Collector - 20260217,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,498476ce-e0fe-48b0-b801-37ba7e2685c6,2026-02-17 18:39:20,True
+5c3a1947-20b3-4bd4-b0fd-d77eff0bd0e5,M365 Discovery Collector - 20260217,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,b0afded3-3588-46d8-8b3d-9842eff778da,2026-02-17 18:39:20,True
+5c3a1947-20b3-4bd4-b0fd-d77eff0bd0e5,M365 Discovery Collector - 20260217,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,246dd0d5-5bd0-4def-940b-0421030a5b68,2026-02-17 18:39:20,True
+5c3a1947-20b3-4bd4-b0fd-d77eff0bd0e5,M365 Discovery Collector - 20260217,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,9a5d68dd-52b0-4cc2-bd40-abcf44ac3a30,2026-02-17 18:39:20,True
+5c3a1947-20b3-4bd4-b0fd-d77eff0bd0e5,M365 Discovery Collector - 20260217,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,230c1aed-a721-4c5d-9cb4-a90514e508ef,2026-02-17 18:39:20,True
+6b58b1f1-3d94-4de0-87fb-8bc9fd064b1b,Quest-Graph-Reader,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,5b567255-7703-4780-807c-7be8301ae99b,2025-08-25 14:43:00,True
+6b58b1f1-3d94-4de0-87fb-8bc9fd064b1b,Quest-Graph-Reader,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,332a536c-c7ef-4017-ab91-336970924f0d,2025-08-25 14:43:00,True
+6b58b1f1-3d94-4de0-87fb-8bc9fd064b1b,Quest-Graph-Reader,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,7ab1d382-f21e-4acd-a863-ba3e13f7da61,2025-08-25 14:43:00,True
+6b58b1f1-3d94-4de0-87fb-8bc9fd064b1b,Quest-Graph-Reader,ServicePrincipal,1d8909b8-4ab4-4a44-9eb2-45cda0ca3399,Microsoft Graph,2280dda6-0bfd-44ee-a2f4-cb867cfc4c1e,2025-08-25 14:43:00,True
+93a45f6d-ca5e-47c3-afbe-9f283334d2a1,ConnectSyncProvisioning_SOURCEMEMBER01_939c643d80d4,ServicePrincipal,2799b943-d95f-4390-89fd-728dfcc6286b,Microsoft password reset service,e006e431-a65b-4f3e-8808-77d29d4c5f1a,2026-01-28 20:28:03,False
+93a45f6d-ca5e-47c3-afbe-9f283334d2a1,ConnectSyncProvisioning_SOURCEMEMBER01_939c643d80d4,ServicePrincipal,2799b943-d95f-4390-89fd-728dfcc6286b,Microsoft password reset service,69201c67-737b-4a20-8f16-e0c8c64e0b0e,2026-01-28 20:28:03,False
+93a45f6d-ca5e-47c3-afbe-9f283334d2a1,ConnectSyncProvisioning_SOURCEMEMBER01_939c643d80d4,ServicePrincipal,2799b943-d95f-4390-89fd-728dfcc6286b,Microsoft password reset service,fc7e8088-95b5-453e-8bef-b17ecfec5ba3,2026-01-28 20:28:03,False
+93a45f6d-ca5e-47c3-afbe-9f283334d2a1,ConnectSyncProvisioning_SOURCEMEMBER01_939c643d80d4,ServicePrincipal,c1183b34-1282-4017-8998-673fb85bb57f,Microsoft Entra AD Synchronization Service,ab43b826-2c7a-4aff-9ecd-d0629d0ca6a9,2026-01-28 20:28:02,False

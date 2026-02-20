@@ -1,0 +1,2 @@
+﻿TenantId,DisplayName,IsDefaultPolicy,InboundAllowed,OutboundAllowed,B2BDirectConnectInboundAllowed,B2BDirectConnectOutboundAllowed,HasRestrictions
+default,Default Settings,True,True,True,False,False,False

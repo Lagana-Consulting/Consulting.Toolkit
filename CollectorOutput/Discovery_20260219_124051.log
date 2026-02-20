@@ -1,0 +1,10 @@
+M365 Discovery Collector CLI
+----------------------------
+Self-check started.
+  ❌ Role boundary: bootstrap-admin is not permitted for runtime CLI run path.
+     Use --role operator for preflight/discovery execution.
+  ✅ Workload selection: 14 workload(s) resolved.
+Config fallback: using GUI config at C:\Users\paull\AppData\Roaming\M365DiscoveryCollector\config.json
+  ✅ Auth config: resolved and valid (mode: AppOnly).
+  ✅ Output access: writable (C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\CollectorOutput).
+Self-check completed: FAIL (1 issue(s)).

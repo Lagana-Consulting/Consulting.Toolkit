@@ -1,0 +1,8 @@
+{
+  "ClientId": "cce6a7eb-a16c-4e48-8adc-00e159387306",
+  "TenantId": "623ad972-a938-44d6-9df8-54f9d0f6b09e",
+  "UseAppOnlyCertificateSignIn": true,
+  "CertificateThumbprint": "0EFF2767FAB6CA2379999979D6E3DEADF3273500",
+  "CertificateSubjectName": "CN=m365-discovery-collector",
+  "AdminConsentUrl": "https://login.microsoftonline.com/623ad972-a938-44d6-9df8-54f9d0f6b09e/adminconsent?client_id=cce6a7eb-a16c-4e48-8adc-00e159387306&redirect_uri=http%3A%2F%2Flocalhost"
+}

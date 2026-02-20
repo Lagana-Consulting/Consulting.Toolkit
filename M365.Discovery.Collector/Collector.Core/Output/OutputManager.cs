@@ -62,15 +62,27 @@ public sealed class OutputManager
     {
         foreach (var result in _results)
         {
-            if (result.Data == null || result.ItemCount == 0)
-                continue;
-
             var fileName = GetCsvFileName(result.WorkloadKey);
             var filePath = Path.Combine(_context.OutputFolder, fileName);
 
             try
             {
+                if (result.ItemCount == 0)
+                {
+                    if (IsCsvWorkload(result.WorkloadKey))
+                    {
+                        await WriteHeaderOnlyCsvAsync(filePath, result.WorkloadKey, cancellationToken);
+                        await WriteLegacyAliasCsvsAsync(filePath, result.WorkloadKey, cancellationToken);
+                        Console.WriteLine($"  ✅ Exported: {fileName} (0 items; header-only)");
+                    }
+                    continue;
+                }
+
+                if (result.Data == null)
+                    continue;
+
                 await WriteCsvAsync(filePath, result.Data, result.WorkloadKey, cancellationToken);
+                await WriteLegacyAliasCsvsAsync(filePath, result.WorkloadKey, cancellationToken);
                 Console.WriteLine($"  ✅ Exported: {fileName} ({result.ItemCount} items)");
             }
             catch (Exception ex)
@@ -107,7 +119,9 @@ public sealed class OutputManager
             "entra.appCredentials" => csvWriter.Write((IEnumerable<Collectors.AppCredentialRecord>)data),
             "entra.appAssignments" => csvWriter.Write((IEnumerable<Collectors.AppAssignmentRecord>)data),
             "entra.signInSignals" => csvWriter.Write((IEnumerable<Collectors.SignInSignalRecord>)data),
+            "entra.authMethods" => csvWriter.Write((IEnumerable<Collectors.AuthMethodCoverageRecord>)data),
             "entra.directorySettings" => csvWriter.Write((IEnumerable<Collectors.DirectorySettingRecord>)data),
+            "hybrid.aadConnectConfig" => csvWriter.Write((IEnumerable<Collectors.HybridAadConnectConfigRecord>)data),
             
             "organization.basic" => WriteOrganizationJson(filePath, (Collectors.OrganizationData)data),
             _ => throw new InvalidOperationException($"Unknown workload key: {workloadKey}")
@@ -118,6 +132,84 @@ public sealed class OutputManager
             await File.WriteAllTextAsync(filePath, csvContent, Encoding.UTF8, cancellationToken);
         }
     }
+
+    private async Task WriteHeaderOnlyCsvAsync(string filePath, string workloadKey, CancellationToken cancellationToken)
+    {
+        var csvWriter = new CsvWriter();
+        var csvContent = workloadKey switch
+        {
+            // V1
+            "entra.users" => csvWriter.WriteHeaderOnly<Collectors.EntraUserRecord>(),
+            "entra.groups" => csvWriter.WriteHeaderOnly<Collectors.EntraGroupRecord>(),
+            "entra.m365groups" => csvWriter.WriteHeaderOnly<Collectors.M365GroupRecord>(),
+            "entra.apps" => csvWriter.WriteHeaderOnly<Collectors.EntraApplicationRecord>(),
+            "entra.applications" => csvWriter.WriteHeaderOnly<Collectors.EntraApplicationRecord>(),
+            "entra.servicePrincipals" => csvWriter.WriteHeaderOnly<Collectors.EntraServicePrincipalRecord>(),
+            "entra.roles" => csvWriter.WriteHeaderOnly<Collectors.EntraRoleRecord>(),
+            "reports.onedrive" => csvWriter.WriteHeaderOnly<Collectors.OneDriveUsageRecord>(),
+            "reports.sharepoint" => csvWriter.WriteHeaderOnly<Collectors.SharePointSiteUsageRecord>(),
+            "reports.teams" => csvWriter.WriteHeaderOnly<Collectors.TeamsActivityRecord>(),
+            "reports.exchange" => csvWriter.WriteHeaderOnly<Collectors.ExchangeMailboxUsageRecord>(),
+
+            // V2 / current workload keys
+            "entra.conditionalAccess" => csvWriter.WriteHeaderOnly<Collectors.ConditionalAccessPolicyRecord>(),
+            "entra.crossTenantAccess" => csvWriter.WriteHeaderOnly<Collectors.CrossTenantAccessRecord>(),
+            "entra.guests" => csvWriter.WriteHeaderOnly<Collectors.GuestUserRecord>(),
+            "entra.groupInventoryPlus" => csvWriter.WriteHeaderOnly<Collectors.GroupInventoryRecord>(),
+            "entra.appCredentials" => csvWriter.WriteHeaderOnly<Collectors.AppCredentialRecord>(),
+            "entra.appAssignments" => csvWriter.WriteHeaderOnly<Collectors.AppAssignmentRecord>(),
+            "entra.signInSignals" => csvWriter.WriteHeaderOnly<Collectors.SignInSignalRecord>(),
+            "entra.authMethods" => csvWriter.WriteHeaderOnly<Collectors.AuthMethodCoverageRecord>(),
+            "entra.directorySettings" => csvWriter.WriteHeaderOnly<Collectors.DirectorySettingRecord>(),
+            "hybrid.aadConnectConfig" => csvWriter.WriteHeaderOnly<Collectors.HybridAadConnectConfigRecord>(),
+            "m365.groups" => csvWriter.WriteHeaderOnly<Collectors.M365GroupRecord>(),
+            "usage.onedrive" => csvWriter.WriteHeaderOnly<Collectors.OneDriveUsageRecord>(),
+            "usage.sharepoint" => csvWriter.WriteHeaderOnly<Collectors.SharePointSiteUsageRecord>(),
+            "usage.teams" => csvWriter.WriteHeaderOnly<Collectors.TeamsActivityRecord>(),
+            "usage.exchange" => csvWriter.WriteHeaderOnly<Collectors.ExchangeMailboxUsageRecord>(),
+            _ => string.Empty
+        };
+
+        if (!string.IsNullOrEmpty(csvContent))
+        {
+            await File.WriteAllTextAsync(filePath, csvContent, Encoding.UTF8, cancellationToken);
+        }
+    }
+
+    private async Task WriteLegacyAliasCsvsAsync(string primaryFilePath, string workloadKey, CancellationToken cancellationToken)
+    {
+        var aliases = GetLegacyCsvAliases(workloadKey);
+        if (aliases.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var aliasName in aliases)
+        {
+            var aliasPath = Path.Combine(_context.OutputFolder, aliasName);
+            if (string.Equals(aliasPath, primaryFilePath, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            // Keep alias byte-identical to primary file for downstream compatibility.
+            var content = await File.ReadAllTextAsync(primaryFilePath, cancellationToken);
+            await File.WriteAllTextAsync(aliasPath, content, Encoding.UTF8, cancellationToken);
+        }
+    }
+
+    private static string[] GetLegacyCsvAliases(string workloadKey) => workloadKey switch
+    {
+        "entra.roles" => new[] { "Entra_Roles.csv" },
+        _ => Array.Empty<string>()
+    };
+
+    private static bool IsCsvWorkload(string workloadKey) => workloadKey switch
+    {
+        "org.organization" => false,
+        "organization.basic" => false,
+        _ => true
+    };
 
     private string WriteOrganizationJson(string basePath, Collectors.OrganizationData orgData)
     {
@@ -184,12 +276,11 @@ public sealed class OutputManager
     private async Task GenerateMigrationRiskReportAsync(CancellationToken cancellationToken)
     {
         var riskReport = Analysis.MigrationRiskAnalyzer.AnalyzeRisks(_results);
+        var filePath = Path.Combine(_context.OutputFolder, "RiskAnalysis.csv");
+        var csvWriter = new CsvWriter();
 
         if (riskReport.Risks.Any())
         {
-            // Write CSV - Changed filename from MigrationRisk_Analysis.csv
-            var filePath = Path.Combine(_context.OutputFolder, "RiskAnalysis.csv");
-            var csvWriter = new CsvWriter();
             var csv = csvWriter.Write(riskReport.Risks);
             await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8, cancellationToken);
 
@@ -203,7 +294,10 @@ public sealed class OutputManager
         }
         else
         {
+            var csv = csvWriter.WriteHeaderOnly<Analysis.RiskItem>();
+            await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8, cancellationToken);
             Console.WriteLine($"  ✅ No migration risks detected");
+            Console.WriteLine($"  📄 Risk Analysis: RiskAnalysis.csv (0 rows; header-only)");
         }
     }
 
@@ -234,7 +328,7 @@ public sealed class OutputManager
         "entra.groups" => "Entra_Groups.csv",
         "entra.applications" => "Entra_Applications.csv",
         "entra.servicePrincipals" => "Entra_ServicePrincipals.csv",
-        "entra.roles" => "Entra_Roles.csv",
+        "entra.roles" => "Entra_RoleAssignments.csv",
         
         // Entra ID - Access & Policy
         "entra.conditionalAccess" => "Entra_ConditionalAccessPolicies.csv",
@@ -243,9 +337,13 @@ public sealed class OutputManager
         // Entra ID - User Analysis
         "entra.guests" => "Entra_GuestUsers.csv",
         "entra.signInSignals" => "Entra_SignInActivity.csv",
+        "entra.authMethods" => "Entra_AuthMethodsCoverage.csv",
         
         // Entra ID - Group Analysis
         "entra.groupInventoryPlus" => "Entra_GroupInventory.csv",
+
+        // Hybrid
+        "hybrid.aadConnectConfig" => "Hybrid_AADConnectConfig.csv",
         
         // Entra ID - App Management
         "entra.appCredentials" => "Entra_AppCredentials.csv",
@@ -290,7 +388,9 @@ public sealed class OutputManager
         "entra.appCredentials" => "Application.Read.All",
         "entra.appAssignments" => "Application.Read.All, Directory.Read.All",
         "entra.signInSignals" => "AuditLog.Read.All, User.Read.All",
+        "entra.authMethods" => "Reports.Read.All, User.Read.All",
         "entra.directorySettings" => "Directory.Read.All",
+        "hybrid.aadConnectConfig" => "OnPremDirectorySynchronization.Read.All, Organization.Read.All (or Directory.Read.All)",
         
         _ => "Unknown"
     };
@@ -318,7 +418,9 @@ public sealed class OutputManager
         "entra.appCredentials" => "🚨 Critical: Cannot identify expiring app credentials during migration",
         "entra.appAssignments" => "⚠️ Cannot assess high-privilege app dependencies",
         "entra.signInSignals" => "Cannot identify inactive users or legacy auth usage",
+        "entra.authMethods" => "Cannot assess MFA/SSPR/passwordless registration coverage",
         "entra.directorySettings" => "Cannot assess behavior-changing directory configurations",
+        "hybrid.aadConnectConfig" => "Cannot assess Entra Connect sync posture and hybrid identity configuration",
         
         _ => "Unknown impact"
     };

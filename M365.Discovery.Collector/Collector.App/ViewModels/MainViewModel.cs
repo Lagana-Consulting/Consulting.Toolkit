@@ -35,6 +35,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string? _appObjectId;
     private bool _isAuthenticated;
     private bool _isAppRegistered;
+    private bool _useAppOnlyCertificateSignIn;
+    private string _tenantId = "organizations";
+    private string _certificateThumbprint = string.Empty;
+    private string _certificateSubjectName = string.Empty;
+    private bool _requiresReauthentication;
+    private bool _isBootstrapAdminRole;
 
     private string _outputFolder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
     private string _runName = $"Discovery_{DateTime.Now:yyyyMMdd_HHmm}";
@@ -59,18 +65,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Workloads.Where(w => w.Definition.Category == "Organization"));
 
         ConfigureAuthCommand = new RelayCommand(ConfigureAuth);
-        SignInCommand = new RelayCommandAsync(SignInAsync, () => !IsBusy && !IsAuthenticated);
+        SignInCommand = new RelayCommandAsync(SignInAsync, CanExecuteSignIn);
         BrowseFolderCommand = new RelayCommand(BrowseFolder);
         OpenOutputFolderCommand = new RelayCommand(OpenOutputFolder);
-        PreflightCommand = new RelayCommandAsync(PreflightAsync, () => !IsBusy && IsAuthenticated);
-        RunSelectedCommand = new RelayCommandAsync(RunSelectedAsync, () => !IsBusy && IsAuthenticated);
+        PreflightCommand = new RelayCommandAsync(PreflightAsync, CanExecutePreflight);
+        RunSelectedCommand = new RelayCommandAsync(RunSelectedAsync, CanExecuteRunSelected);
+        DeselectAllWorkloadsCommand = new RelayCommand(DeselectAllWorkloads);
+        EnableEntraWorkloadsCommand = new RelayCommand(EnableEntraWorkloads);
+        EnableMicrosoft365WorkloadsCommand = new RelayCommand(EnableMicrosoft365Workloads);
 
         // Bootstrap commands
-        BootstrapSignInCommand = new RelayCommandAsync(BootstrapSignInAsync, () => !IsBusy && !IsAuthenticated);
-        CreateAppRegistrationCommand = new RelayCommandAsync(CreateAppRegistrationAsync, () => !IsBusy && IsAuthenticated && !IsAppRegistered);
-        AddPermissionsCommand = new RelayCommandAsync(AddPermissionsAsync, () => !IsBusy && IsAppRegistered);
-        RequestAdminConsentCommand = new RelayCommand(RequestAdminConsent, () => IsAppRegistered);
-        ResetConfigCommand = new RelayCommand(ResetConfig);
+        BootstrapSignInCommand = new RelayCommandAsync(BootstrapSignInAsync, CanExecuteBootstrapSignIn);
+        CreateAppRegistrationCommand = new RelayCommandAsync(CreateAppRegistrationAsync, CanExecuteCreateAppRegistration);
+        AddPermissionsCommand = new RelayCommandAsync(AddPermissionsAsync, CanExecuteAddPermissions);
+        RequestAdminConsentCommand = new RelayCommand(RequestAdminConsent, CanExecuteRequestAdminConsent);
+        ResetConfigCommand = new RelayCommand(ResetConfig, CanExecuteResetConfig);
         ShowReportsPrivacyHelpCommand = new RelayCommand(ShowReportsPrivacyHelp);
 
         // Load saved configuration
@@ -95,6 +104,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenOutputFolderCommand { get; }
     public ICommand PreflightCommand { get; }
     public ICommand RunSelectedCommand { get; }
+    public ICommand DeselectAllWorkloadsCommand { get; }
+    public ICommand EnableEntraWorkloadsCommand { get; }
+    public ICommand EnableMicrosoft365WorkloadsCommand { get; }
 
     // New bootstrap commands
     public ICommand BootstrapSignInCommand { get; }
@@ -106,6 +118,41 @@ public sealed class MainViewModel : INotifyPropertyChanged
     // Help commands
     public ICommand ShowReportsPrivacyHelpCommand { get; }
 
+    public bool IsBootstrapAdminRole
+    {
+        get => _isBootstrapAdminRole;
+        set
+        {
+            if (SetProperty(ref _isBootstrapAdminRole, value))
+            {
+                RaisePropertyChanged(nameof(IsOperatorRole));
+                RaisePropertyChanged(nameof(ActiveRoleLabel));
+                RaiseCommandCanExecuteChanged();
+
+                if (IsBootstrapAdminRole)
+                {
+                    Log("🔐 Role set to Bootstrap Admin. Admin setup actions are enabled; operator run actions are disabled.");
+                    FooterText = "Role: Bootstrap Admin";
+                }
+                else
+                {
+                    Log("👤 Role set to Operator. Discovery actions are enabled; admin setup actions are disabled.");
+                    FooterText = "Role: Operator";
+
+                    if (HasBootstrapAdminContext())
+                    {
+                        RequiresReauthentication = true;
+                        Log("🔄 Switched from bootstrap context. Sign in as operator before preflight/run.");
+                    }
+                }
+            }
+        }
+    }
+
+    public bool IsOperatorRole => !IsBootstrapAdminRole;
+
+    public string ActiveRoleLabel => IsBootstrapAdminRole ? "Bootstrap Admin" : "Operator";
+
     public bool IsAuthenticated
     {
         get => _isAuthenticated;
@@ -113,11 +160,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             if (SetProperty(ref _isAuthenticated, value))
             {
-                ((RelayCommandAsync)SignInCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)PreflightCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)RunSelectedCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)BootstrapSignInCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)CreateAppRegistrationCommand).RaiseCanExecuteChanged();
+                RaiseCommandCanExecuteChanged();
             }
         }
     }
@@ -129,9 +172,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             if (SetProperty(ref _isAppRegistered, value))
             {
-                ((RelayCommandAsync)CreateAppRegistrationCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)AddPermissionsCommand).RaiseCanExecuteChanged();
-                ((RelayCommand)RequestAdminConsentCommand).RaiseCanExecuteChanged();
+                RaiseCommandCanExecuteChanged();
             }
         }
     }
@@ -143,12 +184,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             if (SetProperty(ref _isBusy, value))
             {
-                ((RelayCommandAsync)SignInCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)PreflightCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)RunSelectedCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)BootstrapSignInCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)CreateAppRegistrationCommand).RaiseCanExecuteChanged();
-                ((RelayCommandAsync)AddPermissionsCommand).RaiseCanExecuteChanged();
+                RaiseCommandCanExecuteChanged();
             }
         }
     }
@@ -169,6 +205,66 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         get => _footerText;
         set => SetProperty(ref _footerText, value);
+    }
+
+    public bool RequiresReauthentication
+    {
+        get => _requiresReauthentication;
+        private set
+        {
+            if (SetProperty(ref _requiresReauthentication, value))
+            {
+                ((RelayCommandAsync)SignInCommand).RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public bool UseAppOnlyCertificateSignIn
+    {
+        get => _useAppOnlyCertificateSignIn;
+        set
+        {
+            if (SetProperty(ref _useAppOnlyCertificateSignIn, value))
+            {
+                SaveConfiguration();
+            }
+        }
+    }
+
+    public string TenantId
+    {
+        get => _tenantId;
+        set
+        {
+            if (SetProperty(ref _tenantId, value))
+            {
+                SaveConfiguration();
+            }
+        }
+    }
+
+    public string CertificateThumbprint
+    {
+        get => _certificateThumbprint;
+        set
+        {
+            if (SetProperty(ref _certificateThumbprint, value))
+            {
+                SaveConfiguration();
+            }
+        }
+    }
+
+    public string CertificateSubjectName
+    {
+        get => _certificateSubjectName;
+        set
+        {
+            if (SetProperty(ref _certificateSubjectName, value))
+            {
+                SaveConfiguration();
+            }
+        }
     }
 
     public string LogText => _log.ToString();
@@ -192,6 +288,90 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private bool CanExecuteSignIn()
+    {
+        if (IsBusy || !IsOperatorRole)
+        {
+            return false;
+        }
+
+        return !IsAuthenticated || RequiresReauthentication || HasBootstrapAdminContext();
+    }
+
+    private bool CanExecutePreflight()
+    {
+        return !IsBusy && IsAuthenticated && IsOperatorRole;
+    }
+
+    private bool CanExecuteRunSelected()
+    {
+        return !IsBusy && IsAuthenticated && IsOperatorRole;
+    }
+
+    private bool CanExecuteBootstrapSignIn()
+    {
+        return !IsBusy && IsBootstrapAdminRole && (!IsAuthenticated || !HasBootstrapAdminContext());
+    }
+
+    private bool CanExecuteCreateAppRegistration()
+    {
+        return !IsBusy && IsBootstrapAdminRole && IsAuthenticated && !IsAppRegistered && HasBootstrapAdminContext();
+    }
+
+    private bool CanExecuteAddPermissions()
+    {
+        return !IsBusy && IsBootstrapAdminRole && IsAppRegistered && HasBootstrapAdminContext();
+    }
+
+    private bool CanExecuteRequestAdminConsent()
+    {
+        return IsBootstrapAdminRole && IsAppRegistered;
+    }
+
+    private bool CanExecuteResetConfig()
+    {
+        return IsBootstrapAdminRole && !IsBusy;
+    }
+
+    private void RaiseCommandCanExecuteChanged()
+    {
+        ((RelayCommandAsync)SignInCommand).RaiseCanExecuteChanged();
+        ((RelayCommandAsync)PreflightCommand).RaiseCanExecuteChanged();
+        ((RelayCommandAsync)RunSelectedCommand).RaiseCanExecuteChanged();
+        ((RelayCommandAsync)BootstrapSignInCommand).RaiseCanExecuteChanged();
+        ((RelayCommandAsync)CreateAppRegistrationCommand).RaiseCanExecuteChanged();
+        ((RelayCommandAsync)AddPermissionsCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)RequestAdminConsentCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)ResetConfigCommand).RaiseCanExecuteChanged();
+    }
+
+    private void DeselectAllWorkloads()
+    {
+        foreach (var workload in Workloads)
+        {
+            workload.IsSelected = false;
+        }
+        Log("Selection updated: all workloads deselected.");
+    }
+
+    private void EnableEntraWorkloads()
+    {
+        foreach (var workload in EntraIdWorkloads)
+        {
+            workload.IsSelected = true;
+        }
+        Log($"Selection updated: enabled {EntraIdWorkloads.Count} Entra ID workloads.");
+    }
+
+    private void EnableMicrosoft365Workloads()
+    {
+        foreach (var workload in Microsoft365Workloads)
+        {
+            workload.IsSelected = true;
+        }
+        Log($"Selection updated: enabled {Microsoft365Workloads.Count} Microsoft 365 workloads.");
     }
 
     private void ConfigureAuth()
@@ -254,6 +434,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task BootstrapSignInAsync()
     {
+        if (!IsBootstrapAdminRole)
+        {
+            Log("⚠ Bootstrap admin action blocked. Switch role to Bootstrap Admin.");
+            FooterText = "Role boundary: Bootstrap Admin required.";
+            return;
+        }
+
         IsBusy = true;
         FooterText = "Signing in as admin...";
         Log("🔐 Starting admin authentication for app registration setup...");
@@ -293,15 +480,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task CreateAppRegistrationAsync()
     {
+        if (!IsBootstrapAdminRole)
+        {
+            Log("⚠ Create App blocked. This action is Bootstrap Admin only.");
+            FooterText = "Role boundary: Bootstrap Admin required.";
+            return;
+        }
+
         IsBusy = true;
         FooterText = "Creating app registration...";
         Log("📝 Creating app registration...");
 
         try
         {
-            if (_graphClient == null)
+            if (_graphClient == null || !HasBootstrapAdminContext())
             {
-                Log("⚠ Not authenticated. Sign in with Global Admin first.");
+                Log("⚠ Create App requires admin bootstrap authentication.");
+                Log("   Use '🔐 Admin Sign In' first (delegated token with Application.ReadWrite.All).");
                 return;
             }
 
@@ -335,6 +530,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task AddPermissionsAsync()
     {
+        if (!IsBootstrapAdminRole)
+        {
+            Log("⚠ Add Perms blocked. This action is Bootstrap Admin only.");
+            FooterText = "Role boundary: Bootstrap Admin required.";
+            return;
+        }
+
         IsBusy = true;
         FooterText = "Adding permissions...";
         Log("🔑 Adding required permissions...");
@@ -344,6 +546,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (_graphClient == null || string.IsNullOrEmpty(_appObjectId))
             {
                 Log("⚠ App registration not available.");
+                return;
+            }
+
+            if (!HasBootstrapAdminContext())
+            {
+                Log("⚠ Add Perms requires admin bootstrap authentication.");
+                Log("   Current auth is collector/runtime context.");
+                Log("   Use '🔐 Admin Sign In' first, then run Add Perms.");
+                FooterText = "Admin sign-in required.";
                 return;
             }
 
@@ -383,6 +594,33 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Log("ℹ No new permissions needed - all already configured.");
             }
 
+            Log($"   Delegated permissions - added: {result.AddedDelegatedCount}, existing: {result.ExistingDelegatedCount}");
+            Log($"   Application permissions - added: {result.AddedApplicationCount}, existing: {result.ExistingApplicationCount}");
+
+            if (result.Unresolved.Length > 0)
+            {
+                Log("⚠ Unresolved permissions (not found as Graph scope/role):");
+                foreach (var perm in result.Unresolved)
+                {
+                    Log($"   - {perm}");
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(_clientId) && _tokenInfo != null)
+            {
+                var profiles = appService.GetConsentProfiles(_clientId, _tokenInfo.TenantId);
+                Log("🔐 Consent profiles:");
+                foreach (var profile in profiles)
+                {
+                    Log($"   [{profile.Name}]");
+                    Log($"   Permissions: {string.Join(", ", profile.Permissions)}");
+                    Log($"   Consent URL: {profile.AdminConsentUrl}");
+                }
+            }
+
+            RequiresReauthentication = true;
+            Log("🔄 Permission state changed. Re-authentication is required before preflight/run.");
+
             FooterText = $"Permissions updated: {result.NewlyAdded.Length} added, {result.AlreadyExisted.Length} already existed.";
         }
         catch (Exception ex)
@@ -398,6 +636,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void RequestAdminConsent()
     {
+        if (!IsBootstrapAdminRole)
+        {
+            Log("⚠ Consent blocked. This action is Bootstrap Admin only.");
+            FooterText = "Role boundary: Bootstrap Admin required.";
+            return;
+        }
+
         try
         {
             if (string.IsNullOrEmpty(_clientId) || _tokenInfo == null)
@@ -442,6 +687,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Log("   - The 'localhost refused' error is NORMAL (ignore it)");
             Log("   - You can close the browser");
             Log("   - Permissions are now granted!");
+            RequiresReauthentication = true;
+            Log("🔄 Re-authentication required after consent to refresh token permissions.");
             FooterText = "Admin consent requested - check browser.";
         }
         catch (Exception ex)
@@ -452,6 +699,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task SignInAsync()
     {
+        if (!IsOperatorRole)
+        {
+            Log("⚠ Operator sign-in blocked. Switch role to Operator for runtime discovery.");
+            FooterText = "Role boundary: Operator required.";
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_clientId))
         {
             Log("⚠ App registration not configured. Opening configuration dialog...");
@@ -478,16 +732,48 @@ public sealed class MainViewModel : INotifyPropertyChanged
             }
 
             var requiredPermissions = _catalog.GetRequiredPermissionsForKeys(selectedKeys);
+            AuthConfig config;
 
-            Log($"📋 Requesting {requiredPermissions.Length} permission(s): {string.Join(", ", requiredPermissions)}");
-
-            var config = new AuthConfig
+            if (UseAppOnlyCertificateSignIn)
             {
-                Mode = AuthMode.InteractiveDelegated,
-                ClientId = _clientId,
-                TenantId = "organizations",
-                DelegatedScopes = requiredPermissions
-            };
+                if (string.IsNullOrWhiteSpace(TenantId) || TenantId.Equals("organizations", StringComparison.OrdinalIgnoreCase))
+                {
+                    Log("❌ App-only sign-in requires a specific Tenant ID (GUID or verified domain), not 'organizations'.");
+                    FooterText = "Invalid app-only tenant ID.";
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(CertificateThumbprint) && !string.IsNullOrWhiteSpace(CertificateSubjectName))
+                {
+                    Log("❌ Set either Certificate Thumbprint or Certificate Subject, not both.");
+                    FooterText = "Invalid certificate settings.";
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(CertificateThumbprint) && string.IsNullOrWhiteSpace(CertificateSubjectName))
+                {
+                    Log("❌ App-only certificate sign-in requires Certificate Thumbprint or Certificate Subject.");
+                    FooterText = "Certificate details required.";
+                    return;
+                }
+
+                config = !string.IsNullOrWhiteSpace(CertificateThumbprint)
+                    ? AuthConfig.CreateAppOnlyWithCertificateByThumbprint(_clientId!, TenantId, CertificateThumbprint)
+                    : AuthConfig.CreateAppOnlyWithCertificateBySubject(_clientId!, TenantId, CertificateSubjectName);
+
+                Log("📋 Using app-only certificate authentication.");
+            }
+            else
+            {
+                Log($"📋 Requesting {requiredPermissions.Length} delegated permission(s): {string.Join(", ", requiredPermissions)}");
+                config = new AuthConfig
+                {
+                    Mode = AuthMode.InteractiveDelegated,
+                    ClientId = _clientId,
+                    TenantId = string.IsNullOrWhiteSpace(TenantId) ? "organizations" : TenantId,
+                    DelegatedScopes = requiredPermissions
+                };
+            }
 
             var factory = new GraphClientFactory(config);
             var (client, tokenInfo) = await factory.CreateAuthenticatedClientAsync();
@@ -500,7 +786,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             Log($"✅ Signed in as {tokenInfo.Username}");
             Log($"   Tenant: {tokenInfo.TenantId}");
-            Log($"   Scopes granted: {string.Join(", ", tokenInfo.GrantedScopes)}");
+            if (!string.IsNullOrWhiteSpace(tokenInfo.AuthenticationPath))
+            {
+                Log($"   Auth path: {tokenInfo.AuthenticationPath}");
+            }
+            Log($"   Permissions granted: {string.Join(", ", tokenInfo.GrantedScopes)}");
+            if (UseAppOnlyCertificateSignIn && tokenInfo.ApplicationRoles.Length == 0)
+            {
+                Log("⚠ App-only token did not include Graph app role claims (roles).");
+                Log("   Check that APPLICATION permissions were added and admin consented on the app registration.");
+            }
+            RequiresReauthentication = false;
             FooterText = $"Signed in as {tokenInfo.Username}";
         }
         catch (Exception ex)
@@ -517,6 +813,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task PreflightAsync()
     {
+        if (!IsOperatorRole)
+        {
+            Log("⚠ Preflight blocked. Switch role to Operator.");
+            FooterText = "Role boundary: Operator required.";
+            return;
+        }
+
         IsBusy = true;
         FooterText = "Preflight running...";
         Log("Preflight check started.");
@@ -527,6 +830,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 Log("⚠ Graph client not initialized. Authenticate first.");
                 FooterText = "Not authenticated.";
+                return;
+            }
+
+            if (RequiresReauthentication)
+            {
+                Log("⚠ Re-authentication required before preflight. Sign in again to refresh granted permissions.");
+                FooterText = "Re-authentication required.";
                 return;
             }
 
@@ -560,6 +870,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task RunSelectedAsync()
     {
+        if (!IsOperatorRole)
+        {
+            Log("⚠ Discovery run blocked. Switch role to Operator.");
+            FooterText = "Role boundary: Operator required.";
+            return;
+        }
+
         IsBusy = true;
         FooterText = "Discovery running...";
         Log("🚀 Discovery started.");
@@ -570,6 +887,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 Log("⚠ Not authenticated. Sign in first.");
                 FooterText = "Not authenticated.";
+                return;
+            }
+
+            if (RequiresReauthentication)
+            {
+                Log("⚠ Re-authentication required before run. Sign in again to refresh granted permissions.");
+                FooterText = "Re-authentication required.";
                 return;
             }
 
@@ -605,7 +929,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 { "entra.appCredentials", new AppCredentialsCollector(_graphClient) },
                 { "entra.appAssignments", new AppAssignmentsCollector(_graphClient) },
                 { "entra.signInSignals", new SignInSignalsCollector(_graphClient) },
+                { "entra.authMethods", new AuthMethodsCoverageCollector(_graphClient) },
                 { "entra.directorySettings", new DirectorySettingsCollector(_graphClient) },
+                { "hybrid.aadConnectConfig", new HybridAadConnectConfigCollector(_graphClient) },
     
                 // === V1 - Core Entra Directory ===
                 { "entra.users", new EntraUsersCollector(_graphClient) },
@@ -694,7 +1020,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var config = new
             {
                 ClientId = _clientId,
-                AppObjectId = _appObjectId
+                AppObjectId = _appObjectId,
+                UseAppOnlyCertificateSignIn,
+                TenantId,
+                CertificateThumbprint,
+                CertificateSubjectName
             };
             var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(configPath, json);
@@ -715,25 +1045,68 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (File.Exists(configPath))
             {
                 var json = File.ReadAllText(configPath);
-                var config = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                var config = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
 
                 if (config != null)
                 {
                     if (config.TryGetValue("ClientId", out var clientId))
                     {
-                        _clientId = clientId;
-                        Log($"✅ Loaded saved Client ID: {_clientId.Substring(0, 8)}...");
+                        var loadedClientId = clientId.ValueKind == JsonValueKind.String ? clientId.GetString() : null;
+                        if (!string.IsNullOrWhiteSpace(loadedClientId))
+                        {
+                            _clientId = loadedClientId;
+                            Log($"✅ Loaded saved Client ID: {_clientId.Substring(0, 8)}...");
+                        }
                     }
 
                     if (config.TryGetValue("AppObjectId", out var objectId))
                     {
-                        _appObjectId = objectId;
+                        var loadedObjectId = objectId.ValueKind == JsonValueKind.String ? objectId.GetString() : null;
+                        _appObjectId = loadedObjectId;
                         // Only set IsAppRegistered if we have both IDs
                         // The app can verify later when authenticated
                         if (!string.IsNullOrEmpty(_clientId) && !string.IsNullOrEmpty(_appObjectId))
                         {
                             IsAppRegistered = true;
                             Log($"   App Object ID loaded (not verified)");
+                        }
+                    }
+
+                    if (config.TryGetValue("UseAppOnlyCertificateSignIn", out var appOnlyValue))
+                    {
+                        if (appOnlyValue.ValueKind == JsonValueKind.True || appOnlyValue.ValueKind == JsonValueKind.False)
+                        {
+                            _useAppOnlyCertificateSignIn = appOnlyValue.GetBoolean();
+                        }
+                        else if (appOnlyValue.ValueKind == JsonValueKind.String &&
+                                 bool.TryParse(appOnlyValue.GetString(), out var parsedAppOnly))
+                        {
+                            _useAppOnlyCertificateSignIn = parsedAppOnly;
+                        }
+                    }
+
+                    if (config.TryGetValue("TenantId", out var tenantId))
+                    {
+                        var loadedTenantId = tenantId.ValueKind == JsonValueKind.String ? tenantId.GetString() : null;
+                        if (!string.IsNullOrWhiteSpace(loadedTenantId))
+                        {
+                            _tenantId = loadedTenantId;
+                        }
+                    }
+
+                    if (config.TryGetValue("CertificateThumbprint", out var thumbprint))
+                    {
+                        if (thumbprint.ValueKind == JsonValueKind.String)
+                        {
+                            _certificateThumbprint = thumbprint.GetString() ?? string.Empty;
+                        }
+                    }
+
+                    if (config.TryGetValue("CertificateSubjectName", out var subjectName))
+                    {
+                        if (subjectName.ValueKind == JsonValueKind.String)
+                        {
+                            _certificateSubjectName = subjectName.GetString() ?? string.Empty;
                         }
                     }
                 }
@@ -756,6 +1129,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void ResetConfig()
     {
+        if (!IsBootstrapAdminRole)
+        {
+            Log("⚠ Reset blocked. This action is Bootstrap Admin only.");
+            FooterText = "Role boundary: Bootstrap Admin required.";
+            return;
+        }
+
         try
         {
             var configPath = GetConfigPath();
@@ -767,6 +1147,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             _clientId = null;
             _appObjectId = null;
+            _useAppOnlyCertificateSignIn = false;
+            _tenantId = "organizations";
+            _certificateThumbprint = string.Empty;
+            _certificateSubjectName = string.Empty;
+            RequiresReauthentication = false;
             IsAppRegistered = false;
             IsAuthenticated = false;
 
@@ -819,5 +1204,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             Log($"❌ Failed to open help: {ex.Message}");
         }
+    }
+
+    private bool HasBootstrapAdminContext()
+    {
+        if (_tokenInfo == null)
+        {
+            return false;
+        }
+
+        if (_tokenInfo.AuthMode != AuthMode.InteractiveDelegated)
+        {
+            return false;
+        }
+
+        return _tokenInfo.GrantedScopes.Contains("Application.ReadWrite.All", StringComparer.OrdinalIgnoreCase);
     }
 }

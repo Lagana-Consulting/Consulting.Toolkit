@@ -1,0 +1,8 @@
+﻿Id,UserPrincipalName,UserDisplayName,UserType,IsAdmin,IsSsprRegistered,IsSsprEnabled,IsSsprCapable,IsMfaRegistered,IsMfaCapable,IsPasswordlessCapable,IsSystemPreferredAuthenticationMethodEnabled,LastUpdatedDateTime,DefaultMfaMethod,MethodsRegisteredCount,MethodsRegistered
+cf3aba9b-b52f-4f93-9328-f00c29d9eec7,admin@QuestpmpsoNAM17.onmicrosoft.com,Admin,member,True,True,True,True,True,True,True,True,2026-02-16 14:25:07,,3,microsoftAuthenticatorPasswordless;microsoftAuthenticatorPush;softwareOneTimePasscode
+3615b984-3b2b-442a-889b-1b9f5c2f3c49,Bglass@QuestpmpsoNAM17.onmicrosoft.com,BreakGlass,member,True,True,True,True,True,True,False,True,2026-02-16 14:25:07,,1,softwareOneTimePasscode
+93ea840f-0a7c-4df6-acd1-221812c96a9b,paul.lagana@QuestpmpsoNAM17.onmicrosoft.com,Paul Lagana,member,True,True,True,True,True,True,False,True,2026-02-16 14:25:07,,3,mobilePhone;microsoftAuthenticatorPush;softwareOneTimePasscode
+76eaa9f9-fde2-49f1-a8b6-1526aedf804e,paul.lagana_quest.com#EXT#@QuestpmpsoNAM17.onmicrosoft.com,Paul Lagana (plagana),guest,True,True,True,True,True,True,False,True,2026-02-16 14:25:07,,2,microsoftAuthenticatorPush;softwareOneTimePasscode
+5410ed80-0863-4867-aad2-9203eb3fb53f,Test.User1@QuestpmpsoNAM17.onmicrosoft.com,Test User1,member,False,False,False,False,False,False,False,True,2026-02-16 14:25:07,,0,
+e3d5c040-9090-40b1-87ba-70d82161a3ce,TestRoomTestRoom@QuestpmpsoNAM17.onmicrosoft.com,TestRoom,member,False,False,False,False,False,False,False,True,2026-02-16 14:25:07,,0,
+6f5da5b7-9d6e-4d90-947d-939c27c90721,svc-m365.TestTenant.Admin_quest.com#EXT#@QuestpmpsoNAM17.onmicrosoft.com,svc-m365.TestTenant.Admin,guest,True,False,True,False,False,False,False,True,2026-02-16 14:25:07,,0,

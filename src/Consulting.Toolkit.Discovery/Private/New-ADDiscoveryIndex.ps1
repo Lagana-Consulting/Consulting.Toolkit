@@ -74,6 +74,33 @@ function New-ADDiscoveryIndex {
             '^20_domains/Domain-[^/]+/AD__Domain__Security__PrivilegedPasswordAge__.+\.csv$' { return 'Domain.Security.PrivilegedPasswordAge' }
             '^20_domains/Domain-[^/]+/AD__Domain__Security__AdminSdHolderImpact__.+\.csv$' { return 'Domain.Security.AdminSdHolderImpact' }
 
+            # Entra / M365 collector outputs (run-level)
+            '(^|.*/)Entra_Users\.csv$' { return 'Entra.Users' }
+            '(^|.*/)Entra_Groups\.csv$' { return 'Entra.Groups' }
+            '(^|.*/)Entra_Applications\.csv$' { return 'Entra.Applications' }
+            '(^|.*/)Entra_ServicePrincipals\.csv$' { return 'Entra.ServicePrincipals' }
+            '(^|.*/)Entra_RoleAssignments\.csv$' { return 'Entra.RoleAssignments' }
+            '(^|.*/)Entra_Roles\.csv$' { return 'Entra.RoleAssignments' } # legacy alias
+            '(^|.*/)Entra_ConditionalAccessPolicies\.csv$' { return 'Entra.ConditionalAccessPolicies' }
+            '(^|.*/)Entra_CrossTenantAccess\.csv$' { return 'Entra.CrossTenantAccess' }
+            '(^|.*/)Entra_GuestUsers\.csv$' { return 'Entra.GuestUsers' }
+            '(^|.*/)Entra_SignInActivity\.csv$' { return 'Entra.SignInActivity' }
+            '(^|.*/)Entra_AuthMethodsCoverage\.csv$' { return 'Entra.AuthMethodsCoverage' }
+            '(^|.*/)Entra_GroupInventory\.csv$' { return 'Entra.GroupInventory' }
+            '(^|.*/)Entra_AppCredentials\.csv$' { return 'Entra.AppCredentials' }
+            '(^|.*/)Entra_AppAssignments\.csv$' { return 'Entra.AppAssignments' }
+            '(^|.*/)Entra_DirectorySettings\.csv$' { return 'Entra.DirectorySettings' }
+            '(^|.*/)Hybrid_AADConnectConfig\.csv$' { return 'Hybrid.AADConnectConfig' }
+            '(^|.*/)M365_Groups\.csv$' { return 'M365.Groups' }
+            '(^|.*/)M365_OneDrive_Usage\.csv$' { return 'M365.Usage.OneDrive' }
+            '(^|.*/)M365_SharePoint_Usage\.csv$' { return 'M365.Usage.SharePoint' }
+            '(^|.*/)M365_Teams_Usage\.csv$' { return 'M365.Usage.Teams' }
+            '(^|.*/)M365_Exchange_Usage\.csv$' { return 'M365.Usage.Exchange' }
+            '(^|.*/)RiskAnalysis\.csv$' { return 'Run.RiskAnalysis' }
+            '(^|.*/)Discovery_AccessGaps\.csv$' { return 'Run.AccessGaps' }
+            '(^|.*/)Summary\.csv$' { return 'Run.Summary' }
+            '(^|.*/)RunMetadata\.json$' { return 'Run.Metadata' }
+
             default {
                 $stem = [System.IO.Path]::GetFileNameWithoutExtension($p)
                 return "File.$stem"

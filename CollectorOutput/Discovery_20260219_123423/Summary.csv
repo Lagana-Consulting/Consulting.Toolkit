@@ -1,0 +1,22 @@
+﻿WorkloadKey,Success,ItemCount,ConfidenceLevel,Message,ProcessedItems,Status
+entra.users,True,8,Authoritative,Collected 8 Entra users,8,Completed
+entra.groups,True,8,Authoritative,Collected 8 Entra groups,8,Completed
+entra.applications,True,6,Authoritative,Collected 6 Entra applications,6,Completed
+entra.servicePrincipals,True,196,Authoritative,Collected 196 Entra service principals,196,Completed
+entra.roles,True,135,Authoritative,Collected 135 directory roles,135,Completed
+entra.conditionalAccess,True,1,Authoritative,Collected 1 CA policies,1,Completed
+entra.crossTenantAccess,True,1,Authoritative,Collected 1 cross-tenant settings,0,Completed
+entra.guests,True,2,Authoritative,Collected 2 guest users,2,Completed
+entra.signInSignals,True,3,Authoritative,Collected sign-in data for 3 users (last 30 days),197,Completed
+entra.authMethods,True,7,Authoritative,Collected 7 auth methods coverage rows,7,Completed
+entra.groupInventoryPlus,True,8,Authoritative,Collected 8 groups,8,Completed
+entra.appCredentials,True,6,Authoritative,Collected 6 app credentials,202,Completed
+entra.appAssignments,True,25,Authoritative,Collected 25 app assignments,196,Completed
+entra.directorySettings,True,0,Unavailable,Directory settings require Graph beta endpoint,0,Completed
+m365.groups,True,8,Authoritative,Collected 8 M365 Groups,8,Completed
+reports.onedrive,True,1,Authoritative,Collected OneDrive usage for 1 accounts,1,Completed
+reports.sharepoint,True,16,Authoritative,Collected SharePoint usage for 16 sites,16,Completed
+reports.teams,True,1,Authoritative,Collected Teams activity for 1 users,1,Completed
+reports.exchange,True,2,Authoritative,Collected Exchange mailbox usage for 2 mailboxes (1 with archives),2,Completed
+organization.basic,True,1,Authoritative,Collected organization with 2 domains and 1 license SKUs,4,Completed
+hybrid.aadConnectConfig,True,1,Authoritative,Collected 1 hybrid AAD Connect config row(s),1,Completed

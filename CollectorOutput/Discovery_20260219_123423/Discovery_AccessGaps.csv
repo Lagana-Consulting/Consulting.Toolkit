@@ -1,0 +1,2 @@
+﻿Capability,Status,Message,RequiredScopes,Impact
+entra.directorySettings,Unavailable,Directory settings require Graph beta endpoint,Directory.Read.All,Cannot assess behavior-changing directory configurations

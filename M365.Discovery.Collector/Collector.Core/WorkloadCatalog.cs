@@ -102,6 +102,15 @@ public sealed class WorkloadCatalog
             "Entra ID"
         ));
 
+        catalog.Workloads.Add(new WorkloadDefinition(
+            "entra.authMethods",
+            "Auth Methods Coverage",
+            "MFA/SSPR/passwordless registration coverage by user",
+            false,
+            new[] { "Reports.Read.All", "User.Read.All" },
+            "Entra ID"
+        ));
+
         // Group analysis
         catalog.Workloads.Add(new WorkloadDefinition(
             "entra.groupInventoryPlus",
@@ -194,6 +203,15 @@ public sealed class WorkloadCatalog
             "Tenant details, domains, licenses",
             true,
             new[] { "Organization.Read.All" },
+            "Organization"
+        ));
+
+        catalog.Workloads.Add(new WorkloadDefinition(
+            "hybrid.aadConnectConfig",
+            "Hybrid AAD Connect Config",
+            "On-premises directory synchronization configuration signals",
+            false,
+            new[] { "OnPremDirectorySynchronization.Read.All", "Organization.Read.All" },
             "Organization"
         ));
 

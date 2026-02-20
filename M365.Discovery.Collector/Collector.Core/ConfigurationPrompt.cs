@@ -50,20 +50,55 @@ public static class ConfigurationPrompt
         // Step 3: Mode-specific configuration
         if (mode == AuthMode.AppOnly)
         {
-            Console.WriteLine("⚠ WARNING: Client secret will be visible as you type");
-            Console.Write("Client Secret: ");
-            var clientSecret = ReadSecret();
+            Console.WriteLine("Select app-only credential method:");
+            Console.WriteLine("  1. Certificate (thumbprint) - recommended");
+            Console.WriteLine("  2. Certificate (subject name)");
+            Console.WriteLine("  3. Client secret fallback (lab only)");
+            Console.Write("\nEnter choice [1-3]: ");
+            var credentialChoice = Console.ReadLine()?.Trim();
             Console.WriteLine();
 
-            if (string.IsNullOrWhiteSpace(clientSecret))
+            if (credentialChoice == "2")
             {
-                throw new InvalidOperationException("Client secret is required for app-only mode");
+                Console.Write("Certificate Subject Name: ");
+                var subjectName = Console.ReadLine()?.Trim();
+                if (string.IsNullOrWhiteSpace(subjectName))
+                {
+                    throw new InvalidOperationException("Certificate subject name is required.");
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("✅ App-only authentication configured (certificate subject)");
+                return AuthConfig.CreateAppOnlyWithCertificateBySubject(clientId, tenantId, subjectName);
+            }
+
+            if (credentialChoice == "3")
+            {
+                Console.WriteLine("⚠ WARNING: Client secret will be visible as you type");
+                Console.Write("Client Secret: ");
+                var clientSecret = ReadSecret();
+                Console.WriteLine();
+
+                if (string.IsNullOrWhiteSpace(clientSecret))
+                {
+                    throw new InvalidOperationException("Client secret is required for fallback mode.");
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("✅ App-only authentication configured (client secret fallback)");
+                return AuthConfig.CreateAppOnly(clientId, tenantId, clientSecret);
+            }
+
+            Console.Write("Certificate Thumbprint: ");
+            var thumbprint = Console.ReadLine()?.Trim();
+            if (string.IsNullOrWhiteSpace(thumbprint))
+            {
+                throw new InvalidOperationException("Certificate thumbprint is required.");
             }
 
             Console.WriteLine();
-            Console.WriteLine("✅ App-only authentication configured");
-            
-            return AuthConfig.CreateAppOnly(clientId, tenantId, clientSecret);
+            Console.WriteLine("✅ App-only authentication configured (certificate thumbprint)");
+            return AuthConfig.CreateAppOnlyWithCertificateByThumbprint(clientId, tenantId, thumbprint);
         }
         else
         {
@@ -144,9 +179,15 @@ public static class ConfigurationPrompt
         
         if (config.Mode == AuthMode.AppOnly)
         {
-            var secretMasked = config.ClientSecret?.Length > 0 
-                ? new string('*', Math.Min(config.ClientSecret.Length, 20)) 
+            var certDisplay = !string.IsNullOrWhiteSpace(config.CertificateThumbprint)
+                ? $"thumbprint:{config.CertificateThumbprint}"
+                : (!string.IsNullOrWhiteSpace(config.CertificateSubjectName) ? $"subject:{config.CertificateSubjectName}" : "(not set)");
+            var secretMasked = config.ClientSecret?.Length > 0
+                ? new string('*', Math.Min(config.ClientSecret.Length, 20))
                 : "(not set)";
+
+            Console.WriteLine($"   Certificate: {certDisplay}");
+            Console.WriteLine($"   Client Secret Fallback Enabled: {config.AllowClientSecretFallback}");
             Console.WriteLine($"   Client Secret: {secretMasked}");
         }
         else

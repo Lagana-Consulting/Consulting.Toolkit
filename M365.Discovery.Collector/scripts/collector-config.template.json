@@ -1,0 +1,8 @@
+{
+  "ClientId": "00000000-0000-0000-0000-000000000000",
+  "TenantId": "00000000-0000-0000-0000-000000000000",
+  "UseAppOnlyCertificateSignIn": true,
+  "CertificateThumbprint": "REPLACE_WITH_CERT_THUMBPRINT",
+  "CertificateSubjectName": "CN=m365-discovery-collector",
+  "AdminConsentUrl": "https://login.microsoftonline.com/<tenant-id>/adminconsent?client_id=<client-id>&redirect_uri=http%3A%2F%2Flocalhost"
+}

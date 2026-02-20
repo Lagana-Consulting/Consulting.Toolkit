@@ -1,0 +1,17 @@
+﻿ReportRefreshDate,SiteId,SiteUrl,OwnerDisplayName,IsDeleted,LastActivityDate,FileCount,ActiveFileCount,PageViewCount,VisitedPageCount,StorageUsedBytes,StorageAllocatedBytes,RootWebTemplate,OwnerPrincipalName,ReportPeriodDays
+2026-02-17 00:00:00,1d4a3827-3be2-40bd-a468-d6d378577c13,,Quest PM PSO NAM Test Tenant 17 - 5116720 Owners,False,,0,0,0,0,1456522,27487790694400,Group,QuestPMPSONAMTestTenant17-511672047@QuestpmpsoNAM17.onmicrosoft.com,7
+2026-02-17 00:00:00,24041ac1-955c-43cb-b9fa-2b2b61a240b8,,Paul's Test Team Owners,False,,0,0,0,0,1505360,27487790694400,Group,Paul_Test_Team@QuestpmpsoNAM17.onmicrosoft.com,7
+2026-02-17 00:00:00,490acfdd-74ab-4106-96a8-7092a86384e0,,Test Distribution Group Owners,False,,0,0,0,0,1452339,27487790694400,Group,testdistribution@QuestpmpsoNAM17.onmicrosoft.com,7
+2026-02-17 00:00:00,6c9ffe45-6459-41d5-aa5c-9a418771a2f0,,Quest PM PSO NAM Test Tenant 17 - 5116720 Owners,False,,0,0,0,0,1452841,27487790694400,Group,QuestPMPSONAMTestTenant17-5116720456@QuestpmpsoNAM17.onmicrosoft.com,7
+2026-02-17 00:00:00,96a4bf6d-5b1e-4796-bc50-a33563773566,,All Company Owners,False,,0,0,0,0,1455631,27487790694400,Group,allcompany@QuestpmpsoNAM17.onmicrosoft.com,7
+2026-02-17 00:00:00,bea5775c-c8fc-4a0e-8fc1-a5694a6cfca0,,Paul's Test M365 group Owners,False,,0,0,0,0,1452254,27487790694400,Group,paul_M365@QuestpmpsoNAM17.onmicrosoft.com,7
+2026-02-17 00:00:00,c99a22d8-698f-4665-b188-228d14f400a9,,Quest PM PSO NAM Test Tenant 17 - 5116720 Owners,False,,0,0,0,0,1452872,27487790694400,Group,QuestPMPSONAMTestTenant17-5116720@QuestpmpsoNAM17.onmicrosoft.com,7
+2026-02-17 00:00:00,e7b2d662-e525-4381-b934-408f12bfa397,,Quest PM PSO NAM Test Tenant 17 - 5116720 Owners,False,,0,0,0,0,1453054,27487790694400,Group,QuestPMPSONAMTestTenant17-5116720845@QuestpmpsoNAM17.onmicrosoft.com,7
+2026-02-17 00:00:00,007a3733-e16a-492f-8ef0-5fd9104ea8ea,,Global Administrator,False,2026-01-28 00:00:00,0,0,0,0,1721020,27487790694400,My Site Host,,7
+2026-02-17 00:00:00,01e0fbcc-68f2-4a2e-bc95-46d24d265a44,,Global Administrator,False,2026-01-28 00:00:00,0,0,0,0,2044597,27487790694400,Tenant Admin Site,,7
+2026-02-17 00:00:00,21f55c0a-17eb-4ad9-aa9d-68c8b3f22854,,NT Service\sptimerv4,False,,0,0,0,0,890740,27487790694400,SharePoint Online Tenant Fundamental Site,,7
+2026-02-17 00:00:00,552cf091-3c6b-405a-832f-f78fcbc9f0ff,,Global Administrator,False,,0,0,0,0,1537639,27487790694400,Basic Search Center,,7
+2026-02-17 00:00:00,5adde92e-187c-496e-b5d2-1a0a63e1cbb8,,Global Administrator,False,,1,0,0,0,2130623,27487790694400,Compliance Policy Center,,7
+2026-02-17 00:00:00,5e9b1146-b517-4101-ac68-43f83aef9adc,,Global Administrator,False,,1,0,0,0,1458953,27487790694400,Site Page Publishing,,7
+2026-02-17 00:00:00,dec8932c-647a-4e3f-a738-416d1107a0cc,,Paul Lagana,False,2026-01-28 00:00:00,6,0,0,0,2285198,27487790694400,Site Page Publishing,paul.lagana@QuestpmpsoNAM17.onmicrosoft.com,7
+2026-02-17 00:00:00,7b3e44a5-a65e-42d1-b80b-c36cbed56210,,Global Administrator,False,,0,0,0,0,1592942,27487790694400,Team Site,,7

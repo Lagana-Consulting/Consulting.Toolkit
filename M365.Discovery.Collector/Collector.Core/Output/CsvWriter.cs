@@ -36,6 +36,19 @@ public sealed class CsvWriter
         return sb.ToString();
     }
 
+    public string WriteHeaderOnly<T>()
+    {
+        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead)
+            .OrderBy(p => p.MetadataToken)
+            .ToArray();
+
+        if (properties.Length == 0)
+            return string.Empty;
+
+        return string.Join(",", properties.Select(p => EscapeCsvValue(p.Name))) + Environment.NewLine;
+    }
+
     private static string FormatValue(object? value)
     {
         if (value == null)

@@ -2929,7 +2929,7 @@
       ],
       "requiredDatasets": [
         "AD_Users_Security",
-        "Entra_AuthMethods"
+        "Entra_AuthMethodsCoverage"
       ]
     },
     {
@@ -3019,7 +3019,7 @@
       ],
       "requiredDatasets": [
         "AD_Users_Security",
-        "Entra_AuthMethods"
+        "Entra_AuthMethodsCoverage"
       ]
     },
     {
@@ -3085,7 +3085,7 @@
         "AD_ForestTrusts",
         "AD_TrustRelationshipMap",
         "AD_Users_Security",
-        "Entra_AuthMethods",
+        "Entra_AuthMethodsCoverage",
         "Entra_ConditionalAccessPolicies"
       ]
     },
@@ -3108,7 +3108,7 @@
       ],
       "requiredDatasets": [
         "AD_Users_Security",
-        "Entra_AuthMethods",
+        "Entra_AuthMethodsCoverage",
         "Entra_ConditionalAccessPolicies",
         "Entra_RoleAssignments"
       ]
@@ -3176,7 +3176,7 @@
         }
       ],
       "requiredDatasets": [
-        "Entra_AuthMethods",
+        "Entra_AuthMethodsCoverage",
         "Entra_ConditionalAccessPolicies"
       ]
     },
@@ -3280,7 +3280,7 @@
       "requiredDatasets": [
         "AD_Groups",
         "AD_Users_Security",
-        "Entra_AuthMethods"
+        "Entra_AuthMethodsCoverage"
       ]
     },
     {
@@ -3336,7 +3336,7 @@
       ],
       "requiredDatasets": [
         "AD_Users_Security",
-        "Entra_AuthMethods",
+        "Entra_AuthMethodsCoverage",
         "Entra_RoleAssignments"
       ]
     },
@@ -3632,7 +3632,7 @@
       ],
       "requiredDatasets": [
         "AD_Users_Security",
-        "Entra_AuthMethods",
+        "Entra_AuthMethodsCoverage",
         "Entra_RoleAssignments"
       ]
     },
@@ -3655,7 +3655,7 @@
       ],
       "requiredDatasets": [
         "AD_Users_Security",
-        "Entra_AuthMethods",
+        "Entra_AuthMethodsCoverage",
         "Entra_RoleAssignments"
       ]
     },
@@ -3909,7 +3909,7 @@
       ],
       "requiredDatasets": [
         "AD_Users_Security",
-        "Entra_AuthMethods"
+        "Entra_AuthMethodsCoverage"
       ]
     },
     {
@@ -3953,7 +3953,7 @@
         }
       ],
       "requiredDatasets": [
-        "Entra_AuthMethods",
+        "Entra_AuthMethodsCoverage",
         "Entra_ConditionalAccessPolicies"
       ]
     },

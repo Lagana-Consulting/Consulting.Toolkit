@@ -5,6 +5,7 @@ namespace Collector.App.Services;
 public class AppRegistrationService
 {
     private readonly GraphServiceClient _graphClient;
+    private const string GraphResourceAppId = "00000003-0000-0000-c000-000000000000";
 
     public AppRegistrationService(GraphServiceClient graphClient)
     {
@@ -23,15 +24,14 @@ public class AppRegistrationService
             },
             RequiredResourceAccess = new List<RequiredResourceAccess>
             {
-                // Start with minimal Microsoft Graph permissions
                 new RequiredResourceAccess
                 {
-                    ResourceAppId = "00000003-0000-0000-c000-000000000000", // Microsoft Graph
+                    ResourceAppId = GraphResourceAppId,
                     ResourceAccess = new List<ResourceAccess>
                     {
                         new ResourceAccess
                         {
-                            Id = Guid.Parse("e1fe6dd8-ba31-4d61-89e7-88639da4683d"), // User.Read
+                            Id = Guid.Parse("e1fe6dd8-ba31-4d61-89e7-88639da4683d"), // User.Read (delegated)
                             Type = "Scope"
                         }
                     }
@@ -40,105 +40,151 @@ public class AppRegistrationService
         };
 
         var createdApp = await _graphClient.Applications.Request().AddAsync(application);
-        
         return (createdApp.AppId, createdApp.Id);
     }
 
-    public async Task<PermissionAddResult> AddPermissionsAsync(string appObjectId, string[] requiredPermissions)
+    public async Task<PermissionAddResult> AddPermissionsAsync(
+        string appObjectId,
+        string[] requiredPermissions,
+        bool includeDelegated = true,
+        bool includeApplication = true)
     {
-        // Microsoft Graph Resource App ID
-        const string graphResourceId = "00000003-0000-0000-c000-000000000000";
+        var graphSp = await GetGraphServicePrincipalAsync();
 
-        // DELEGATED Permission GUIDs (all verified)
-        var permissionMap = new Dictionary<string, Guid>
+        var requestedAccess = ResolveGraphResourceAccess(
+            graphSp,
+            requiredPermissions,
+            includeDelegated,
+            includeApplication,
+            out var unresolved);
+
+        if (requestedAccess.Count == 0)
         {
-            { "User.Read.All", Guid.Parse("a154be20-db9c-4678-8ab7-66f6cc099a59") },
-            { "Group.Read.All", Guid.Parse("5f8c59db-677d-491f-a6b8-5f174b11ec1d") },
-            { "Directory.Read.All", Guid.Parse("06da0dbc-49e2-44d2-8312-53f166ab848a") },
-            { "Application.Read.All", Guid.Parse("c79f8feb-a9db-4090-85f9-90d820caa0eb") },
-            { "Reports.Read.All", Guid.Parse("02e97553-ed7b-43d0-ab3c-f8bace0d040c") },
-            { "Organization.Read.All", Guid.Parse("4908d5b9-3fb2-4b1e-9336-1888b7937185") },
-            { "Domain.Read.All", Guid.Parse("2f9ee017-59c1-4f1d-9472-bd5529a7b311") }
-        };
-
-        var requestedAccess = requiredPermissions
-            .Where(p => permissionMap.ContainsKey(p))
-            .Select(p => new ResourceAccess
-            {
-                Id = permissionMap[p],
-                Type = "Scope"
-            })
-            .ToList();
+            return new PermissionAddResult(
+                Requested: requiredPermissions,
+                AlreadyExisted: Array.Empty<string>(),
+                NewlyAdded: Array.Empty<string>(),
+                Unresolved: unresolved.ToArray(),
+                AddedDelegatedCount: 0,
+                AddedApplicationCount: 0,
+                ExistingDelegatedCount: 0,
+                ExistingApplicationCount: 0);
+        }
 
         var application = await _graphClient.Applications[appObjectId].Request().GetAsync();
-        
         var requiredResourceAccess = application.RequiredResourceAccess?.ToList() ?? new List<RequiredResourceAccess>();
-        
-        var graphResource = requiredResourceAccess
-            .FirstOrDefault(r => r.ResourceAppId == graphResourceId);
 
-        List<string> existingPermissions = new();
-        List<string> newPermissions = new();
-        
+        var graphResource = requiredResourceAccess.FirstOrDefault(r => r.ResourceAppId == GraphResourceAppId);
+        var existingPermissions = new List<string>();
+        var newPermissions = new List<string>();
+
         if (graphResource == null)
         {
-            // First time - no permissions exist yet
             graphResource = new RequiredResourceAccess
             {
-                ResourceAppId = graphResourceId,
-                ResourceAccess = requestedAccess
+                ResourceAppId = GraphResourceAppId,
+                ResourceAccess = requestedAccess.Select(x => x.ResourceAccess).ToList()
             };
             requiredResourceAccess.Add(graphResource);
-            
-            // All permissions are new
-            newPermissions = requiredPermissions.Where(p => permissionMap.ContainsKey(p)).ToList();
+            newPermissions.AddRange(requestedAccess.Select(x => x.DisplayName));
         }
         else
         {
-            // Permissions already exist - merge
             var existingAccess = graphResource.ResourceAccess?.ToList() ?? new List<ResourceAccess>();
-            var existingIds = existingAccess
-                .Where(ea => ea.Id.HasValue)
-                .Select(r => r.Id.Value)
-                .ToHashSet();
-            
-            // Track what we already have
-            var reverseMap = permissionMap.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-            existingPermissions = existingAccess
-                .Where(ea => ea.Id.HasValue && reverseMap.ContainsKey(ea.Id.Value))
-                .Select(ea => reverseMap[ea.Id!.Value])
-                .ToList();
-            
-            // Add only new permissions
-            foreach (var newAccess in requestedAccess.Where(r => r.Id.HasValue && !existingIds.Contains(r.Id.Value)))
+            var existingKeys = existingAccess
+                .Where(e => e.Id.HasValue)
+                .Select(e => $"{e.Type}:{e.Id!.Value}")
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var reverseLookup = requestedAccess.ToDictionary(
+                k => $"{k.ResourceAccess.Type}:{k.ResourceAccess.Id}",
+                v => v.DisplayName,
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (var ea in existingAccess.Where(e => e.Id.HasValue))
             {
-                existingAccess.Add(newAccess);
-                if (newAccess.Id.HasValue && reverseMap.TryGetValue(newAccess.Id.Value, out var permName))
+                var key = $"{ea.Type}:{ea.Id!.Value}";
+                if (reverseLookup.TryGetValue(key, out var name))
                 {
-                    newPermissions.Add(permName);
+                    existingPermissions.Add(name);
                 }
             }
-            
-            // Update the resource with merged permissions
+
+            foreach (var request in requestedAccess)
+            {
+                var key = $"{request.ResourceAccess.Type}:{request.ResourceAccess.Id}";
+                if (existingKeys.Contains(key))
+                {
+                    continue;
+                }
+
+                existingAccess.Add(request.ResourceAccess);
+                newPermissions.Add(request.DisplayName);
+            }
+
             graphResource.ResourceAccess = existingAccess;
         }
 
-        // Update the application with all resources
         application.RequiredResourceAccess = requiredResourceAccess;
         await _graphClient.Applications[appObjectId].Request().UpdateAsync(application);
-        
+
+        var addedDelegated = newPermissions.Count(p => p.StartsWith("Delegated:", StringComparison.OrdinalIgnoreCase));
+        var addedApplication = newPermissions.Count(p => p.StartsWith("Application:", StringComparison.OrdinalIgnoreCase));
+        var existingDelegated = existingPermissions.Count(p => p.StartsWith("Delegated:", StringComparison.OrdinalIgnoreCase));
+        var existingApplication = existingPermissions.Count(p => p.StartsWith("Application:", StringComparison.OrdinalIgnoreCase));
+
         return new PermissionAddResult(
             Requested: requiredPermissions,
-            AlreadyExisted: existingPermissions.ToArray(),
-            NewlyAdded: newPermissions.ToArray()
-        );
+            AlreadyExisted: existingPermissions.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray(),
+            NewlyAdded: newPermissions.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray(),
+            Unresolved: unresolved.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray(),
+            AddedDelegatedCount: addedDelegated,
+            AddedApplicationCount: addedApplication,
+            ExistingDelegatedCount: existingDelegated,
+            ExistingApplicationCount: existingApplication);
     }
-    
+
     public record PermissionAddResult(
         string[] Requested,
         string[] AlreadyExisted,
-        string[] NewlyAdded
+        string[] NewlyAdded,
+        string[] Unresolved,
+        int AddedDelegatedCount,
+        int AddedApplicationCount,
+        int ExistingDelegatedCount,
+        int ExistingApplicationCount
     );
+
+    public record ConsentProfile(string Name, string[] Permissions, string AdminConsentUrl);
+
+    public IReadOnlyList<ConsentProfile> GetConsentProfiles(string clientId, string tenantId)
+    {
+        var url = GetAdminConsentUrl(clientId, tenantId);
+        var profiles = new List<ConsentProfile>
+        {
+            new("Core-Entra-Phase3", new[]
+            {
+                "RoleManagement.Read.Directory",
+                "Policy.Read.All",
+                "User.Read.All",
+                "Group.Read.All",
+                "Application.Read.All",
+                "Directory.Read.All"
+            }, url),
+            new("Core-M365-Reports", new[]
+            {
+                "Reports.Read.All",
+                "Organization.Read.All",
+                "Domain.Read.All"
+            }, url),
+            new("Hybrid-Connect", new[]
+            {
+                "OnPremDirectorySynchronization.Read.All"
+            }, url)
+        };
+
+        return profiles;
+    }
 
     public string GetAdminConsentUrl(string clientId, string tenantId)
     {
@@ -147,4 +193,78 @@ public class AppRegistrationService
                $"client_id={clientId}&" +
                $"redirect_uri={redirectUri}";
     }
+
+    private async Task<ServicePrincipal> GetGraphServicePrincipalAsync()
+    {
+        var graphSps = await _graphClient.ServicePrincipals
+            .Request()
+            .Filter($"appId eq '{GraphResourceAppId}'")
+            .Select("id,appId,displayName,appRoles,oauth2PermissionScopes")
+            .GetAsync();
+
+        var graphSp = graphSps?.CurrentPage?.FirstOrDefault();
+        if (graphSp == null)
+        {
+            throw new InvalidOperationException("Microsoft Graph service principal was not found in the tenant.");
+        }
+
+        return graphSp;
+    }
+
+    private static List<ResolvedPermission> ResolveGraphResourceAccess(
+        ServicePrincipal graphSp,
+        IEnumerable<string> permissions,
+        bool includeDelegated,
+        bool includeApplication,
+        out List<string> unresolved)
+    {
+        unresolved = new List<string>();
+        var resolved = new List<ResolvedPermission>();
+
+        foreach (var permission in permissions.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var resolvedAny = false;
+
+            if (includeDelegated)
+            {
+                var scope = graphSp.Oauth2PermissionScopes?
+                    .FirstOrDefault(s => s.IsEnabled == true &&
+                                         string.Equals(s.Value, permission, StringComparison.OrdinalIgnoreCase));
+
+                if (scope?.Id != null)
+                {
+                    resolved.Add(new ResolvedPermission(
+                        new ResourceAccess { Id = scope.Id, Type = "Scope" },
+                        $"Delegated:{permission}"));
+                    resolvedAny = true;
+                }
+            }
+
+            if (includeApplication)
+            {
+                var role = graphSp.AppRoles?
+                    .FirstOrDefault(r => r.IsEnabled == true &&
+                                         r.AllowedMemberTypes != null &&
+                                         r.AllowedMemberTypes.Contains("Application") &&
+                                         string.Equals(r.Value, permission, StringComparison.OrdinalIgnoreCase));
+
+                if (role?.Id != null)
+                {
+                    resolved.Add(new ResolvedPermission(
+                        new ResourceAccess { Id = role.Id, Type = "Role" },
+                        $"Application:{permission}"));
+                    resolvedAny = true;
+                }
+            }
+
+            if (!resolvedAny)
+            {
+                unresolved.Add(permission);
+            }
+        }
+
+        return resolved;
+    }
+
+    private sealed record ResolvedPermission(ResourceAccess ResourceAccess, string DisplayName);
 }

@@ -13,6 +13,7 @@
     </Window.DataContext>
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <!-- Expander Header Style -->
         <Style x:Key="CategoryExpanderStyle" TargetType="Expander">
             <Setter Property="IsExpanded" Value="True"/>
@@ -41,7 +42,7 @@
         <DockPanel DockPanel.Dock="Top" LastChildFill="False" Margin="0,0,0,12">
             <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                 <TextBlock Text="M365 Discovery Collector V2" FontSize="22" FontWeight="SemiBold"/>
-                <TextBlock Text="Entra ID migration risk assessment + workload discovery" Opacity="0.75"/>
+                <TextBlock Text="Entra ID and Microsoft 365 workload discovery" Opacity="0.75"/>
             </StackPanel>
 
             <!-- Scrollable button area -->
@@ -60,8 +61,40 @@
                     <Rectangle Width="1" Fill="#DDDDDD" Margin="0,4"/>
                     
                     <TextBlock Text="USER:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,8,0" Opacity="0.7" FontSize="11"/>
+                    <ToggleButton Content="Bootstrap Admin Role"
+                                  IsChecked="{Binding IsBootstrapAdminRole, UpdateSourceTrigger=PropertyChanged}"
+                                  Margin="0,0,8,0"
+                                  Padding="6,4"
+                                  FontSize="11"/>
+                    <Border Background="#E6F2FF"
+                            BorderBrush="#7AA7D9"
+                            BorderThickness="1"
+                            CornerRadius="3"
+                            Padding="6,3"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ActiveRoleLabel}" FontSize="11" FontWeight="SemiBold" Foreground="#124A8A"/>
+                    </Border>
                     <Button Content="⚙ Configure Auth" Command="{Binding ConfigureAuthCommand}" Margin="0,0,8,0"/>
                     <Button Content="🔐 Sign In" Command="{Binding SignInCommand}" Margin="0,0,8,0"/>
+                    
+                    <Border Background="#FFF4CE"
+                            BorderBrush="#FFB900"
+                            BorderThickness="1"
+                            CornerRadius="3"
+                            Padding="6,3"
+                            Margin="0,0,6,0"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding RequiresReauthentication, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Auth stale - Sign in required" FontSize="11" FontWeight="SemiBold" Foreground="#8A5100"/>
+                    </Border>
+                    <Button Content="🔄 Refresh Sign-In"
+                            Command="{Binding SignInCommand}"
+                            Margin="0,0,8,0"
+                            Padding="6,4"
+                            FontSize="11"
+                            Visibility="{Binding RequiresReauthentication, Converter={StaticResource BoolToVis}}"/>
+
                     <Button Content="Preflight Check" Command="{Binding PreflightCommand}" Margin="0,0,8,0"/>
                     
                     <Button Content="ℹ️ Hashed Names?" 
@@ -96,6 +129,21 @@
 
                         <Label Content="Run Name:" Padding="0,0,0,4"/>
                         <TextBox Text="{Binding RunName, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+
+                        <Separator Margin="0,10,0,8"/>
+                        <TextBlock Text="Sign-In Mode" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <CheckBox Content="Use app-only certificate sign-in"
+                                  IsChecked="{Binding UseAppOnlyCertificateSignIn, UpdateSourceTrigger=PropertyChanged}"
+                                  Margin="0,0,0,6"/>
+
+                        <Label Content="Tenant ID / Domain:" Padding="0,0,0,4"/>
+                        <TextBox Text="{Binding TenantId, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+
+                        <Label Content="Certificate Thumbprint (preferred):" Padding="0,6,0,4"/>
+                        <TextBox Text="{Binding CertificateThumbprint, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
+
+                        <Label Content="Certificate Subject Name (alternative):" Padding="0,6,0,4"/>
+                        <TextBox Text="{Binding CertificateSubjectName, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
                     </StackPanel>
 
                     <!-- Run button at bottom - ALWAYS VISIBLE -->
@@ -111,8 +159,26 @@
 
                     <!-- Workload selection - GROUPED BY SERVICE TYPE -->
                     <GroupBox Header="Select Workloads to Collect">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel>
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                                <Button Content="Deselect All"
+                                        Command="{Binding DeselectAllWorkloadsCommand}"
+                                        Margin="0,0,6,0"
+                                        Padding="6,3"
+                                        FontSize="11"/>
+                                <Button Content="Enable Entra ID"
+                                        Command="{Binding EnableEntraWorkloadsCommand}"
+                                        Margin="0,0,6,0"
+                                        Padding="6,3"
+                                        FontSize="11"/>
+                                <Button Content="Enable Microsoft 365"
+                                        Command="{Binding EnableMicrosoft365WorkloadsCommand}"
+                                        Padding="6,3"
+                                        FontSize="11"/>
+                            </StackPanel>
+
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel>
                                 <!-- ENTRA ID CATEGORY -->
                                 <Expander Style="{StaticResource CategoryExpanderStyle}" IsExpanded="True">
                                     <Expander.Header>
@@ -242,8 +308,9 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </Expander>
-                            </StackPanel>
-                        </ScrollViewer>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DockPanel>
                     </GroupBox>
                 </DockPanel>
             </Border>

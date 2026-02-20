@@ -23,6 +23,10 @@ public sealed class DiscoveryOrchestrator
         var resilientClient = new ResilientGraphClient(graphClient, maxParallelRequests: 4);
 
         Console.WriteLine($"🔍 Token expires: {tokenInfo.ExpiresOn:yyyy-MM-dd HH:mm:ss} UTC");
+        if (!string.IsNullOrWhiteSpace(tokenInfo.AuthenticationPath))
+        {
+            Console.WriteLine($"🔐 Auth path: {tokenInfo.AuthenticationPath}");
+        }
         Console.WriteLine();
 
         // Step 2: Run preflight checks
@@ -31,7 +35,7 @@ public sealed class DiscoveryOrchestrator
         var preflightReport = await preflightService.RunPreflightAsync(tokenInfo, cancellationToken);
 
         Console.WriteLine($"   {preflightReport.OrganizationTestMessage}");
-        Console.WriteLine($"   Granted permissions: {tokenInfo.GrantedScopes.Length} {(authConfig.Mode == AuthMode.AppOnly ? "roles" : "scopes")}");
+        Console.WriteLine($"   Granted permissions: {tokenInfo.GrantedScopes.Length}");
         Console.WriteLine();
 
         // Display capability matrix

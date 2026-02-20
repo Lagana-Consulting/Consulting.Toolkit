@@ -1,0 +1,9 @@
+﻿Id,DisplayName,UserPrincipalName,Mail,AccountEnabled,CreatedDateTime,UserType,LicenseCount
+cf3aba9b-b52f-4f93-9328-f00c29d9eec7,Admin,admin@QuestpmpsoNAM17.onmicrosoft.com,,True,2025-08-25 14:19:22,Member,0
+3615b984-3b2b-442a-889b-1b9f5c2f3c49,BreakGlass,Bglass@QuestpmpsoNAM17.onmicrosoft.com,,True,2025-08-01 14:21:22,Member,0
+76eaa9f9-fde2-49f1-a8b6-1526aedf804e,Paul Lagana (plagana),paul.lagana_quest.com#EXT#@QuestpmpsoNAM17.onmicrosoft.com,paul.lagana@quest.com,True,2025-08-01 23:47:37,Guest,0
+93ea840f-0a7c-4df6-acd1-221812c96a9b,Paul Lagana,paul.lagana@QuestpmpsoNAM17.onmicrosoft.com,paul.lagana@QuestpmpsoNAM17.onmicrosoft.com,True,2026-01-28 19:48:05,Member,1
+6f5da5b7-9d6e-4d90-947d-939c27c90721,svc-m365.TestTenant.Admin,svc-m365.TestTenant.Admin_quest.com#EXT#@QuestpmpsoNAM17.onmicrosoft.com,svc-m365.TestTenant.Admin@quest.com,True,2025-08-01 14:28:51,Guest,0
+5410ed80-0863-4867-aad2-9203eb3fb53f,Test User1,Test.User1@QuestpmpsoNAM17.onmicrosoft.com,,True,2026-01-28 20:31:23,Member,0
+ee0a33fb-59df-4ee6-838d-a61f48d072ab,Test_Shared,Test_Shared@QuestpmpsoNAM17.onmicrosoft.com,Test_Shared@QuestpmpsoNAM17.onmicrosoft.com,False,2026-01-28 23:23:03,Member,0
+e3d5c040-9090-40b1-87ba-70d82161a3ce,TestRoom,TestRoomTestRoom@QuestpmpsoNAM17.onmicrosoft.com,TestRoomTestRoom@QuestpmpsoNAM17.onmicrosoft.com,True,2026-01-28 23:19:19,Member,0

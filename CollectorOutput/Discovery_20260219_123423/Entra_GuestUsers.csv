@@ -1,0 +1,3 @@
+﻿Id,DisplayName,UserPrincipalName,Mail,ExternalUserState,ExternalUserStateChangeDateTime,CreatedDateTime,AccountEnabled,GroupMembershipCount,IsOrphaned,IsPendingAcceptance,DaysSinceCreated
+6f5da5b7-9d6e-4d90-947d-939c27c90721,svc-m365.TestTenant.Admin,svc-m365.TestTenant.Admin_quest.com#EXT#@QuestpmpsoNAM17.onmicrosoft.com,svc-m365.TestTenant.Admin@quest.com,PendingAcceptance,2025-08-01 14:28:51,2025-08-01 14:28:51,True,2,False,True,202
+76eaa9f9-fde2-49f1-a8b6-1526aedf804e,Paul Lagana (plagana),paul.lagana_quest.com#EXT#@QuestpmpsoNAM17.onmicrosoft.com,paul.lagana@quest.com,Accepted,2025-08-04 21:21:19,2025-08-01 23:47:37,True,2,False,False,201

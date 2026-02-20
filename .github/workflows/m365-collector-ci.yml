@@ -1,0 +1,67 @@
+name: M365 Collector CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "M365.Discovery.Collector/**"
+      - "docs/CUSTOMER_RUN_GUIDE.md"
+      - ".github/workflows/m365-collector-ci.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "M365.Discovery.Collector/**"
+      - "docs/CUSTOMER_RUN_GUIDE.md"
+      - ".github/workflows/m365-collector-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Run CLI smoke checks
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File "M365.Discovery.Collector/scripts/Test-M365CollectorSmoke.ps1" -Configuration Debug
+
+      - name: Upload smoke logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m365-collector-smoke-logs
+          path: M365.Discovery.Collector/artifacts/smoke/logs/*
+          if-no-files-found: warn
+
+  package:
+    runs-on: windows-latest
+    needs: smoke
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build release package
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File "M365.Discovery.Collector/scripts/Build-M365CollectorRelease.ps1" -Configuration Release -SkipGui
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: m365-collector-release
+          path: |
+            M365.Discovery.Collector/releases/*.zip
+            M365.Discovery.Collector/releases/*.sha256.txt
+          if-no-files-found: error

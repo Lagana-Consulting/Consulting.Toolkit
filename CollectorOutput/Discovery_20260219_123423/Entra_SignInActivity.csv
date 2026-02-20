@@ -1,0 +1,4 @@
+﻿Id,DisplayName,UserPrincipalName,UserType,AccountEnabled,LastSignInDateTime,LastNonInteractiveSignInDateTime,DaysSinceLastSignIn,IsStale,NeverSignedIn,IsInactive
+cf3aba9b-b52f-4f93-9328-f00c29d9eec7,Admin,admin@questpmpsonam17.onmicrosoft.com,,True,2026-02-19 14:46:16,,0,False,False,False
+76eaa9f9-fde2-49f1-a8b6-1526aedf804e,Paul Lagana (plagana),paul.lagana@quest.com,,True,2026-02-06 12:57:11,,13,False,False,False
+93ea840f-0a7c-4df6-acd1-221812c96a9b,Paul Lagana,paul.lagana@questpmpsonam17.onmicrosoft.com,,True,2026-02-05 13:30:04,,14,False,False,False

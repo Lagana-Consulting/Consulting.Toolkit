@@ -168,6 +168,10 @@ public partial class MainViewModel : ObservableObject
             var resilientClient = new ResilientGraphClient(graphClient, maxParallelRequests: 4);
 
             AddLog($"✅ Authenticated as: {tokenInfo.Username}");
+            if (!string.IsNullOrWhiteSpace(tokenInfo.AuthenticationPath))
+            {
+                AddLog($"🔐 Auth path: {tokenInfo.AuthenticationPath}");
+            }
             AddLog($"🔍 Token expires: {tokenInfo.ExpiresOn:yyyy-MM-dd HH:mm:ss} UTC");
 
             // Run preflight
