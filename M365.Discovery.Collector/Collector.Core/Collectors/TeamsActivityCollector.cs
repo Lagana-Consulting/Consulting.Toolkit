@@ -18,15 +18,16 @@ public sealed class TeamsActivityCollector : IWorkloadCollector
         CancellationToken cancellationToken = default)
     {
         var checkpoint = new CollectorCheckpoint("TeamsActivity");
+        var reportDays = context.ReportDays;
 
         try
         {
-            progress?.Report("📊 Fetching Teams user activity report (last 7 days)...");
+            progress?.Report($"📊 Fetching Teams user activity report (last {reportDays} days)...");
 
             var reportStream = await _graphClient.ExecuteAsync(
                 async client =>
                 {
-                    var request = client.Reports.GetTeamsUserActivityUserDetail("D7").Request();
+                    var request = client.Reports.GetTeamsUserActivityUserDetail(context.ReportPeriod).Request();
                     return await request.GetAsync(cancellationToken);
                 },
                 cancellationToken);
@@ -89,7 +90,7 @@ public sealed class TeamsActivityCollector : IWorkloadCollector
                         SharedChannelTenantDisplayNames: fields.Length > 29 ? fields[29] : null,
                         ReplyMessages: fields.Length > 30 ? ParseLongSafe(fields[30]) : 0,
                         IsLicensed: fields.Length > 31 ? fields[31] : null,
-                        ReportPeriodDays: fields.Length > 32 ? ParseIntSafe(fields[32]) : 7
+                        ReportPeriodDays: fields.Length > 32 ? ParseIntSafe(fields[32]) : reportDays
                     ));
 
                     checkpoint.ItemsProcessed++;

@@ -18,15 +18,16 @@ public sealed class SharePointUsageCollector : IWorkloadCollector
         CancellationToken cancellationToken = default)
     {
         var checkpoint = new CollectorCheckpoint("SharePointUsage");
+        var reportDays = context.ReportDays;
 
         try
         {
-            progress?.Report("📊 Fetching SharePoint site usage report (last 7 days)...");
+            progress?.Report($"📊 Fetching SharePoint site usage report (last {reportDays} days)...");
 
             var reportStream = await _graphClient.ExecuteAsync(
                 async client =>
                 {
-                    var request = client.Reports.GetSharePointSiteUsageDetail("D7").Request();
+                    var request = client.Reports.GetSharePointSiteUsageDetail(context.ReportPeriod).Request();
                     return await request.GetAsync(cancellationToken);
                 },
                 cancellationToken);
@@ -64,7 +65,7 @@ public sealed class SharePointUsageCollector : IWorkloadCollector
                         StorageAllocatedBytes: ParseLongSafe(fields[11]),
                         RootWebTemplate: fields[12],
                         OwnerPrincipalName: fields.Length > 13 ? fields[13] : null,
-                        ReportPeriodDays: fields.Length > 14 ? ParseIntSafe(fields[14]) : 7
+                        ReportPeriodDays: fields.Length > 14 ? ParseIntSafe(fields[14]) : reportDays
                     ));
 
                     checkpoint.ItemsProcessed++;

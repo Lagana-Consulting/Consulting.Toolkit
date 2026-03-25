@@ -130,6 +130,24 @@
                         <Label Content="Run Name:" Padding="0,0,0,4"/>
                         <TextBox Text="{Binding RunName, UpdateSourceTrigger=PropertyChanged}" Padding="4,2"/>
 
+                        <Label Content="Report Days:" Padding="0,6,0,4"/>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      Width="90"
+                                      ItemsSource="{Binding ReportDayOptions}"
+                                      SelectedItem="{Binding ReportDays, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Column="1"
+                                       Margin="8,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Text="Usage reports support 7, 30, 90, or 180 days."
+                                       Opacity="0.7"
+                                       TextWrapping="Wrap"/>
+                        </Grid>
+
                         <Separator Margin="0,10,0,8"/>
                         <TextBlock Text="Sign-In Mode" FontWeight="SemiBold" Margin="0,0,0,6"/>
                         <CheckBox Content="Use app-only certificate sign-in"

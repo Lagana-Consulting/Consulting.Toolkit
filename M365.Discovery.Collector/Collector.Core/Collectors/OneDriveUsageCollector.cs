@@ -19,16 +19,17 @@ public sealed class OneDriveUsageCollector : IWorkloadCollector
         CancellationToken cancellationToken = default)
     {
         var checkpoint = new CollectorCheckpoint("OneDriveUsage");
+        var reportDays = context.ReportDays;
 
         try
         {
-            progress?.Report("📊 Fetching OneDrive usage report (last 7 days)...");
+            progress?.Report($"📊 Fetching OneDrive usage report (last {reportDays} days)...");
 
             // Graph reports API: /reports/getOneDriveUsageAccountDetail(period='D7')
             var reportStream = await _graphClient.ExecuteAsync(
                 async client =>
                 {
-                    var request = client.Reports.GetOneDriveUsageAccountDetail("D7").Request();
+                    var request = client.Reports.GetOneDriveUsageAccountDetail(context.ReportPeriod).Request();
                     return await request.GetAsync(cancellationToken);
                 },
                 cancellationToken);
@@ -63,7 +64,7 @@ public sealed class OneDriveUsageCollector : IWorkloadCollector
                         StorageUsedBytes: ParseLongSafe(fields[8]),
                         StorageAllocatedBytes: ParseLongSafe(fields[9]),
                         OwnerPrincipalName: fields[10],
-                        ReportPeriodDays: fields.Length > 11 ? ParseIntSafe(fields[11]) : 7
+                        ReportPeriodDays: fields.Length > 11 ? ParseIntSafe(fields[11]) : reportDays
                     ));
 
                     checkpoint.ItemsProcessed++;

@@ -18,16 +18,17 @@ public sealed class ExchangeMailboxUsageCollector : IWorkloadCollector
         CancellationToken cancellationToken = default)
     {
         var checkpoint = new CollectorCheckpoint("ExchangeMailboxUsage");
+        var reportDays = context.ReportDays;
 
         try
         {
-            progress?.Report("📊 Fetching Exchange mailbox usage report (last 7 days)...");
+            progress?.Report($"📊 Fetching Exchange mailbox usage report (last {reportDays} days)...");
 
             // Graph reports API: /reports/getMailboxUsageDetail(period='D7')
             var reportStream = await _graphClient.ExecuteAsync(
                 async client =>
                 {
-                    var request = client.Reports.GetMailboxUsageDetail("D7").Request();
+                    var request = client.Reports.GetMailboxUsageDetail(context.ReportPeriod).Request();
                     return await request.GetAsync(cancellationToken);
                 },
                 cancellationToken);
@@ -68,7 +69,7 @@ public sealed class ExchangeMailboxUsageCollector : IWorkloadCollector
                         DeletedItemSizeBytes: ParseLongSafe(fields[13]),
                         DeletedItemQuotaBytes: ParseLongSafe(fields[14]),
                         HasArchive: ParseBoolSafe(fields[15]),
-                        ReportPeriodDays: fields.Length > 16 ? ParseIntSafe(fields[16]) : 7
+                        ReportPeriodDays: fields.Length > 16 ? ParseIntSafe(fields[16]) : reportDays
                     ));
 
                     checkpoint.ItemsProcessed++;

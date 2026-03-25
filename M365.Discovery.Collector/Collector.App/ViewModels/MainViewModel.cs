@@ -44,6 +44,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private string _outputFolder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
     private string _runName = $"Discovery_{DateTime.Now:yyyyMMdd_HHmm}";
+    private int _reportDays = DiscoveryContext.DefaultReportDays;
     private string _footerText = "Ready.";
     private bool _isBusy;
 
@@ -93,6 +94,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<WorkloadViewModel> EntraIdWorkloads { get; }
     public ObservableCollection<WorkloadViewModel> Microsoft365Workloads { get; }
     public ObservableCollection<WorkloadViewModel> OrganizationWorkloads { get; }
+    public IReadOnlyList<int> ReportDayOptions { get; } = DiscoveryContext.SupportedReportDays;
 
     // Workload counts for UI
     public string EntraIdWorkloadCount => $"({EntraIdWorkloads.Count} workloads)";
@@ -199,6 +201,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         get => _runName;
         set => SetProperty(ref _runName, value);
+    }
+
+    public int ReportDays
+    {
+        get => _reportDays;
+        set
+        {
+            var normalizedValue = DiscoveryContext.NormalizeReportDays(value);
+            if (SetProperty(ref _reportDays, normalizedValue))
+            {
+                SaveConfiguration();
+            }
+        }
     }
 
     public string FooterText
@@ -844,7 +859,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             Log($"✅ {report.OrganizationTestMessage}");
 
-            var ctx = new DiscoveryContext(OutputFolder, RunName);
+            var ctx = new DiscoveryContext(OutputFolder, RunName, ReportDays);
 
             foreach (var w in Workloads)
             {
@@ -912,7 +927,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Log($"📊 Collecting {selected.Count} workload(s)...");
             Log("");
 
-            var ctx = new DiscoveryContext(runFolder, RunName);
+            var ctx = new DiscoveryContext(runFolder, RunName, ReportDays);
 
             // Initialize output manager with preflight report
             var preflightReport = await _preflight!.RunPreflightAsync(_tokenInfo);
@@ -1021,6 +1036,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 ClientId = _clientId,
                 AppObjectId = _appObjectId,
+                ReportDays,
                 UseAppOnlyCertificateSignIn,
                 TenantId,
                 CertificateThumbprint,
@@ -1082,6 +1098,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
                                  bool.TryParse(appOnlyValue.GetString(), out var parsedAppOnly))
                         {
                             _useAppOnlyCertificateSignIn = parsedAppOnly;
+                        }
+                    }
+
+                    if (config.TryGetValue("ReportDays", out var reportDays))
+                    {
+                        if (reportDays.ValueKind == JsonValueKind.Number && reportDays.TryGetInt32(out var parsedReportDays))
+                        {
+                            _reportDays = DiscoveryContext.NormalizeReportDays(parsedReportDays);
+                        }
+                        else if (reportDays.ValueKind == JsonValueKind.String &&
+                                 int.TryParse(reportDays.GetString(), out parsedReportDays))
+                        {
+                            _reportDays = DiscoveryContext.NormalizeReportDays(parsedReportDays);
                         }
                     }
 
@@ -1147,6 +1176,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             _clientId = null;
             _appObjectId = null;
+            _reportDays = DiscoveryContext.DefaultReportDays;
             _useAppOnlyCertificateSignIn = false;
             _tenantId = "organizations";
             _certificateThumbprint = string.Empty;

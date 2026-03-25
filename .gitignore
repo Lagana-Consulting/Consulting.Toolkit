@@ -8,6 +8,13 @@ logs/
 dist/
 compare/
 *.zip
+*.sha256.txt
+
+# Discovery packaging/runtime artifacts
+CollectorOutput/
+M365.Discovery.Collector/releases/
+M365.Discovery.Collector/artifacts/
+src/Consulting.Toolkit.Discovery/releases/
 *.7z
 _archive/
 *.tmp
