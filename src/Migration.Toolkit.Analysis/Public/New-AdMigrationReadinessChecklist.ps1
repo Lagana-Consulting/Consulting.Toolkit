@@ -52,33 +52,18 @@ function New-AdMigrationReadinessChecklist {
     $OutputPath = Join-Path $SourceRunRoot "AD__Migration__Readiness__Checklist__$timestamp.html"
   }
 
-  # Helper to safely import CSV
-  function Import-CsvSafe([string]$Path) {
-    if (-not (Test-Path -LiteralPath $Path)) { return @() }
-    try {
-      return @(Import-Csv -Path $Path -ErrorAction Stop)
-    } catch {
-      return @()
-    }
-  }
+  $sourceData = Get-AdDiscoveryRunSummary -RunRoot $SourceRunRoot
+  $targetData = Get-AdDiscoveryRunSummary -RunRoot $TargetRunRoot
 
-  # Load assessments
-  $sourceAssess = Import-CsvSafe (Join-Path $SourceRunRoot 'AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
-  $targetAssess = Import-CsvSafe (Join-Path $TargetRunRoot 'AD__Assessment__Summary__Forest.csv') | Select-Object -First 1
+  $sourceAssess = $sourceData.Summary
+  $targetAssess = $targetData.Summary
+  $sourceRiskFlags = @($sourceData.RiskSummary)
+  $targetRiskFlags = @($targetData.RiskSummary)
 
-  # Provide fallbacks if missing
-  if (-not $sourceAssess) { $sourceAssess = [pscustomobject]@{ UsersTotal = 0; GroupsTotal = 0; ComputersTotal = 0 } }
-  if (-not $targetAssess) { $targetAssess = [pscustomobject]@{ UsersTotal = 0; GroupsTotal = 0; ComputersTotal = 0 } }
-
-  # Load risk flags
-  $sourceRiskFlags = Import-CsvSafe (Join-Path $SourceRunRoot 'AD__Migration__RiskFlagsSummary__Forest.csv')
-  $targetRiskFlags = Import-CsvSafe (Join-Path $TargetRunRoot 'AD__Migration__RiskFlagsSummary__Forest.csv')
-
-  # Parse risk flag counts (safely handle empty arrays)
-  $sourceCritical = ($sourceRiskFlags | Where-Object { $_.Flag -match 'Critical' } | Measure-Object).Count
-  $sourceHigh = ($sourceRiskFlags | Where-Object { $_.Flag -match 'High' } | Measure-Object).Count
-  $targetCritical = ($targetRiskFlags | Where-Object { $_.Flag -match 'Critical' } | Measure-Object).Count
-  $targetHigh = ($targetRiskFlags | Where-Object { $_.Flag -match 'High' } | Measure-Object).Count
+  $sourceCritical = [int](($sourceRiskFlags | Where-Object { $_.Severity -eq 'Critical' } | Measure-Object -Property Count -Sum | Select-Object -ExpandProperty Sum) ?? 0)
+  $sourceHigh = [int](($sourceRiskFlags | Where-Object { $_.Severity -eq 'High' } | Measure-Object -Property Count -Sum | Select-Object -ExpandProperty Sum) ?? 0)
+  $targetCritical = [int](($targetRiskFlags | Where-Object { $_.Severity -eq 'Critical' } | Measure-Object -Property Count -Sum | Select-Object -ExpandProperty Sum) ?? 0)
+  $targetHigh = [int](($targetRiskFlags | Where-Object { $_.Severity -eq 'High' } | Measure-Object -Property Count -Sum | Select-Object -ExpandProperty Sum) ?? 0)
 
 
   # Build checklist items
@@ -87,19 +72,24 @@ function New-AdMigrationReadinessChecklist {
       Category = "Object Migration Counts"
       Items    = @(
         @{
-          Item   = "All source users migrated to target";
-          Status = if ([int]$sourceAssess.UsersTotal -le [int]$targetAssess.UsersTotal) { "Pass" } else { "Fail" };
-          Note   = "Source: $($sourceAssess.UsersTotal) to Target: $($targetAssess.UsersTotal)"
+          Item   = "Users";
+          Status = "Manual";
+          Note   = "Source discovered: $($sourceAssess.UsersTotal) | Target discovered: $($targetAssess.UsersTotal)"
         },
         @{
-          Item   = "All source groups migrated to target";
-          Status = if ([int]$sourceAssess.GroupsTotal -le [int]$targetAssess.GroupsTotal) { "Pass" } else { "Fail" };
-          Note   = "Source: $($sourceAssess.GroupsTotal) to Target: $($targetAssess.GroupsTotal)"
+          Item   = "Groups";
+          Status = "Manual";
+          Note   = "Source discovered: $($sourceAssess.GroupsTotal) | Target discovered: $($targetAssess.GroupsTotal)"
         },
         @{
-          Item   = "All source computers migrated to target";
-          Status = if ([int]$sourceAssess.ComputersTotal -le [int]$targetAssess.ComputersTotal) { "Pass" } else { "Fail" };
-          Note   = "Source: $($sourceAssess.ComputersTotal) to Target: $($targetAssess.ComputersTotal)"
+          Item   = "Workstations";
+          Status = "Manual";
+          Note   = "Source discovered: $($sourceAssess.WorkstationsTotal) | Target discovered: $($targetAssess.WorkstationsTotal)"
+        },
+        @{
+          Item   = "Servers";
+          Status = "Manual";
+          Note   = "Source discovered: $($sourceAssess.ServersTotal) | Target discovered: $($targetAssess.ServersTotal)"
         }
       )
     },

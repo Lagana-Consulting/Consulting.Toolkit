@@ -1,0 +1,84 @@
+{
+  "Metadata": {
+    "CustomerName": "Versetal",
+    "Purpose": "Executive summary consultant input for current Versetal assessments and a reusable baseline for future AD migration assessments.",
+    "ReuseGuidance": "Copy this file for future customers, update Metadata.CustomerName, review Defaults, and replace or add PerForest entries for each assessed source or target forest."
+  },
+  "Defaults": {
+    "ScopeNote": "Migration scope should be confirmed with business, application, and identity stakeholders before final wave planning is approved.",
+    "DnsOverlapAssessment": "No automated DNS zone overlap analysis was performed in this discovery set. Validate namespace ownership, conditional forwarders, suffix routing, and application name-resolution dependencies during migration planning.",
+    "HybridIdentityConsiderations": "Hybrid identity was not directly assessed in this AD-only discovery run. Confirm Entra Connect or Cloud Sync topology, federation assumptions, tenant alignment, and source-of-authority ownership separately.",
+    "RecommendedMigrationApproach": {
+      "DirectoryMigrationTool": "ADMT inter-forest migration tooling. If there is a need to maintain profile son Desktops we will need a tool like Profile Wizard from ForensIT",
+      "MigrationCadence": "Staged",
+      "Notes": "Use pilot waves for privileged accounts, service accounts, and representative user and device cohorts before broader migration waves."
+    },
+    "AdditionalComplexityDrivers": [
+      "Application authentication and service dependency mapping should be completed before cutover sequencing is finalized.",
+      "Namespace normalization and target landing-zone standards should be reviewed before broad migration waves begin."
+    ],
+    "AdditionalRisks": [
+      "Consultant review is still required for DNS forwarding, namespace overlap, and application authentication dependencies.",
+      "Business-unit migration waves and rollback expectations should be confirmed before execution planning is finalized."
+    ]
+  },
+  "PerForest": {
+    "rossoptical.local": {
+      "ScopeNote": "This source forest is a focused single-domain migration scope into the target landing zone and is well suited to a controlled staged migration once identity cleanup activities are complete.",
+      "RecommendedMigrationApproach": {
+        "DirectoryMigrationTool": "ADMT inter-forest",
+        "MigrationCadence": "Staged",
+        "Notes": "Resolve duplicate identities, validate service-account dependencies, and normalize user namespaces before broader user, workstation, and server waves."
+      },
+      "AdditionalComplexityDrivers": [
+        "Namespace normalization is a leading complexity driver because most inventoried accounts use non-routable UPN suffixes.",
+        "Identity-conflict resolution with the target environment should be completed before production migration waves are scheduled.",
+        "Privileged and protected accounts should be separated into dedicated migration and validation waves."
+      ],
+      "AdditionalRisks": [
+        "Source identities overlap with the target environment and should be remediated before migration execution.",
+        "Non-routable UPN usage should be corrected before final identity synchronization or cutover planning.",
+        "Service-account dependencies require application-owner validation before server or application migration waves begin."
+      ],
+      "ReadinessOverride": {
+        "Status": "Amber",
+        "Score": 64,
+        "Note": "Proceed after identity conflict resolution, service-account validation, and namespace normalization are reviewed and approved with customer stakeholders."
+      }
+    },
+    "lighthouseoptics.local": {
+      "ScopeNote": "This source forest has a larger user and device footprint than rossoptical and should be planned as a staged migration sequence into the target environment.",
+      "RecommendedMigrationApproach": {
+        "DirectoryMigrationTool": "ADMT inter-forest",
+        "MigrationCadence": "Staged",
+        "Notes": "Use pilot waves to validate privileged access handling, service-account dependencies, and representative device migration patterns before broader production waves."
+      },
+      "AdditionalComplexityDrivers": [
+        "Higher object volume increases coordination, validation, and rollback-planning requirements.",
+        "Policy, OU, and privileged-access review should be completed before migration targeting is locked.",
+        "Cross-source and source-to-target identity overlap should be validated in the shared comparison workspace before execution planning."
+      ],
+      "AdditionalRisks": [
+        "Identity overlap with the target and across source environments should be reviewed before migration waves are approved.",
+        "Privileged and service-account dependencies may affect sequencing for application and infrastructure workloads.",
+        "Namespace and hybrid-identity assumptions still require consultant confirmation before cutover design is finalized."
+      ]
+    },
+    "poc.local": {
+      "ScopeNote": "This forest serves as the target landing zone and should be validated for namespace, access, and policy readiness before onboarding production source identities.",
+      "RecommendedMigrationApproach": {
+        "DirectoryMigrationTool": "Target landing zone for ADMT inter-forest migration waves",
+        "MigrationCadence": "Staged",
+        "Notes": "Validate OU design, GPO targeting, privileged access model, and target naming standards before onboarding production users, groups, and devices."
+      },
+      "AdditionalComplexityDrivers": [
+        "Target standards for OU placement, policy application, and delegated administration should be finalized before execution.",
+        "Target namespace, DNS forwarding, and landing-zone assumptions should be validated before source cutover planning."
+      ],
+      "AdditionalRisks": [
+        "Target design assumptions should be reviewed against source application and authentication dependencies before production onboarding.",
+        "Hybrid identity, source-of-authority, and target tenant expectations should be confirmed before production wave scheduling."
+      ]
+    }
+  }
+}

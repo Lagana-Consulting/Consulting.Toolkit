@@ -45,9 +45,10 @@ function Add-AdForestRiskSummary {
         [Parameter(Mandatory)]
         [string]$Title,
 
-        [Parameter(Mandatory)]
-        [ValidateScript({ Test-Path $_ -PathType Leaf })]
         [string]$CsvPath,
+
+        [ValidateScript({ Test-Path $_ -PathType Container })]
+        [string]$DiscoveryOutputPath,
 
         [string]$TableStyleName,
 
@@ -57,9 +58,18 @@ function Add-AdForestRiskSummary {
     )
 
     # Import risk summary data
-    $riskData = Import-Csv -Path $CsvPath -ErrorAction Stop
+    if ($CsvPath) {
+        $riskData = Import-Csv -Path $CsvPath -ErrorAction Stop
+    }
+    elseif ($DiscoveryOutputPath) {
+        $riskData = Get-AdAssessmentForestRiskSummaryData -DiscoveryOutputPath $DiscoveryOutputPath
+    }
+    else {
+        throw "Either CsvPath or DiscoveryOutputPath must be provided."
+    }
+
     if (-not $riskData -or $riskData.Count -eq 0) {
-        Write-Warning "CSV file $CsvPath is empty or has no data rows."
+        Write-Warning "No forest risk summary data was available to render."
         return $InsertRange
     }
 

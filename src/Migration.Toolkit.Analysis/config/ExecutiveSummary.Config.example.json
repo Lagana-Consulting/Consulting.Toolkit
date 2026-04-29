@@ -1,0 +1,31 @@
+{
+  "Defaults": {
+    "DnsOverlapAssessment": "No automated DNS zone overlap analysis was performed in this run. Validate namespace ownership, conditional forwarders, and resolver design during migration planning.",
+    "HybridIdentityConsiderations": "Hybrid identity was not directly assessed in this AD-only discovery run. Confirm Entra Connect, Cloud Sync, federation, and target tenant assumptions separately.",
+    "RecommendedMigrationApproach": {
+      "DirectoryMigrationTool": "ADMT inter-forest",
+      "MigrationCadence": "Staged",
+      "Notes": "Use pilot waves for privileged, service, and application-tied identities before broader user and device waves."
+    },
+    "AdditionalComplexityDrivers": [
+      "Line-of-business application dependency mapping is still in progress."
+    ],
+    "AdditionalRisks": [
+      "Consultant review required for namespace overlap, DNS forwarding, and application authentication dependencies."
+    ]
+  },
+  "PerForest": {
+    "rossoptical.local": {
+      "RecommendedMigrationApproach": {
+        "DirectoryMigrationTool": "ADMT inter-forest",
+        "MigrationCadence": "Staged",
+        "Notes": "Resolve duplicate identities and validate service-account dependencies before broad migration waves."
+      },
+      "ReadinessOverride": {
+        "Status": "Amber",
+        "Score": 64,
+        "Note": "Proceed after identity conflict resolution, service-account validation, and namespace normalization are reviewed with stakeholders."
+      }
+    }
+  }
+}

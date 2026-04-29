@@ -45,9 +45,10 @@ function Add-AdDomainRiskSummary {
         [Parameter(Mandatory)]
         [string]$Title,
 
-        [Parameter(Mandatory)]
-        [ValidateScript({ Test-Path $_ -PathType Leaf })]
         [string]$CsvPath,
+
+        [ValidateScript({ Test-Path $_ -PathType Container })]
+        [string]$DomainFolderPath,
 
         [string]$TableStyleName,
 
@@ -57,9 +58,18 @@ function Add-AdDomainRiskSummary {
     )
 
     # Import risk summary data
-    $riskData = Import-Csv -Path $CsvPath -ErrorAction Stop
+    if ($CsvPath) {
+        $riskData = Import-Csv -Path $CsvPath -ErrorAction Stop
+    }
+    elseif ($DomainFolderPath) {
+        $riskData = Get-AdAssessmentDomainRiskSummaryData -DomainFolderPath $DomainFolderPath
+    }
+    else {
+        throw "Either CsvPath or DomainFolderPath must be provided."
+    }
+
     if (-not $riskData -or $riskData.Count -eq 0) {
-        Write-Warning "CSV file $CsvPath is empty or has no data rows."
+        Write-Warning "No domain risk summary data was available to render."
         return $InsertRange
     }
 

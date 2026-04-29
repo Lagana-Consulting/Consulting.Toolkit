@@ -49,7 +49,11 @@ function Add-AdServerSummary {
         return $InsertRange
     }
 
-    $devices = Import-Csv $CsvPath
+    $devices = @(Import-Csv $CsvPath)
+    if ($devices.Count -gt 0 -and $devices[0].PSObject.Properties.Name -contains 'IsServer') {
+        $devices = @($devices | Where-Object { $_.IsServer -eq 'True' -or $_.IsServer -eq $true })
+    }
+
     if (@($devices).Count -eq 0) {
         Write-Warning "No server data found."
         return $InsertRange
@@ -117,7 +121,7 @@ function Add-AdServerSummary {
     # Create metrics hashtable
     $metrics = [ordered]@{
         "Servers"                = $total
-        "Legacy OS Devices (XP/7/2008/2008 R2)" = $legacy
+        "Legacy OS Devices (Server 2003/2008/2008 R2)" = $legacy
         "Enabled Devices"        = $enabled
         "Inactive (>180 days)"   = $inactive180Plus
         "Inactive (91-180 days)" = $inactive91to180

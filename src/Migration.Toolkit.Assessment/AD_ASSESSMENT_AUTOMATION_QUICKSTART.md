@@ -31,6 +31,15 @@ Invoke-ADAssessmentAutomation `
   -OutputPath "C:\Reports\Assessment.docx"
 ```
 
+Or use the bundled module template:
+
+```powershell
+Invoke-ADAssessmentAutomation `
+  -DiscoveryOutputPath "C:\Discovery\AD_forest__vts_20260129-120000" `
+  -UseBundledDiscoveryTemplate `
+  -OutputPath "C:\Reports\Assessment.docx"
+```
+
 ## How to Use
 
 ### Step 1: Place Template

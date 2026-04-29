@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AD Migration Comparison Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    header { border-bottom: 4px solid #0078d4; padding-bottom: 20px; margin-bottom: 30px; }
+    h1 { color: #0078d4; font-size: 28px; margin-bottom: 5px; }
+    .subtitle { color: #666; font-size: 14px; }
+    .section { margin-bottom: 40px; }
+    .section h2 { color: #0078d4; font-size: 20px; margin: 20px 0 15px 0; border-left: 4px solid #0078d4; padding-left: 10px; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #f0f0f0; font-weight: 600; color: #333; }
+    tr:hover { background: #f9f9f9; }
+    .positive { color: #107c10; font-weight: 600; }
+    .negative { color: #d83b01; font-weight: 600; }
+    .neutral { color: #666; }
+    .warning { background: #fff4ce; color: #9d5d00; padding: 10px; margin: 10px 0; border-left: 4px solid #ffc107; border-radius: 3px; }
+    .info-box { background: #eff6fc; color: #003366; padding: 15px; margin: 15px 0; border-left: 4px solid #0078d4; border-radius: 3px; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0; }
+    .metric-card { background: #f0f0f0; padding: 15px; border-radius: 5px; border-left: 4px solid #0078d4; }
+    .metric-card .label { font-size: 12px; color: #666; text-transform: uppercase; }
+    .metric-card .value { font-size: 24px; font-weight: 700; color: #333; margin-top: 5px; }
+    .metric-card .delta { font-size: 12px; margin-top: 5px; }
+    footer { border-top: 1px solid #ddd; padding-top: 15px; margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AD Environment Comparison Report</h1>
+      <p class="subtitle">Versetal | Generated April 28, 2026 18:19:05</p>
+    </header>
+
+    <div class="section">
+      <h2>Executive Summary</h2>
+      <div class="info-box">
+        <strong>Comparison Summary:</strong><br/>
+        Source Environment: F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723<br/>
+        Target Environment: F:\Versetal\poc.local\discovery\AD_poc.local__poc.local_20260428-142453
+      </div><div class='warning'><strong>WARNING - New Domains in Target:</strong> poc.local</div><div class='warning'><strong>WARNING - Domains Missing from Target:</strong> rossoptical.local</div>
+    </div>
+
+    <div class='section'>
+      <h2>Forest-Level Metrics</h2>
+      <div class='metrics-grid'>
+
+      <div class='metric-card'>
+        <div class='label'>Forest Domains</div>
+        <div class='value'>1</div>
+        <div class='delta'><span class='neutral'>= 0 (Source: 1)</span></div>
+      </div>
+
+      <div class='metric-card'>
+        <div class='label'>Total Users</div>
+        <div class='value'>163</div>
+        <div class='delta'><span class='positive'>&uarr; 91 (Source: 72)</span></div>
+      </div>
+
+      <div class='metric-card'>
+        <div class='label'>Total Groups</div>
+        <div class='value'>152</div>
+        <div class='delta'><span class='positive'>&uarr; 96 (Source: 56)</span></div>
+      </div>
+
+      <div class='metric-card'>
+        <div class='label'>Total Computers</div>
+        <div class='value'>147</div>
+        <div class='delta'><span class='positive'>&uarr; 93 (Source: 54)</span></div>
+      </div>
+
+      <div class='metric-card'>
+        <div class='label'>Forest Trusts</div>
+        <div class='value'>2</div>
+        <div class='delta'><span class='neutral'>= 0 (Source: 2)</span></div>
+      </div>
+
+      </div>
+    </div>
+
+    <div class='section'>
+      <h2>Duplicate and Collision Check</h2>
+
+      <div class='warning'>
+        <strong>Duplicate objects detected:</strong> 33 source-to-target conflicts were identified.
+        <br/>Supporting CSV: <a href='tmp-identity-comparison__DuplicateConflicts.csv'>tmp-identity-comparison__DuplicateConflicts.csv</a>
+      </div>
+      <div class='metrics-grid'>
+        <div class='metric-card'>
+          <div class='label'>Total Conflicts</div>
+          <div class='value'>33</div>
+          <div class='delta'>Source-to-target duplicate matches</div>
+        </div>
+        <div class='metric-card'>
+          <div class='label'>User Conflicts</div>
+          <div class='value'>30</div>
+          <div class='delta'>Conflicts involving user objects</div>
+        </div>
+        <div class='metric-card'>
+          <div class='label'>Group Conflicts</div>
+          <div class='value'>4</div>
+          <div class='delta'>Conflicts involving group objects</div>
+        </div>
+        <div class='metric-card'>
+          <div class='label'>Computer Conflicts</div>
+          <div class='value'>0</div>
+          <div class='delta'>Conflicts involving computer objects</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Conflict Type</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr>
+            <td>SamAccountName</td>
+            <td>19</td>
+          </tr>
+
+          <tr>
+            <td>UserPrincipalNameLocal</td>
+            <td>14</td>
+          </tr>
+
+        </tbody>
+      </table>
+
+    </div>
+
+    <div class='section'>
+      <h2>Domain-Level Comparison</h2>
+      <table>
+        <thead>
+          <tr>
+            <th rowspan='2'>Domain</th>
+            <th colspan='3'>Users</th>
+            <th colspan='3'>Groups</th>
+            <th colspan='3'>Computers</th>
+            <th colspan='3'>SPNs</th>
+            <th colspan='3'>OUs</th>
+          </tr>
+          <tr>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Delta</th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Delta</th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Delta</th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Delta</th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Delta</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr>
+            <td><strong>poc.local</strong></td>
+            <td>0</td>
+            <td>163</td>
+            <td><span class='positive'>163</span></td>
+            <td>0</td>
+            <td>152</td>
+            <td><span class='positive'>152</span></td>
+            <td>0</td>
+            <td>147</td>
+            <td><span class='positive'>147</span></td>
+            <td>0</td>
+            <td>754</td>
+            <td><span class='positive'>754</span></td>
+            <td>0</td>
+            <td>10</td>
+            <td><span class='positive'>10</span></td>
+          </tr>
+
+          <tr>
+            <td><strong>rossoptical.local</strong></td>
+            <td>72</td>
+            <td>0</td>
+            <td><span class='negative'>-72</span></td>
+            <td>56</td>
+            <td>0</td>
+            <td><span class='negative'>-56</span></td>
+            <td>54</td>
+            <td>0</td>
+            <td><span class='negative'>-54</span></td>
+            <td>329</td>
+            <td>0</td>
+            <td><span class='negative'>-329</span></td>
+            <td>4</td>
+            <td>0</td>
+            <td><span class='negative'>-4</span></td>
+          </tr>
+
+    </div>
+
+    <div class='section'>
+      <h2>Identity Matching and Conflict Analysis</h2>
+
+      <div class='info-box'>
+        This section highlights the identity attributes most likely to affect matching, namespace alignment, and pre-migration remediation across the source and target environments.
+      </div>
+      <div class='metrics-grid'>
+        <div class='metric-card'>
+          <div class='label'>UPN Conflicts</div>
+          <div class='value'>14</div>
+          <div class='delta'>0 exact match(es), 14 local-part overlap(s)</div>
+        </div>
+        <div class='metric-card'>
+          <div class='label'>SMTP Conflicts</div>
+          <div class='value'>0</div>
+          <div class='delta'>0 exact match(es), 0 local-part overlap(s)</div>
+        </div>
+        <div class='metric-card'>
+          <div class='label'>sAMAccountName Conflicts</div>
+          <div class='value'>19</div>
+          <div class='delta'>Cross-environment naming conflicts across users, groups, or computers</div>
+        </div>
+        <div class='metric-card'>
+          <div class='label'>Group Naming Conflicts</div>
+          <div class='value'>4</div>
+          <div class='delta'>Conflicts involving group names or mail-enabled group addresses</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Match Area</th>
+            <th>Current Signal</th>
+            <th>What It Means for Migration</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Soft Match</strong></td>
+            <td>UPN and SMTP comparisons are available from the AD discovery output.</td>
+            <td>Use UPN and SMTP conflicts to validate namespace alignment and plan for accounts that may need renaming or exception handling before synchronization or coexistence.</td>
+          </tr>
+          <tr>
+            <td><strong>Hard Match</strong></td>
+            <td>ImmutableID / sourceAnchor values were not collected in this AD-only assessment.</td>
+            <td>Hard-match planning should be completed separately if hybrid identity or existing cloud identity reconciliation is part of the migration scope.</td>
+          </tr>
+          <tr>
+            <td><strong>Display Name Conflicts</strong></td>
+            <td>Not included in the current automated conflict set.</td>
+            <td>Display-name review can still be useful for user experience and address book cleanup, but it is lower priority than UPN, SMTP, and sign-in identifier alignment.</td>
+          </tr>
+          <tr>
+            <td><strong>Teams / M365 Group Conflicts</strong></td>
+            <td>Not assessed from the current on-premises AD-only discovery output.</td>
+            <td>Cloud group and collaboration conflict analysis requires Entra ID / Microsoft 365 data and should be assessed separately when that workload is in scope.</td>
+          </tr>
+        </tbody>
+      </table>
+      <table>
+        <thead>
+          <tr>
+            <th>Namespace Area</th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Shared / Overlap</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>UPN Suffixes</strong></td>
+            <td>None exported in this source run</td>
+            <td>None exported in this target run</td>
+            <td>No shared UPN suffixes were identified from the exported suffix lists</td>
+          </tr>
+          <tr>
+            <td><strong>SMTP Domains</strong></td>
+            <td>rossoptical.com</td>
+            <td>cbiz.com, lighthouseoptics.com, poci.com</td>
+            <td>No shared SMTP domains were identified from exported mail addresses</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3 style='margin: 15px 0 10px 0; color: #333;'>Required Transformations</h3>
+      <ul style='margin-left: 20px;'>
+
+        <li>72 source account(s) use non-routable UPN suffixes and should be normalized to routable domains before migration.</li>
+
+        <li>14 UPN-based conflict(s) were identified, so UPN changes or match exceptions will be required before cutover.</li>
+
+        <li>Source-only SMTP domains were identified: rossoptical.com. Validate ownership, accepted domains, and target namespace alignment before migration waves begin.</li>
+
+        <li>19 sAMAccountName conflict(s) were identified and will require renaming, consolidation, or exception handling before migration execution.</li>
+
+      </ul>
+      <p style='margin-top: 12px;'><strong>Supporting data:</strong> The detailed conflict export is available here: <a href='tmp-identity-comparison__DuplicateConflicts.csv'>tmp-identity-comparison__DuplicateConflicts.csv</a></p>
+
+        </tbody>
+      </table>
+    </div>
+
+    <div class='section'>
+      <h2>Next Steps</h2>
+      <ol style='margin-left: 20px;'>
+        <li>Review domain-level deltas to identify migration gaps</li>
+        <li>Review duplicate and collision results to resolve conflicting identities before migration waves begin</li>
+        <li>Investigate new domains in target and verify they are expected</li>
+        <li>Run readiness checklist to validate migration prerequisites</li>
+        <li>Execute detailed comparison via Excel workbook for full object-level analysis</li>
+      </ol>
+    </div>
+
+    <footer>
+      <p>Paul Lagana Toolkit | Migration Readiness Assessment</p>
+    </footer>
+  </div>
+</body>
+</html>
