@@ -129,6 +129,36 @@ If you want the internal package without structured data:
   -SkipWorkspace
 ```
 
+Examples
+
+
+```powershell
+& "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\Public\run-assessment-package.ps1" `
+    -SourceRunRoot @(
+    "F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
+    "F:\Versetal\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625") `
+    -TargetRunRoot "F:\Versetal\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
+    -OutputRoot "F:\Versetal\AssessmentPackage_Internal" `
+    -CustomerName "Versetal" `
+    -ExecutiveSummaryConfigPath "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\config\ExecutiveSummary.Config.Versetal.json" `
+    -IncludeComprehensiveReport
+```
+
+```powershell 
+& "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\Public\run-assessment-package.ps1" `
+    -SourceRunRoot @(
+    "F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
+    "F:\Versetal\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625") `
+    -TargetRunRoot "F:\Versetal\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
+    -OutputRoot "F:\Versetal\AssessmentPackage_Customer" `
+    -CustomerName "Versetal" `
+    -ExecutiveSummaryConfigPath "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\config\ExecutiveSummary.Config.Versetal.json" `
+    -CreateCustomerPackage `
+    -SkipStructuredData `
+    -ZipCustomerPackage `
+    -SkipWorkspace
+```
+
 ## Notes
 
 - With one source run, output defaults to `<SourceRunRoot>\40_assessment`

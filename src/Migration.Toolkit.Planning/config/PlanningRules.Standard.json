@@ -1,0 +1,29 @@
+{
+  "Thresholds": {
+    "UserStaleDays": 180,
+    "ComputerStaleDays": 90,
+    "PreferredMinPasswordLength": 14,
+    "PreferredMaxPasswordAgeDays": 180
+  },
+  "ExcludedUserSamAccountNames": [
+    "administrator",
+    "guest",
+    "krbtgt",
+    "defaultaccount",
+    "wdagutilityaccount"
+  ],
+  "BuiltInGroupDnPrefixes": [
+    "CN=Builtin,"
+  ],
+  "BuiltInGroupSamAccountNames": [
+    "domain admins",
+    "enterprise admins",
+    "schema admins",
+    "administrators",
+    "domain users",
+    "domain computers",
+    "domain guests",
+    "authenticated users",
+    "everyone"
+  ]
+}
