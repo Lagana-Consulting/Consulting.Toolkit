@@ -45,7 +45,8 @@ function Add-AdEmptyGroupsTable {
     param(
         [Parameter(Mandatory)] $Document,
         [Parameter(Mandatory)][string] $Title,
-        [Parameter(Mandatory)][string] $CsvPath,
+        [string] $CsvPath,
+        [string] $DomainFolderPath,
         [Parameter(Mandatory)][string] $TableStyleName,
         $InsertRange = $null,
         [string] $HeaderFontColor,
@@ -53,14 +54,71 @@ function Add-AdEmptyGroupsTable {
         [object] $Columns
     )
 
-    if (-not (Test-Path $CsvPath)) {
-        Write-Warning "CSV not found: $CsvPath"
-        return $InsertRange
+    if ($CsvPath -and (Test-Path $CsvPath)) {
+        $data = Import-Csv $CsvPath
+        if (-not $data -or $data.Count -eq 0) {
+            Write-Warning "No empty groups data found in: $CsvPath"
+            return $InsertRange
+        }
     }
+    elseif ($DomainFolderPath -and (Test-Path $DomainFolderPath)) {
+        $groups = Get-AdAssessmentFirstCsv -Directory $DomainFolderPath -Patterns @('*__Identity__Groups__*.csv')
+        $metrics = [ordered]@{
+            "Status" = "Not derivable from current offline discovery output"
+            "Groups Inventoried" = [string]@($groups).Count
+            "Reason" = "The current discovery export does not include group membership or member counts."
+            "Recommended Next Step" = "Enhance the collector to export group membership so empty groups can be identified offline."
+        }
 
-    $data = Import-Csv $CsvPath
-    if (-not $data -or $data.Count -eq 0) {
-        Write-Warning "No empty groups data found in: $CsvPath"
+        if ($InsertRange) {
+            $currentRange = $InsertRange.Duplicate()
+        }
+        else {
+            $currentRange = $Document.Range()
+            $currentRange.Collapse(0) | Out-Null
+        }
+
+        $hRange = $currentRange.Duplicate()
+        $para = $hRange.Paragraphs.Add()
+        $para.Range.Text = $Title
+        $para.Range.Style = "Caption"
+        $para.Range.InsertParagraphAfter() | Out-Null
+
+        $afterHeadingRange = $para.Range.Duplicate()
+        $afterHeadingRange.Collapse(0) | Out-Null
+
+        $table = $Document.Tables.Add($afterHeadingRange, $metrics.Count + 1, 2)
+        $table.Range.Style = "Normal"
+
+        $style = Get-AdWordTableStyle -Document $Document -TableStyleName $TableStyleName
+        if ($style) { $table.Style = $style }
+
+        $table.Cell(1, 1).Range.Text = "Metric"
+        $table.Cell(1, 1).Range.Bold = $true
+        $table.Cell(1, 2).Range.Text = "Value"
+        $table.Cell(1, 2).Range.Bold = $true
+        $table.Rows.Item(1).HeadingFormat = -1
+
+        if ($HeaderFontColor) {
+            Set-AdHeaderFontColor -Table $table -Color $HeaderFontColor
+        }
+
+        $rowIndex = 2
+        foreach ($key in $metrics.Keys) {
+            $table.Cell($rowIndex, 1).Range.Text = [string]$key
+            $table.Cell($rowIndex, 2).Range.Text = [string]$metrics[$key]
+            $rowIndex++
+        }
+
+        $table.AutoFitBehavior(1)
+        $table.Range.InsertParagraphAfter() | Out-Null
+
+        $nextRange = $table.Range.Duplicate()
+        $nextRange.Collapse(0) | Out-Null
+        return $nextRange
+    }
+    else {
+        Write-Warning "Either CsvPath or DomainFolderPath must be provided for empty group analysis."
         return $InsertRange
     }
 

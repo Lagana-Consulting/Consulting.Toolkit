@@ -127,30 +127,29 @@ function Add-AdDomainInformation {
         $metrics["StaleUsers"] = 0
     }
 
-    # Workstations metrics
-    $workstationsCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__ComputersWorkstations__Domain-*.csv" | Select-Object -First 1
-    if ($workstationsCsv) {
-        $workstations = Import-Csv -Path $workstationsCsv.FullName
-        $metrics["TotalWorkstations"] = $workstations.Count
+    # Computer metrics from the current unified ComputersAll dataset
+    $computersCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__ComputersAll__Domain-*.csv" | Select-Object -First 1
+    if ($computersCsv) {
+        $computers = @(Import-Csv -Path $computersCsv.FullName)
+        if ($computers.Count -gt 0 -and $computers[0].PSObject.Properties.Name -contains 'IsServer') {
+            $workstations = @($computers | Where-Object { $_.IsServer -eq 'False' -or $_.IsServer -eq $false })
+            $servers = @($computers | Where-Object { $_.IsServer -eq 'True' -or $_.IsServer -eq $true })
+        }
+        else {
+            $workstations = $computers
+            $servers = @()
+        }
 
-        # Active workstations (logged on in last 30 days)
+        $metrics["TotalWorkstations"] = $workstations.Count
         $metrics["ActiveWorkstations"] = @($workstations | Where-Object {
                 $_.LastLogonDays -and
                 ([int]$_.LastLogonDays -le 30)
             }).Count
+        $metrics["TotalServers"] = $servers.Count
     }
     else {
         $metrics["TotalWorkstations"] = 0
         $metrics["ActiveWorkstations"] = 0
-    }
-
-    # Servers metrics
-    $serversCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__ComputersServers__Domain-*.csv" | Select-Object -First 1
-    if ($serversCsv) {
-        $servers = Import-Csv -Path $serversCsv.FullName
-        $metrics["TotalServers"] = $servers.Count
-    }
-    else {
         $metrics["TotalServers"] = 0
     }
 
@@ -167,12 +166,12 @@ function Add-AdDomainInformation {
             $metrics["EmptyGroups"] = $emptyGroups.Count
         }
         else {
-            $metrics["EmptyGroups"] = 0
+            $metrics["EmptyGroups"] = "Not Available"
         }
     }
     else {
         $metrics["TotalGroups"] = 0
-        $metrics["EmptyGroups"] = 0
+        $metrics["EmptyGroups"] = "Not Available"
     }
 
     # Contacts
@@ -186,7 +185,7 @@ function Add-AdDomainInformation {
     }
 
     # GPOs
-    $gposCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Config__GPOInventory__Domain-*.csv" | Select-Object -First 1
+    $gposCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Domain__GPO__Inventory__Domain-*.csv" | Select-Object -First 1
     if ($gposCsv) {
         $gpos = Import-Csv -Path $gposCsv.FullName
         $metrics["TotalGPOs"] = $gpos.Count
@@ -196,7 +195,7 @@ function Add-AdDomainInformation {
     }
 
     # OUs
-    $ousCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__OrganizationalUnits__Domain-*.csv" | Select-Object -First 1
+    $ousCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Structure__OrganizationalUnits__Domain-*.csv" | Select-Object -First 1
     if ($ousCsv) {
         $ous = Import-Csv -Path $ousCsv.FullName
         $metrics["TotalOUs"] = $ous.Count
@@ -206,7 +205,7 @@ function Add-AdDomainInformation {
     }
 
     # Printers
-    $printersCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Identity__Printers__Domain-*.csv" | Select-Object -First 1
+    $printersCsv = Get-ChildItem -Path $DomainFolderPath -Filter "*__Inventory__PublishedPrinters__Domain-*.csv" | Select-Object -First 1
     if ($printersCsv) {
         $printers = Import-Csv -Path $printersCsv.FullName
         $metrics["TotalPrinters"] = $printers.Count
@@ -228,7 +227,7 @@ function Add-AdDomainInformation {
     # Forest-level metrics (if ForestFolderPath provided)
     if ($ForestFolderPath) {
         # Sites
-        $sitesCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Infrastructure__Sites__Forest.csv" | Select-Object -First 1
+        $sitesCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Network__Sites__Forest.csv" | Select-Object -First 1
         if ($sitesCsv) {
             $sites = Import-Csv -Path $sitesCsv.FullName
             $metrics["SiteCount"] = $sites.Count
@@ -238,7 +237,7 @@ function Add-AdDomainInformation {
         }
 
         # Subnets
-        $subnetsCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Infrastructure__Subnets__Forest.csv" | Select-Object -First 1
+        $subnetsCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Network__Subnets__Forest.csv" | Select-Object -First 1
         if ($subnetsCsv) {
             $subnets = Import-Csv -Path $subnetsCsv.FullName
             $metrics["SubnetCount"] = $subnets.Count
@@ -248,7 +247,7 @@ function Add-AdDomainInformation {
         }
 
         # Trusts
-        $trustsCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Infrastructure__Trusts__Forest.csv" | Select-Object -First 1
+        $trustsCsv = Get-ChildItem -Path $ForestFolderPath -Filter "*__Security__Trusts__Forest.csv" | Select-Object -First 1
         if ($trustsCsv) {
             $trusts = Import-Csv -Path $trustsCsv.FullName
             $metrics["TrustCount"] = $trusts.Count

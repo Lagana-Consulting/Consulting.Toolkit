@@ -5,7 +5,10 @@ Invoke-AdDiscoveryAnalysis (Workspace Engine)
   - One run only (source OR target)
   - Multiple source runs
   - Optional target run
-- Reads each run's: 99_manifest\Discovery__Index__Run.json (Discovery.v1 preferred; falls back to file scan)
+- Reads each run's manifest index from:
+  - 99_manifest\Discovery.Index.json (current Consulting.Toolkit.Discovery)
+  - 99_manifest\Discovery__Index__Run.json (legacy)
+  Falls back to file scan only when an index is not available.
 - Produces:
   - <WorkspaceRoot>\30_analysis\cross_run\AD__CrossRun__IdentityCollisions.csv
   - <WorkspaceRoot>\30_analysis\cross_run\AD__CrossRun__PasswordPolicyDiff.csv
@@ -111,8 +114,13 @@ function Invoke-AdDiscoveryAnalysis {
     # Helper functions (private)
     # ---------------------------
     function Get-DiscoveryIndexPath([string]$RunRoot) {
-        $p = Join-Path $RunRoot '99_manifest\Discovery__Index__Run.json'
-        if (Test-Path -LiteralPath $p) { return $p }
+        foreach ($relativePath in @(
+                '99_manifest\Discovery.Index.json',
+                '99_manifest\Discovery__Index__Run.json'
+            )) {
+            $p = Join-Path $RunRoot $relativePath
+            if (Test-Path -LiteralPath $p) { return $p }
+        }
         return $null
     }
 
@@ -236,7 +244,7 @@ function Invoke-AdDiscoveryAnalysis {
 
     foreach ($src in $SourceRunRoot) {
         $idxPath = Get-DiscoveryIndexPath $src
-        if (-not $idxPath) { throw "Missing Discovery__Index__Run.json under: $src\99_manifest" }
+        if (-not $idxPath) { throw "Missing discovery index under: $src\99_manifest (expected Discovery.Index.json or Discovery__Index__Run.json)" }
         $idx = Load-DiscoveryIndex $src
         $runId = Get-RunIdFromIndex $idxPath
 
@@ -255,7 +263,7 @@ function Invoke-AdDiscoveryAnalysis {
 
     if ($TargetRunRoot) {
         $idxPath = Get-DiscoveryIndexPath $TargetRunRoot
-        if (-not $idxPath) { throw "Missing Discovery__Index__Run.json under: $TargetRunRoot\99_manifest" }
+        if (-not $idxPath) { throw "Missing discovery index under: $TargetRunRoot\99_manifest (expected Discovery.Index.json or Discovery__Index__Run.json)" }
         $idx = Load-DiscoveryIndex $TargetRunRoot
         $runId = Get-RunIdFromIndex $idxPath
 
@@ -412,7 +420,10 @@ function Invoke-AdDiscoveryAnalysis {
             $parts = $k.Split('|', 2)
             $ctype = $parts[0]
             $val = $parts[1]
-            $list = @($map[$k])
+            $list = @()
+            foreach ($occurrence in $map[$k]) {
+                $list += $occurrence
+            }
 
             # Only a "collision" if:
             # - multiple objects, AND
@@ -532,7 +543,12 @@ function Invoke-AdDiscoveryAnalysis {
                 }
             }
 
-            return @($pol)
+            $policies = @()
+            foreach ($policy in $pol) {
+                $policies += $policy
+            }
+
+            return $policies
         }
 
         # Build per-run policy sets
@@ -547,8 +563,15 @@ function Invoke-AdDiscoveryAnalysis {
                 [pscustomobject]$RightRun
             )
 
-            $left = @($runPolicies[$LeftRun.runId])
-            $right = @($runPolicies[$RightRun.runId])
+            $left = @()
+            foreach ($policy in $runPolicies[$LeftRun.runId]) {
+                $left += $policy
+            }
+
+            $right = @()
+            foreach ($policy in $runPolicies[$RightRun.runId]) {
+                $right += $policy
+            }
 
             # Index by (DomainFqdn|Type|Name)
             $lMap = @{}
@@ -556,7 +579,7 @@ function Invoke-AdDiscoveryAnalysis {
             $rMap = @{}
             foreach ($p in $right) { $rMap["$($p.DomainFqdn)|$($p.PolicyType)|$($p.PolicyName)"] = $p }
 
-            $keys = @($lMap.Keys + $rMap.Keys | Sort-Object -Unique)
+            $keys = @((@($lMap.Keys) + @($rMap.Keys)) | Sort-Object -Unique)
 
             foreach ($k in $keys) {
                 $lp = $lMap[$k]

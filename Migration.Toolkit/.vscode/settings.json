@@ -1,0 +1,23 @@
+{
+  "powershell.scriptAnalysis.settingsPath": "../PSScriptAnalyzerSettings.psd1",
+  "powershell.powerShellDefaultVersion": "PowerShell (x64)",
+  // === Client Guardrails ===
+  // 1) Reduce accidental Copilot output in non-code places
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false
+  },
+  // 2) Make it harder to accept big suggestions blindly
+  "github.copilot.editor.enableAutoCompletions": true,
+  "editor.inlineSuggest.enabled": true,
+  // 3) Stop “helpful” suggestions from reusing local text
+  // (Prevents VS Code from echoing existing client data into suggestions)
+  "[powershell]": {
+    "editor.wordBasedSuggestions": "off"
+  },
+  // 4) Optional: tighten save behavior
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+}

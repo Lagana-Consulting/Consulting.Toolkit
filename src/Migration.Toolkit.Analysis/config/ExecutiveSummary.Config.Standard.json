@@ -1,0 +1,60 @@
+{
+  "Metadata": {
+    "CustomerName": "Replace With Customer Name",
+    "Purpose": "Neutral starter configuration for executive-summary consultant input across AD migration assessments.",
+    "ReuseGuidance": "Copy this file for each engagement, update Metadata.CustomerName, adjust Defaults for the delivery style you want, and add PerForest entries for each source or target forest."
+  },
+  "Defaults": {
+    "ScopeNote": "Migration scope should be confirmed with business, application, and identity stakeholders before final wave planning is approved.",
+    "DnsOverlapAssessment": "No automated DNS zone overlap analysis was performed in this discovery set. Validate namespace ownership, conditional forwarders, suffix routing, and application name-resolution dependencies during migration planning.",
+    "HybridIdentityConsiderations": "Hybrid identity was not directly assessed in this AD-only discovery run. Confirm Entra Connect or Cloud Sync topology, federation assumptions, tenant alignment, and source-of-authority ownership separately.",
+    "RecommendedMigrationApproach": {
+      "DirectoryMigrationTool": "ADMT inter-forest or equivalent inter-forest directory migration tooling",
+      "MigrationCadence": "Staged",
+      "Notes": "Use pilot waves for privileged accounts, service accounts, and representative user and device cohorts before broader migration waves."
+    },
+    "AdditionalComplexityDrivers": [
+      "Application authentication and service dependency mapping should be completed before cutover sequencing is finalized.",
+      "Namespace normalization and target landing-zone standards should be reviewed before broad migration waves begin."
+    ],
+    "AdditionalRisks": [
+      "Consultant review is still required for DNS forwarding, namespace overlap, and application authentication dependencies.",
+      "Business-unit migration waves and rollback expectations should be confirmed before execution planning is finalized."
+    ]
+  },
+  "PerForest": {
+    "source.example.local": {
+      "ScopeNote": "Example source-forest note. Replace with engagement-specific scope language.",
+      "RecommendedMigrationApproach": {
+        "DirectoryMigrationTool": "ADMT inter-forest",
+        "MigrationCadence": "Staged",
+        "Notes": "Example migration note. Replace with sequencing and dependency guidance for this forest."
+      },
+      "AdditionalComplexityDrivers": [
+        "Example complexity driver. Replace with the drivers that matter for this forest."
+      ],
+      "AdditionalRisks": [
+        "Example risk statement. Replace with consultant-approved risk language for this forest."
+      ],
+      "ReadinessOverride": {
+        "Status": "Amber",
+        "Score": 65,
+        "Note": "Example readiness note. Replace only when you want a consultant-approved override instead of the calculated score."
+      }
+    },
+    "target.example.local": {
+      "ScopeNote": "Example target-forest note. Replace with landing-zone readiness language for the target environment.",
+      "RecommendedMigrationApproach": {
+        "DirectoryMigrationTool": "Target landing zone for ADMT inter-forest migration waves",
+        "MigrationCadence": "Staged",
+        "Notes": "Example target note. Replace with target-readiness and onboarding guidance."
+      },
+      "AdditionalComplexityDrivers": [
+        "Example target complexity driver. Replace with target-design considerations for the engagement."
+      ],
+      "AdditionalRisks": [
+        "Example target risk statement. Replace with consultant-approved target-readiness language."
+      ]
+    }
+  }
+}

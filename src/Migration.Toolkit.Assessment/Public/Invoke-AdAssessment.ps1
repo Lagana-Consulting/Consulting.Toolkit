@@ -15,6 +15,15 @@ function Invoke-AdAssessment {
   .PARAMETER OutputPath
   Optional override for output document path.
 
+  .PARAMETER TemplatePath
+  Optional override for the Word template path defined in the config.
+
+  .PARAMETER UseBundledDiscoveryTemplate
+  Use the bundled "Discovery and Assessment Findings Report" Word template from the module config folder.
+
+  .PARAMETER UseBundledSummaryTemplate
+  Use the bundled "Assessment Summary and Migration Process" Word template from the module config folder.
+
   .PARAMETER Visible
   Show Word UI while generating the report.
 
@@ -29,6 +38,13 @@ function Invoke-AdAssessment {
         [Parameter()]
         [string]$OutputPath,
 
+        [Parameter()]
+        [string]$TemplatePath,
+
+        [switch]$UseBundledDiscoveryTemplate,
+
+        [switch]$UseBundledSummaryTemplate,
+
         [switch]$Visible
     )
 
@@ -39,15 +55,11 @@ function Invoke-AdAssessment {
     $configJson = Get-Content -Path $ConfigPath -Raw
     $config = $configJson | ConvertFrom-Json
 
-    $templatePath = $config.TemplatePath
+    $templatePath = Resolve-AdAssessmentTemplatePath -TemplatePath $(if ($TemplatePath) { $TemplatePath } else { $config.TemplatePath }) -UseBundledDiscoveryTemplate:$UseBundledDiscoveryTemplate -UseBundledSummaryTemplate:$UseBundledSummaryTemplate
     $outputRoot = $config.OutputRoot
     $customer = $config.Customer
     $tableStyle = $config.TableStyleName
     $sections = $config.Sections
-
-    if (-not (Test-Path $templatePath)) {
-        throw "Template not found: $templatePath"
-    }
 
     if (-not $OutputPath) {
         if (-not (Test-Path $outputRoot)) {

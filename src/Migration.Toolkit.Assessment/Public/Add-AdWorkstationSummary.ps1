@@ -49,7 +49,11 @@ function Add-AdWorkstationSummary {
         return $InsertRange
     }
 
-    $devices = Import-Csv $CsvPath
+    $devices = @(Import-Csv $CsvPath)
+    if ($devices.Count -gt 0 -and $devices[0].PSObject.Properties.Name -contains 'IsServer') {
+        $devices = @($devices | Where-Object { $_.IsServer -eq 'False' -or $_.IsServer -eq $false })
+    }
+
     if (@($devices).Count -eq 0) {
         Write-Warning "No workstation data found."
         return $InsertRange
@@ -117,7 +121,7 @@ function Add-AdWorkstationSummary {
     # Create metrics hashtable
     $metrics = [ordered]@{
         "Workstations"           = $total
-        "Legacy OS Devices (XP/7/2008/2008 R2)" = $legacy
+        "Legacy OS Devices (XP/7/8.1/Vista/2000)" = $legacy
         "Enabled Devices"        = $enabled
         "Inactive (>180 days)"   = $inactive180Plus
         "Inactive (91-180 days)" = $inactive91to180

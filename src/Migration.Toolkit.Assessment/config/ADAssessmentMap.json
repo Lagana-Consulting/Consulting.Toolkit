@@ -99,9 +99,8 @@
       "Builder": "Add-AdForestRiskSummary",
       "DataSource": {
         "Path": "",
-        "Pattern": "AD__Migration__RiskFlagsSummary__Forest.csv",
-        "Single": true,
-        "Description": "Forest-level migration risk flag counts by object type"
+        "Type": "Folder",
+        "Description": "Derived forest-level migration risk summary from current discovery exports"
       },
       "Columns": null,
       "Mode": "Table"
@@ -162,10 +161,10 @@
       "Builder": "Add-AdWorkstationSummary",
       "DataSource": {
         "Path": "20_domains/{Domain}",
-        "Pattern": "*__Identity__ComputersWorkstations__Domain-*.csv",
+        "Pattern": "*__Identity__ComputersAll__Domain-*.csv",
         "Single": false,
         "PerDomain": true,
-        "Description": "Workstation devices with activity and legacy OS metrics"
+        "Description": "Computer inventory filtered to workstation devices with activity and legacy OS metrics"
       },
       "Columns": null,
       "Mode": "Table"
@@ -178,10 +177,10 @@
       "Builder": "Add-AdServerSummary",
       "DataSource": {
         "Path": "20_domains/{Domain}",
-        "Pattern": "*__Identity__ComputersServers__Domain-*.csv",
+        "Pattern": "*__Identity__ComputersAll__Domain-*.csv",
         "Single": false,
         "PerDomain": true,
-        "Description": "Server devices with activity and legacy OS metrics"
+        "Description": "Computer inventory filtered to server devices with activity and legacy OS metrics"
       },
       "Columns": null,
       "Mode": "Table"
@@ -257,8 +256,8 @@
       "Category": "Security",
       "Builder": "Add-AdFineGrainPasswordPolicies",
       "DataSource": {
-        "Path": "20_domains/{DomainName}",
-        "Pattern": "*__Security__FineGrainPasswordPolicies__Domain-*.csv",
+        "Path": "20_domains/{Domain}",
+        "Pattern": "*__Security__PasswordPolicyFgpp__Domain-*.csv",
         "Single": false,
         "PerDomain": true,
         "Description": "Fine-Grained Password Policies (PSOs): Name, Precedence, MinPasswordLength, Complexity"
@@ -306,10 +305,10 @@
       "Builder": "Add-AdOUDepthSummary",
       "DataSource": {
         "Path": "20_domains/{DomainName}",
-        "Pattern": "*__Analysis__OuDepthAnalysis__Domain-*.csv",
+        "Pattern": "*__Structure__OrganizationalUnits__Domain-*.csv",
         "Single": false,
         "PerDomain": true,
-        "Description": "OU nesting depth analysis: MaxDepth, Count by depth"
+        "Description": "OU nesting depth analysis derived from raw OrganizationalUnits output"
       },
       "Columns": null,
       "Mode": "Pivot"
@@ -336,10 +335,9 @@
       "Builder": "Add-AdDomainRiskSummary",
       "DataSource": {
         "Path": "20_domains/{DomainName}",
-        "Pattern": "*__Analysis__MigrationRiskFlagsSummary__Domain-*.csv",
-        "Single": false,
+        "Type": "Folder",
         "PerDomain": true,
-        "Description": "Domain-level migration risk flag counts by object type"
+        "Description": "Derived domain-level migration risk summary from current discovery exports"
       },
       "Columns": null,
       "Mode": "Table"
@@ -352,10 +350,9 @@
       "Builder": "Add-AdEmptyGroupsTable",
       "DataSource": {
         "Path": "20_domains/{DomainName}",
-        "Pattern": "*__Analysis__EmptyGroups__Domain-*.csv",
-        "Single": false,
+        "Type": "Folder",
         "PerDomain": true,
-        "Description": "Groups with no members: Count by GroupCategory/GroupScope"
+        "Description": "Empty group assessment status based on current discovery output capabilities"
       },
       "Columns": null,
       "Mode": "Summary",
@@ -410,7 +407,7 @@
         "Sections": ["Forest_Trusts", "Forest_Sites", "Forest_Subnets", "Domain_Controllers", "Domain_Printers", "Domain_Discovery"]
       },
       "Identity": {
-        "Sections": ["Domain_Users", "Domain_Computers", "Domain_Groups", "Domain_Contacts", "Domain_EmptyGroups"]
+        "Sections": ["Domain_Users", "Domain_Workstations", "Domain_Servers", "Domain_Groups", "Domain_Contacts", "Domain_EmptyGroups"]
       },
       "Security": {
         "Sections": ["Domain_PasswordPolicy", "Domain_FGPP", "Domain_GPO", "Domain_ServiceAccounts", "Domain_PrivilegedAccounts"]

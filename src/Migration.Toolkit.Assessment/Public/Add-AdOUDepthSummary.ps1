@@ -76,17 +76,36 @@ function Add-AdOUDepthSummary {
     )
 
     # Import CSV data
-    $data = Import-Csv -Path $CsvPath -ErrorAction Stop
+    $data = @(Import-Csv -Path $CsvPath -ErrorAction Stop)
     if (-not $data -or $data.Count -eq 0) {
         Write-Warning "CSV file $CsvPath is empty or has no data rows."
         return $InsertRange
     }
 
+    $availableColumns = $data[0].PSObject.Properties.Name
+    $renderData = $data
+
+    # Current discovery exports raw OU rows with a Level column. Build a summary on the fly.
+    if (($availableColumns -contains 'Level') -and -not (($availableColumns -contains 'OUDepthLevel') -and ($availableColumns -contains 'OUs'))) {
+        $renderData = @(
+            $data |
+            Group-Object -Property Level |
+            Sort-Object { [int]$_.Name } |
+            ForEach-Object {
+                [pscustomobject]@{
+                    OUDepthLevel = "Level $($_.Name)"
+                    OUs          = $_.Count
+                }
+            }
+        )
+        $availableColumns = $renderData[0].PSObject.Properties.Name
+    }
+
     # Define default columns if not specified
     if ($null -eq $Columns) {
         $Columns = [ordered]@{
-            "Depth" = "Depth Level"
-            "Name"  = "OU Name"
+            "OUDepthLevel" = "Depth Level"
+            "OUs"          = "OUs"
         }
     }
 
@@ -109,8 +128,6 @@ function Add-AdOUDepthSummary {
     }
 
     # Validate columns exist in CSV
-    $firstRow = $data[0]
-    $availableColumns = $firstRow.PSObject.Properties.Name
     $validColumns = [ordered]@{}
     foreach ($oldName in $columnMap.Keys) {
         if ($availableColumns -contains $oldName) {
@@ -144,7 +161,7 @@ function Add-AdOUDepthSummary {
     $caption.Range.InsertParagraphAfter()
 
     # Create table
-    $numRows = $data.Count + 1  # +1 for header
+    $numRows = $renderData.Count + 1  # +1 for header
     $numCols = $validColumns.Count
     $tableRange = $caption.Range.Next()
     $tableRange.Collapse(1)
@@ -164,7 +181,7 @@ function Add-AdOUDepthSummary {
 
     # Data rows
     $rowIndex = 2
-    foreach ($row in $data) {
+    foreach ($row in $renderData) {
         $colIndex = 1
         foreach ($oldName in $validColumns.Keys) {
             $value = $row.$oldName

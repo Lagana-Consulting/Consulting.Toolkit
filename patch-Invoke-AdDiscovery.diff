@@ -1,0 +1,108 @@
+diff --git a/Consulting.Toolkit.Discovery/Public/Invoke-AdDiscovery.ps1 b/Consulting.Toolkit.Discovery/Public/Invoke-AdDiscovery.ps1
+index 0000000..0000000 100644
+--- a/Consulting.Toolkit.Discovery/Public/Invoke-AdDiscovery.ps1
++++ b/Consulting.Toolkit.Discovery/Public/Invoke-AdDiscovery.ps1
+@@ -67,7 +67,7 @@ function Invoke-AdDiscovery {
+ 
+     # Verify required functions are available
+-    foreach ($fn in @('Export-AdCsvSafe', 'Export-AdSchemas', 'Get-AdAdForest', 'Get-AdAdDomains', 'Get-AdAdDomainContext', 'New-AdRunLayout')) {
++    foreach ($fn in @('Export-AdCsvSafe', 'Export-AdCsvSafeWithSchema', 'Export-AdSchemas', 'Get-AdAdForest', 'Get-AdAdDomains', 'Get-AdAdDomainContext', 'New-AdRunLayout')) {
+         if (-not (Get-Command $fn -ErrorAction SilentlyContinue)) {
+             throw "$fn not found. Ensure Consulting.Toolkit.Discovery is properly loaded."
+         }
+@@ -140,10 +140,45 @@ function Invoke-AdDiscovery {
+     foreach ($p in @($schemasDir, $forestDir, $domainsRoot, $manifestDir, $logsDir)) {
+         if (-not (Test-Path -LiteralPath $p)) { New-Item -ItemType Directory -Path $p -Force | Out-Null }
+     }
+ 
+     if ($IncludeSecurity) {
+         Write-Host "Exporting security datasets (forest)..." -ForegroundColor Cyan
+-        Invoke-AdSecurityDiscoveryExport -Forest $forest -ForestDir $forestDir -ScopeTag 'Forest' -LogPath $layout.LogPath
++
++        function Try-SecurityExport([scriptblock]$Action, [string]$Operation) {
++            try {
++                & $Action
++                Write-Host "    [OK] $Operation" -ForegroundColor Green
++            } catch {
++                Write-Host "    [WARN] $Operation : $($_.Exception.Message)" -ForegroundColor Yellow
++            }
++        }
++
++        Try-SecurityExport -Operation "ADCS Enterprise CAs (forest)" -Action {
++            $cas = @(Get-AdSecurityAdcsInventory -Forest $forest -Mode EnterpriseCAs)
++            $out = Join-Path $forestDir "AD__Forest__Security__ADCS__EnterpriseCAs__Forest.csv"
++            Export-AdCsvSafeWithSchema -InputObject @($cas) -Path $out -Force -AllowEmpty
++        }
++
++        Try-SecurityExport -Operation "ADCS Enrollment Services Templates (forest)" -Action {
++            $map = @(Get-AdSecurityAdcsInventory -Forest $forest -Mode EnrollmentServicesTemplates)
++            $out = Join-Path $forestDir "AD__Forest__Security__ADCS__EnrollmentServicesTemplates__Forest.csv"
++            Export-AdCsvSafeWithSchema -InputObject @($map) -Path $out -Force -AllowEmpty
++        }
++
++        Try-SecurityExport -Operation "ADCS Certificate Templates (forest)" -Action {
++            $templates = @(Get-AdSecurityCertificateTemplates -Forest $forest -Mode Templates)
++            $out = Join-Path $forestDir "AD__Forest__Security__ADCS__CertificateTemplates__Forest.csv"
++            Export-AdCsvSafeWithSchema -InputObject @($templates) -Path $out -Force -AllowEmpty
++        }
++
++        Try-SecurityExport -Operation "ADCS Certificate Template Permissions (forest)" -Action {
++            $perms = @(Get-AdSecurityCertificateTemplates -Forest $forest -Mode TemplatePermissions)
++            $out = Join-Path $forestDir "AD__Forest__Security__ADCS__CertificateTemplatePermissions__Forest.csv"
++            Export-AdCsvSafeWithSchema -InputObject @($perms) -Path $out -Force -AllowEmpty
++        }
+     }
+ 
+     # -------------------------
+     # Schemas
+@@ -214,10 +249,46 @@ function Invoke-AdDiscovery {
+             $domainDir = Join-Path $domainsRoot $scopeTag
+             if (-not (Test-Path -LiteralPath $domainDir)) { New-Item -ItemType Directory -Path $domainDir -Force | Out-Null }
+ 
+             if ($IncludeSecurity) {
+                 Write-Host "  - Security discovery (tier0/delegation/adcs signals)" -ForegroundColor Gray
+-                Invoke-AdSecurityDiscoveryExport -Forest $forest -ForestDir $forestDir -DomainContext $ctx -DomainDir $domainDir -ScopeTag $scopeTag -LogPath $layout.LogPath
++
++                # Tier0 inventory (memberships, AdminCount=1 objects, Protected Users)
++                try {
++                    $tier0 = Get-AdSecurityTier0Inventory -DomainContext $ctx
++
++                    Export-AdCsvSafeWithSchema -InputObject @($tier0.PrivilegedGroupMembers) -Path (Join-Path $domainDir ("AD__Domain__Security__PrivilegedGroupMembers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
++                    Export-AdCsvSafeWithSchema -InputObject @($tier0.AdminCountObjects)       -Path (Join-Path $domainDir ("AD__Domain__Security__AdminCountObjects__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
++                    Export-AdCsvSafeWithSchema -InputObject @($tier0.ProtectedUsers)         -Path (Join-Path $domainDir ("AD__Domain__Security__ProtectedUsers__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
++                } catch {
++                    Write-Host "    [WARN] Tier0 inventory : $($_.Exception.Message)" -ForegroundColor Yellow
++                }
++
++                # Delegation inventory (unconstrained, constrained, protocol transition, RBCD)
++                try {
++                    $del = Get-AdSecurityDelegationInventory -DomainContext $ctx
++
++                    Export-AdCsvSafeWithSchema -InputObject @($del.Unconstrained)      -Path (Join-Path $domainDir ("AD__Domain__Security__DelegationUnconstrained__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
++                    Export-AdCsvSafeWithSchema -InputObject @($del.Constrained)        -Path (Join-Path $domainDir ("AD__Domain__Security__DelegationConstrained__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
++                    Export-AdCsvSafeWithSchema -InputObject @($del.ProtocolTransition) -Path (Join-Path $domainDir ("AD__Domain__Security__DelegationProtocolTransition__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
++                    Export-AdCsvSafeWithSchema -InputObject @($del.RBCD)               -Path (Join-Path $domainDir ("AD__Domain__Security__DelegationRBCD__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
++                } catch {
++                    Write-Host "    [WARN] Delegation inventory : $($_.Exception.Message)" -ForegroundColor Yellow
++                }
++
++                # SPN Accounts inventory
++                try {
++                    $spn = @(Get-AdSecuritySpnAccounts -DomainContext $ctx)
++                    Export-AdCsvSafeWithSchema -InputObject @($spn) -Path (Join-Path $domainDir ("AD__Domain__Security__SpnAccounts__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
++                } catch {
++                    Write-Host "    [WARN] SPN Accounts inventory : $($_.Exception.Message)" -ForegroundColor Yellow
++                }
++
++                # Domain Controller security signals (best effort)
++                try {
++                    $signals = @(Get-AdSecurityDomainControllerSignals -DomainContext $ctx)
++                    Export-AdCsvSafeWithSchema -InputObject @($signals) -Path (Join-Path $domainDir ("AD__Domain__Security__DomainControllerSecuritySignals__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
++                } catch {
++                    Write-Host "    [WARN] DC security signals : $($_.Exception.Message)" -ForegroundColor Yellow
++                }
+             }
+ 
+             # Domain summary / infrastructure
+             Write-Host "  - Domain summary and infrastructure" -ForegroundColor Gray
+             (Get-AdAdDomainSummary -DomainContext $ctx) |

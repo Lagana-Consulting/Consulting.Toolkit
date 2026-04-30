@@ -14,6 +14,12 @@ function Invoke-ADAssessmentAutomation {
   .PARAMETER TemplatePath
   Path to Word template document with bookmarks for sections.
 
+  .PARAMETER UseBundledDiscoveryTemplate
+  Use the bundled "Discovery and Assessment Findings Report" Word template from the module config folder.
+
+  .PARAMETER UseBundledSummaryTemplate
+  Use the bundled "Assessment Summary and Migration Process" Word template from the module config folder.
+
   .PARAMETER OutputPath
   Path where final assessment document will be saved.
 
@@ -36,6 +42,9 @@ function Invoke-ADAssessmentAutomation {
   .EXAMPLE
   Invoke-ADAssessmentAutomation -DiscoveryOutputPath "C:\Discovery\FOREST__20260129-120000" -TemplatePath "C:\Templates\AD_Assessment.dotx" -OutputPath "C:\Reports\Assessment_Final.docx"
 
+  .EXAMPLE
+  Invoke-ADAssessmentAutomation -DiscoveryOutputPath "C:\Discovery\FOREST__20260129-120000" -UseBundledDiscoveryTemplate -OutputPath "C:\Reports\Assessment_Final.docx"
+
   .INPUTS
   None. This function does not accept pipeline input.
 
@@ -50,7 +59,6 @@ function Invoke-ADAssessmentAutomation {
         [Parameter(Mandatory)]
         [string]$DiscoveryOutputPath,
 
-        [Parameter(Mandatory)]
         [string]$TemplatePath,
 
         [Parameter(Mandatory)]
@@ -59,6 +67,8 @@ function Invoke-ADAssessmentAutomation {
         [string]$TableStyleName,
         [string]$HeaderFontColor,
         [switch]$Visible,
+        [switch]$UseBundledDiscoveryTemplate,
+        [switch]$UseBundledSummaryTemplate,
         [string]$ConfigPath,
         [string[]]$Sections
     )
@@ -68,9 +78,7 @@ function Invoke-ADAssessmentAutomation {
         throw "Discovery output path not found: $DiscoveryOutputPath"
     }
 
-    if (-not (Test-Path $TemplatePath)) {
-        throw "Template not found: $TemplatePath"
-    }
+    $TemplatePath = Resolve-AdAssessmentTemplatePath -TemplatePath $TemplatePath -UseBundledDiscoveryTemplate:$UseBundledDiscoveryTemplate -UseBundledSummaryTemplate:$UseBundledSummaryTemplate
 
     # Convert OutputPath to absolute path
     if (-not [System.IO.Path]::IsPathRooted($OutputPath)) {
@@ -180,6 +188,7 @@ function Invoke-ADAssessmentAutomation {
 
     # Discover section data files
     $sectionContexts = @()
+    $missingSections = @()
     $domainDirectories = @()
 
     # Forest-level sections
@@ -189,13 +198,29 @@ function Invoke-ADAssessmentAutomation {
         if ($isPerDomain) { continue }
 
         $ctx = New-SectionContext -SectionDef $sectionDef
-        if ($sectionDef.DataSource.PSObject.Properties.Name -contains "Pattern") {
+        if ($sectionDef.DataSource.PSObject.Properties.Name -contains "Type" -and $sectionDef.DataSource.Type -eq "Folder") {
+            $ctx.DataFiles.DiscoveryOutputPath = $DiscoveryOutputPath
+            $ctx.DataFiles.ForestFolderPath = Join-Path $DiscoveryOutputPath "10_forest"
+            $sectionContexts += $ctx
+            Write-Host "  Forest: $($sectionDef.Title)" -ForegroundColor Green
+        }
+        elseif ($sectionDef.DataSource.PSObject.Properties.Name -contains "Pattern") {
             $subPath = if ($sectionDef.DataSource.Path) { $sectionDef.DataSource.Path } else { "" }
             $csvPath = Find-ForestCsv -Pattern $sectionDef.DataSource.Pattern -RootPath $DiscoveryOutputPath -SubPath $subPath
             if ($csvPath) {
                 $ctx.DataFiles.CsvPath = $csvPath
                 $sectionContexts += $ctx
                 Write-Host "  Forest: $($sectionDef.Title)" -ForegroundColor Green
+            }
+            else {
+                $missingSections += [pscustomobject]@{
+                    Scope   = "Forest"
+                    Domain  = $null
+                    Id      = $sectionDef.Id
+                    Title   = $sectionDef.Title
+                    Pattern = $sectionDef.DataSource.Pattern
+                    Path    = $subPath
+                }
             }
         }
     }
@@ -243,11 +268,28 @@ function Invoke-ADAssessmentAutomation {
                     $ctx.DataFiles.CsvPath = $csvPath
                     $sectionContexts += $ctx
                 }
+                else {
+                    $missingSections += [pscustomobject]@{
+                        Scope   = "Domain"
+                        Domain  = $domainName
+                        Id      = $sectionDef.Id
+                        Title   = $sectionDef.Title
+                        Pattern = $sectionDef.DataSource.Pattern
+                        Path    = $domainDir.FullName
+                    }
+                }
             }
         }
     }
 
     Write-Host "Discovered $($sectionContexts.Count) sections" -ForegroundColor Cyan
+    if ($missingSections.Count -gt 0) {
+        Write-Warning ("{0} configured section instance(s) were not discovered in the current output." -f $missingSections.Count)
+        foreach ($missing in $missingSections) {
+            $scopeLabel = if ($missing.Domain) { "$($missing.Scope): $($missing.Domain)" } else { $missing.Scope }
+            Write-Warning ("  Missing [{0}] {1} (pattern: {2})" -f $scopeLabel, $missing.Title, $missing.Pattern)
+        }
+    }
 
     # Create Word document
     Write-Host "Creating assessment document..." -ForegroundColor Cyan
@@ -308,12 +350,18 @@ function Invoke-ADAssessmentAutomation {
                 # Folder-based builders
                 if ($ctx.DataFiles.ContainsKey("DomainFolderPath")) {
                     $builderParams.DomainFolderPath = $ctx.DataFiles.DomainFolderPath
-                    if ($ctx.DataFiles.ContainsKey("ForestFolderPath")) {
-                        $builderParams.ForestFolderPath = $ctx.DataFiles.ForestFolderPath
-                    }
+                if ($ctx.DataFiles.ContainsKey("ForestFolderPath")) {
+                    $builderParams.ForestFolderPath = $ctx.DataFiles.ForestFolderPath
                 }
-                # Multi-file builders
-                elseif ($ctx.DataFiles.ContainsKey("Servers")) {
+            }
+            elseif ($ctx.DataFiles.ContainsKey("DiscoveryOutputPath")) {
+                $builderParams.DiscoveryOutputPath = $ctx.DataFiles.DiscoveryOutputPath
+                if ($ctx.DataFiles.ContainsKey("ForestFolderPath")) {
+                    $builderParams.ForestFolderPath = $ctx.DataFiles.ForestFolderPath
+                }
+            }
+            # Multi-file builders
+            elseif ($ctx.DataFiles.ContainsKey("Servers")) {
                     $builderParams.ServersCsvPath = $ctx.DataFiles.Servers
                     $builderParams.WorkstationsCsvPath = $ctx.DataFiles.Workstations
                     if ($ctx.Parameters) {
