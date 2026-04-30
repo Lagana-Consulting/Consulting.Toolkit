@@ -1,4 +1,6 @@
-﻿using Collector.Graph;
+﻿// Copyright (c) 2024 Lagana Consulting. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is prohibited.
+using Collector.Graph;
 using Microsoft.Graph;
 
 namespace Collector.Core.Collectors;
