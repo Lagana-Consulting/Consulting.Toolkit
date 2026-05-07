@@ -1,0 +1,136 @@
+{
+  "Source": {
+    "Registry": [
+      {
+        "Name": "TcpipClientSupport",
+        "Path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa",
+        "ValueName": "TcpipClientSupport",
+        "ValueType": "DWord",
+        "ExpectedValue": 1,
+        "Severity": "Fail",
+        "Recommendation": "Enable TcpipClientSupport on source domain controllers that participate in SID history migration, then restart the domain controller."
+      }
+    ],
+    "Services": [
+      {
+        "Name": "RemoteRegistry",
+        "ExpectedStatus": "Running",
+        "ExpectedStartType": "Automatic",
+        "Severity": "Warn",
+        "Recommendation": "Enable and start Remote Registry where ADMT agents or prerequisite checks require remote registry access."
+      }
+    ],
+    "Groups": [
+      {
+        "Name": "Pre-Windows 2000 Compatible Access",
+        "Members": [],
+        "Severity": "Info",
+        "Recommendation": "Validate ADMT migration account access according to the migration design. No default member is applied by this module."
+      }
+    ],
+    "ServiceAccounts": [
+      {
+        "Name": "Source ADMT service account",
+        "SamAccountName": "",
+        "UserPrincipalName": "",
+        "CreateIfMissing": false,
+        "Path": "",
+        "Enabled": true,
+        "PasswordNeverExpires": true,
+        "Description": "ADMT source-side migration service account.",
+        "RequiredGroups": [],
+        "Severity": "Fail",
+        "Recommendation": "Specify the source ADMT service account and required source-domain group memberships in a customer-specific config."
+      }
+    ],
+    "Trusts": [
+      {
+        "Name": "Source to target trust",
+        "TargetDomain": "",
+        "ExpectedDirection": "Bidirectional",
+        "ExpectedTrustType": "",
+        "RequireTransitive": null,
+        "RequireSidFilteringQuarantined": null,
+        "RequireSelectiveAuthentication": null,
+        "Severity": "Fail",
+        "Recommendation": "Specify the target domain DNS name and expected trust settings in a customer-specific config."
+      }
+    ],
+    "DnsResolution": [
+      {
+        "Name": "Resolve target domain",
+        "HostName": "",
+        "RecordType": "A",
+        "ExpectedAddresses": [],
+        "DnsServer": "",
+        "Severity": "Fail",
+        "Recommendation": "Specify target-domain DNS names that must resolve from the source environment."
+      }
+    ]
+  },
+  "Target": {
+    "Groups": [
+      {
+        "Name": "Administrators",
+        "Members": [],
+        "Severity": "Info",
+        "Recommendation": "Validate the ADMT migration account has the delegated rights required by the migration design. No default member is applied by this module."
+      }
+    ],
+    "Services": [],
+    "Registry": [],
+    "ServiceAccounts": [
+      {
+        "Name": "Target ADMT service account",
+        "SamAccountName": "",
+        "UserPrincipalName": "",
+        "CreateIfMissing": false,
+        "Path": "",
+        "Enabled": true,
+        "PasswordNeverExpires": true,
+        "Description": "ADMT target-side migration service account.",
+        "RequiredGroups": [],
+        "Severity": "Fail",
+        "Recommendation": "Specify the target ADMT service account and required target-domain group memberships in a customer-specific config."
+      }
+    ],
+    "Trusts": [
+      {
+        "Name": "Target to source trust",
+        "TargetDomain": "",
+        "ExpectedDirection": "Bidirectional",
+        "ExpectedTrustType": "",
+        "RequireTransitive": null,
+        "RequireSidFilteringQuarantined": null,
+        "RequireSelectiveAuthentication": null,
+        "Severity": "Fail",
+        "Recommendation": "Specify the source domain DNS name and expected trust settings in a customer-specific config."
+      }
+    ],
+    "DnsResolution": [
+      {
+        "Name": "Resolve source domain",
+        "HostName": "",
+        "RecordType": "A",
+        "ExpectedAddresses": [],
+        "DnsServer": "",
+        "Severity": "Fail",
+        "Recommendation": "Specify source-domain DNS names that must resolve from the target environment."
+      }
+    ]
+  },
+  "Both": {
+    "PowerShellModules": [
+      {
+        "Name": "ActiveDirectory",
+        "Severity": "Fail",
+        "Recommendation": "Install RSAT Active Directory PowerShell tools before running AD preparation commands."
+      }
+    ],
+    "Domain": {
+      "MinimumDomainMode": "Windows2003Domain",
+      "Severity": "Warn",
+      "Recommendation": "Confirm the forest and domain functional levels are supported by the selected ADMT version and migration design."
+    }
+  }
+}
