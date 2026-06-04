@@ -72,8 +72,9 @@ function Get-AdRecentlyCreatedObjects {
   try {
     $groups = @(
       Get-ADGroup -LDAPFilter "(whenCreated>=$cutoffLdap)" -SearchBase $searchBase -SearchScope Subtree -Server $server `
-        -Properties whenCreated,objectGuid,samAccountName,distinguishedName,name -ResultPageSize 1000 -ErrorAction Stop
+        -Properties whenCreated,objectGuid,samAccountName,distinguishedName,name,objectSid -ResultPageSize 1000 -ErrorAction Stop
     )
+    $groups = @($groups | Where-Object { -not (Test-AdBuiltInGroup -Group $_) })
     foreach ($g in $groups) { Add-RecentRow -Obj $g -ObjectClass 'group' }
     $counts.group = $groups.Count
   } catch {

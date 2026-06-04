@@ -129,6 +129,98 @@ function Test-AdPlanningBuiltInGroup {
     return $sam -in @($Rules.BuiltInGroupSamAccountNames | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
 }
 
+function Get-AdPlanningObjectPropertyValue {
+    [CmdletBinding()]
+    param(
+        [AllowNull()][object]$InputObject,
+        [Parameter(Mandatory)][string]$PropertyName
+    )
+
+    if ($null -eq $InputObject -or -not $InputObject.PSObject.Properties[$PropertyName]) {
+        return ''
+    }
+
+    return [string]$InputObject.PSObject.Properties[$PropertyName].Value
+}
+
+function New-AdPlanningGroupKey {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][object]$Group,
+        [string]$SamAccountNameProperty = 'SamAccountName',
+        [string]$DistinguishedNameProperty = 'DistinguishedName'
+    )
+
+    $domain = (Get-AdPlanningObjectPropertyValue -InputObject $Group -PropertyName 'DomainFqdn').Trim().ToLowerInvariant()
+    $sam = (Get-AdPlanningObjectPropertyValue -InputObject $Group -PropertyName $SamAccountNameProperty).Trim().ToLowerInvariant()
+    $dn = (Get-AdPlanningObjectPropertyValue -InputObject $Group -PropertyName $DistinguishedNameProperty).Trim().ToLowerInvariant()
+
+    if (-not [string]::IsNullOrWhiteSpace($domain) -and -not [string]::IsNullOrWhiteSpace($sam)) {
+        return ("{0}|sam|{1}" -f $domain, $sam)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($domain) -and -not [string]::IsNullOrWhiteSpace($dn)) {
+        return ("{0}|dn|{1}" -f $domain, $dn)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($dn)) {
+        return ("dn|{0}" -f $dn)
+    }
+
+    return ''
+}
+
+function Add-AdPlanningGroupReviewSignal {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][hashtable]$Signals,
+        [Parameter(Mandatory)][string]$Key,
+        [Parameter(Mandatory)][string]$Reason
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Key)) { return }
+    if (-not $Signals.ContainsKey($Key)) {
+        $Signals[$Key] = New-Object System.Collections.Generic.List[string]
+    }
+    if (-not $Signals[$Key].Contains($Reason)) {
+        [void]$Signals[$Key].Add($Reason)
+    }
+}
+
+function Get-AdPlanningGroupReviewSignals {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$RunRoot
+    )
+
+    $signals = @{}
+    $domainRoot = Join-Path $RunRoot '20_domains'
+    if (-not (Test-Path -LiteralPath $domainRoot -PathType Container)) {
+        return $signals
+    }
+
+    $signalFiles = @(
+        [pscustomobject]@{ Filter = 'AD__Domain__Identity__GroupsEmpty__*.csv'; Reason = 'EmptyGroup' }
+        [pscustomobject]@{ Filter = 'AD__Domain__Identity__GroupsSingleMember__*.csv'; Reason = 'SingleMemberGroup' }
+        [pscustomobject]@{ Filter = 'AD__Domain__Identity__GroupsWithDisabledOrInactiveMembers__*.csv'; Reason = 'DisabledOrInactiveGroupMember' }
+    )
+
+    foreach ($signalFile in $signalFiles) {
+        $files = @(
+            Get-ChildItem -LiteralPath $domainRoot -Recurse -Filter $signalFile.Filter -File -ErrorAction SilentlyContinue |
+                Sort-Object FullName
+        )
+        foreach ($file in $files) {
+            foreach ($row in @(Import-AdPlanningCsvSafe -Path $file.FullName)) {
+                $key = New-AdPlanningGroupKey -Group $row -SamAccountNameProperty 'GroupSamAccountName' -DistinguishedNameProperty 'GroupDistinguishedName'
+                Add-AdPlanningGroupReviewSignal -Signals $signals -Key $key -Reason $signalFile.Reason
+            }
+        }
+    }
+
+    return $signals
+}
+
 function Get-AdPlanningRunData {
     [CmdletBinding()]
     param(

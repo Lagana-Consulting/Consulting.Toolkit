@@ -22,6 +22,10 @@
         'New-AdRunLayout',
         'Export-AdCsvSafe',
         'Export-AdSchemas',
+        'Get-AdComputerStatusDetails',
+        'Get-AdGroupMembershipDetails',
+        'Get-AdSchemaDefinitions',
+        'Get-AdUserStatusDetails',
         'New-AdLog',
         'Write-AdLog'
     )

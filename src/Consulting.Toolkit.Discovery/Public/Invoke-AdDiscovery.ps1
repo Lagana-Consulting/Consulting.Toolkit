@@ -405,6 +405,58 @@ function Invoke-AdDiscovery {
             $users  | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Users__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
             $comps  | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ComputersAll__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
 
+            try {
+                Write-Host "  - Computer status details" -ForegroundColor Gray
+                $computerStatus = Get-AdComputerStatusDetails -Computers $comps
+
+                $inactiveWorkstationsOut = Join-Path $domainDir ("AD__Domain__Identity__ComputersInactiveWorkstations__{0}.csv" -f $scopeTag)
+                $inactiveServersOut = Join-Path $domainDir ("AD__Domain__Identity__ComputersInactiveServers__{0}.csv" -f $scopeTag)
+
+                $computerStatus.InactiveWorkstations |
+                Export-AdCsvSafe -Path $inactiveWorkstationsOut -SchemaName 'ComputerStatus_InactiveWorkstations' -Force -AllowEmpty
+
+                $computerStatus.InactiveServers |
+                Export-AdCsvSafe -Path $inactiveServersOut -SchemaName 'ComputerStatus_InactiveServers' -Force -AllowEmpty
+            } catch {
+                Log-ExecutionStatus "Computer Status Details ($d)" "FAIL" $_.Exception.Message
+            }
+
+            try {
+                Write-Host "  - User status details" -ForegroundColor Gray
+                $userStatus = Get-AdUserStatusDetails -Users $users
+
+                $disabledUsersOut = Join-Path $domainDir ("AD__Domain__Identity__UsersDisabled__{0}.csv" -f $scopeTag)
+                $inactiveUsersOut = Join-Path $domainDir ("AD__Domain__Identity__UsersInactive__{0}.csv" -f $scopeTag)
+
+                $userStatus.DisabledUsers |
+                Export-AdCsvSafe -Path $disabledUsersOut -SchemaName 'UserStatus_DisabledUsers' -Force -AllowEmpty
+
+                $userStatus.InactiveUsers |
+                Export-AdCsvSafe -Path $inactiveUsersOut -SchemaName 'UserStatus_InactiveUsers' -Force -AllowEmpty
+            } catch {
+                Log-ExecutionStatus "User Status Details ($d)" "FAIL" $_.Exception.Message
+            }
+
+            try {
+                Write-Host "  - Group membership details" -ForegroundColor Gray
+                $groupDetails = Get-AdGroupMembershipDetails -DomainContext $ctx
+
+                $emptyGroupsOut = Join-Path $domainDir ("AD__Domain__Identity__GroupsEmpty__{0}.csv" -f $scopeTag)
+                $singleMemberGroupsOut = Join-Path $domainDir ("AD__Domain__Identity__GroupsSingleMember__{0}.csv" -f $scopeTag)
+                $groupsDisabledInactiveOut = Join-Path $domainDir ("AD__Domain__Identity__GroupsWithDisabledOrInactiveMembers__{0}.csv" -f $scopeTag)
+
+                $groupDetails.EmptyGroups |
+                Export-AdCsvSafe -Path $emptyGroupsOut -SchemaName 'GroupMembership_EmptyGroups' -Force -AllowEmpty
+
+                $groupDetails.SingleMemberGroups |
+                Export-AdCsvSafe -Path $singleMemberGroupsOut -SchemaName 'GroupMembership_SingleMemberGroups' -Force -AllowEmpty
+
+                $groupDetails.GroupsWithDisabledOrInactiveMembers |
+                Export-AdCsvSafe -Path $groupsDisabledInactiveOut -SchemaName 'GroupMembership_DisabledOrInactiveMembers' -Force -AllowEmpty
+            } catch {
+                Log-ExecutionStatus "Group Membership Details ($d)" "FAIL" $_.Exception.Message
+            }
+
             # Published resources (collector)
             Write-Host "  - Published resources" -ForegroundColor Gray
             (Get-AdAdPublishedPrinters -DomainContext $ctx) |

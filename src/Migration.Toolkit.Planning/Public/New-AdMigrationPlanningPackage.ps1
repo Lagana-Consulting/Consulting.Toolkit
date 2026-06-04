@@ -44,6 +44,23 @@ function New-AdMigrationPlanningPackage {
         return [System.Uri]::UnescapeDataString($baseUri.MakeRelativeUri($childUri).ToString()).Replace('/', '\')
     }
 
+    function ConvertTo-SafeFileName {
+        param(
+            [AllowNull()][string]$Value,
+            [string]$Fallback = 'Organization'
+        )
+
+        $name = if ([string]::IsNullOrWhiteSpace($Value)) { $Fallback } else { $Value.Trim() }
+        $invalidPattern = ('[{0}]' -f [regex]::Escape(([System.IO.Path]::GetInvalidFileNameChars() -join '')))
+        $safeName = ($name -replace $invalidPattern, '_').Trim()
+        $safeName = ($safeName -replace '\s+', ' ').Trim()
+        if ([string]::IsNullOrWhiteSpace($safeName)) {
+            return $Fallback
+        }
+
+        return $safeName
+    }
+
     function Export-CustomerEditableCsv {
         param(
             [Parameter(Mandatory)][string]$SourcePath,
@@ -95,6 +112,52 @@ function New-AdMigrationPlanningPackage {
         @($exportRows) | Export-Csv -LiteralPath $DestinationPath -NoTypeInformation -Encoding UTF8 -Force
     }
 
+    function Export-DiscoveryCsvRollup {
+        param(
+            [Parameter(Mandatory)][string]$RunRoot,
+            [Parameter(Mandatory)][string]$Filter,
+            [Parameter(Mandatory)][string]$DestinationPath,
+            [Parameter(Mandatory)][string[]]$DefaultHeaders
+        )
+
+        $domainRoot = Join-Path $RunRoot '20_domains'
+        $files = @()
+        if (Test-Path -LiteralPath $domainRoot -PathType Container) {
+            $files = @(
+                Get-ChildItem -LiteralPath $domainRoot -Recurse -Filter $Filter -File -ErrorAction SilentlyContinue |
+                    Sort-Object FullName
+            )
+        }
+
+        $rows = New-Object System.Collections.Generic.List[object]
+        $headers = New-Object System.Collections.Generic.List[string]
+
+        foreach ($file in $files) {
+            $rawLines = @(Get-Content -LiteralPath $file.FullName -Encoding UTF8 -TotalCount 1)
+            if ($rawLines.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace($rawLines[0])) {
+                foreach ($header in @($rawLines[0] -split ',' | ForEach-Object { $_.Trim().Trim('"') } | Where-Object { $_ })) {
+                    if (-not $headers.Contains($header)) { [void]$headers.Add($header) }
+                }
+            }
+
+            foreach ($row in @(Import-Csv -LiteralPath $file.FullName)) {
+                [void]$rows.Add($row)
+            }
+        }
+
+        if ($headers.Count -eq 0) {
+            foreach ($header in $DefaultHeaders) { [void]$headers.Add($header) }
+        }
+
+        if ($rows.Count -eq 0) {
+            ($headers.ToArray() -join ',') | Set-Content -LiteralPath $DestinationPath -Encoding UTF8
+            return 0
+        }
+
+        @($rows.ToArray()) | Export-Csv -LiteralPath $DestinationPath -NoTypeInformation -Encoding UTF8 -Force
+        return $rows.Count
+    }
+
     $timestamp = Get-AdPlanningTimestamp
 
     if (-not $OutputRoot) {
@@ -140,11 +203,17 @@ function New-AdMigrationPlanningPackage {
         $excludePath = Join-Path $sourceRoot 'AD__Migration__Exclude__Candidates.csv'
         $userReviewPath = Join-Path $sourceRoot 'AD__Migration__Review__UserAccounts.csv'
         $duplicatePath = Join-Path $sourceRoot 'AD__Migration__Review__DuplicateConflicts.csv'
+        $emptyGroupsPath = Join-Path $sourceRoot 'AD__Migration__Review__EmptyGroups.csv'
+        $singleMemberGroupsPath = Join-Path $sourceRoot 'AD__Migration__Review__SingleMemberGroups.csv'
+        $disabledInactiveGroupsPath = Join-Path $sourceRoot 'AD__Migration__Review__GroupsWithDisabledOrInactiveMembers.csv'
 
         $usersInclude = New-AdMigrationIncludeFile -RunRoot $sourcePath -ObjectType Users -OutputPath $includeUsersPath -PlanningConfigPath $PlanningConfigPath -IncludeNonRoutableUpnUsers:$IncludeNonRoutableUpnUsers
         $groupsInclude = New-AdMigrationIncludeFile -RunRoot $sourcePath -ObjectType Groups -OutputPath $includeGroupsPath -PlanningConfigPath $PlanningConfigPath
         $computersInclude = New-AdMigrationIncludeFile -RunRoot $sourcePath -ObjectType Computers -OutputPath $includeComputersPath -PlanningConfigPath $PlanningConfigPath
         $exclude = New-AdMigrationExcludeFile -RunRoot $sourcePath -OutputPath $excludePath -PlanningConfigPath $PlanningConfigPath
+        $emptyGroupsCount = Export-DiscoveryCsvRollup -RunRoot $sourcePath -Filter 'AD__Domain__Identity__GroupsEmpty__*.csv' -DestinationPath $emptyGroupsPath -DefaultHeaders @('DomainFqdn', 'GroupName', 'GroupSamAccountName', 'GroupDistinguishedName', 'GroupCategory', 'GroupScope', 'MemberCount', 'WhenCreated', 'WhenChanged', 'Description')
+        $singleMemberGroupsCount = Export-DiscoveryCsvRollup -RunRoot $sourcePath -Filter 'AD__Domain__Identity__GroupsSingleMember__*.csv' -DestinationPath $singleMemberGroupsPath -DefaultHeaders @('DomainFqdn', 'GroupName', 'GroupSamAccountName', 'GroupDistinguishedName', 'GroupCategory', 'GroupScope', 'MemberCount', 'MemberName', 'MemberSamAccountName', 'MemberObjectClass', 'MemberDistinguishedName', 'MemberEnabled', 'LastLogonTimestampUtc', 'LastLogonDays', 'WhenCreated', 'WhenChanged', 'Description')
+        $disabledInactiveGroupsCount = Export-DiscoveryCsvRollup -RunRoot $sourcePath -Filter 'AD__Domain__Identity__GroupsWithDisabledOrInactiveMembers__*.csv' -DestinationPath $disabledInactiveGroupsPath -DefaultHeaders @('DomainFqdn', 'GroupName', 'GroupSamAccountName', 'GroupDistinguishedName', 'GroupCategory', 'GroupScope', 'GroupMemberCount', 'MemberName', 'MemberSamAccountName', 'MemberObjectClass', 'MemberDistinguishedName', 'MemberEnabled', 'LastLogonTimestampUtc', 'LastLogonDays', 'InactiveThresholdDays', 'IsDisabled', 'IsInactive', 'FindingReason', 'LookupError')
 
         $includedUserSamAccountNames = @(
             @($usersInclude.Rows) |
@@ -276,6 +345,9 @@ function New-AdMigrationPlanningPackage {
             "- `AD__Migration__Include__Computers.csv`: active workstation and server candidates.",
             "- `AD__Migration__Exclude__Candidates.csv`: objects that should be excluded from default waves or reviewed separately.",
             "- `AD__Migration__Review__UserAccounts.csv`: one row per reviewed user account with flags for service-account, privileged, and non-routable UPN handling.",
+            "- `AD__Migration__Review__EmptyGroups.csv`: empty groups from discovery for cleanup and scope review.",
+            "- `AD__Migration__Review__SingleMemberGroups.csv`: groups with exactly one direct member from discovery.",
+            "- `AD__Migration__Review__GroupsWithDisabledOrInactiveMembers.csv`: groups with disabled or inactive direct members from discovery.",
             $(if ($TargetRunRoot) { "- `AD__Migration__Review__DuplicateConflicts.csv`: source-to-target identity conflicts detected from current discovery data." } else { '' })
         ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Set-Content -LiteralPath $sourceReadmePath -Encoding UTF8
 
@@ -294,6 +366,12 @@ function New-AdMigrationPlanningPackage {
             ExcludeCount          = $exclude.Count
             UserReviewPath        = $userReviewPath
             UserReviewCount       = @($userReviewRows).Count
+            EmptyGroupsPath       = $emptyGroupsPath
+            EmptyGroupsCount      = $emptyGroupsCount
+            SingleMemberGroupsPath = $singleMemberGroupsPath
+            SingleMemberGroupsCount = $singleMemberGroupsCount
+            DisabledInactiveGroupsPath = $disabledInactiveGroupsPath
+            DisabledInactiveGroupsCount = $disabledInactiveGroupsCount
             ServiceReviewCount    = @($runData.ServiceAccounts).Count
             PrivilegedReviewCount = @($runData.PrivilegedAccounts).Count
             NonRoutableUpnCount   = @($userReviewRows | Where-Object { $_.IsNonRoutableUpnSuffix }).Count
@@ -353,7 +431,8 @@ function New-AdMigrationPlanningPackage {
     $customerChecklistPath = $null
     if ($CreateCustomerPackage) {
         Write-Host "Creating customer planning package..." -ForegroundColor Cyan
-        $customerPackageRoot = Join-Path $OutputRoot 'customer'
+        $safeCustomerName = ConvertTo-SafeFileName -Value $CustomerName
+        $customerPackageRoot = Join-Path $OutputRoot $safeCustomerName
         $customerReportsRoot = Join-Path $customerPackageRoot 'Reports'
         foreach ($dir in @($customerPackageRoot, $customerReportsRoot)) {
             if (-not (Test-Path -LiteralPath $dir -PathType Container)) {
@@ -415,12 +494,36 @@ function New-AdMigrationPlanningPackage {
                     WhatWeNeed      = 'For each flagged account, provide owner, application dependency, whether it must migrate, and whether the current UPN is expected to change.'
                     AddEditableColumns = $true
                 }
+                [pscustomobject]@{
+                    SourcePath      = $sourcePackage.EmptyGroupsPath
+                    FriendlyName    = '06-Empty-Groups.csv'
+                    Purpose         = 'Groups with no direct members, sourced from the discovery empty-groups dataset.'
+                    CustomerAction  = 'Review whether each empty group is still required or can be retired before migration.'
+                    WhatWeNeed      = 'Tell us which groups should migrate, be deleted, be archived, or be reviewed with an application or business owner.'
+                    AddEditableColumns = $true
+                }
+                [pscustomobject]@{
+                    SourcePath      = $sourcePackage.SingleMemberGroupsPath
+                    FriendlyName    = '07-Single-Member-Groups.csv'
+                    Purpose         = 'Groups with exactly one direct member, sourced from the discovery single-member-groups dataset.'
+                    CustomerAction  = 'Review whether each one-member group still has a valid business or application purpose.'
+                    WhatWeNeed      = 'Tell us whether the group should migrate, be consolidated, have membership corrected, or be removed from scope.'
+                    AddEditableColumns = $true
+                }
+                [pscustomobject]@{
+                    SourcePath      = $sourcePackage.DisabledInactiveGroupsPath
+                    FriendlyName    = '08-Groups-With-Disabled-Or-Inactive-Members.csv'
+                    Purpose         = 'Groups that contain disabled or inactive direct members, sourced from the discovery group-membership dataset.'
+                    CustomerAction  = 'Review stale or disabled group members and confirm whether membership should be cleaned up before migration.'
+                    WhatWeNeed      = 'Tell us which members should remain, be removed, or require owner validation before the group migrates.'
+                    AddEditableColumns = $true
+                }
             )
 
             if ($sourcePackage.DuplicatePath) {
                 $friendlyMap += [pscustomobject]@{
                     SourcePath      = $sourcePackage.DuplicatePath
-                    FriendlyName    = '06-Duplicate-Conflicts.csv'
+                    FriendlyName    = '09-Duplicate-Conflicts.csv'
                     Purpose         = 'Source-to-target naming and identity conflicts detected automatically.'
                     CustomerAction  = 'Review each conflict and decide whether the source object should be renamed, merged, deferred, or treated as a separate identity.'
                     WhatWeNeed      = 'For each conflict, tell us which object should remain authoritative and whether any rename or consolidation is required before migration.'
@@ -455,7 +558,8 @@ function New-AdMigrationPlanningPackage {
                 '2. Remove anything that should not be migrated and note anything missing that must be added.',
                 '3. Review 04-Excluded-Or-Needs-Review.csv for objects that may need to be brought back into scope.',
                 '4. Review 05-User-Review.csv carefully for service accounts, privileged accounts, and UPN changes.',
-                $(if ($sourcePackage.DuplicatePath) { '5. Review 06-Duplicate-Conflicts.csv and tell us how each conflict should be resolved.' } else { '' }),
+                '5. Review 06-Empty-Groups.csv, 07-Single-Member-Groups.csv, and 08-Groups-With-Disabled-Or-Inactive-Members.csv for group cleanup decisions.',
+                $(if ($sourcePackage.DuplicatePath) { '6. Review 09-Duplicate-Conflicts.csv and tell us how each conflict should be resolved.' } else { '' }),
                 '',
                 'Please fill in the CustomerDecision, Owner, Comment, and RequiredAction columns directly in the CSV files and return them to us.'
             ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Set-Content -LiteralPath $sourceGuidePath -Encoding UTF8
@@ -506,6 +610,7 @@ function New-AdMigrationPlanningPackage {
         [void]$customerHtml.AppendLine('        <li>Confirm which users, groups, and computers should migrate.</li>')
         [void]$customerHtml.AppendLine('        <li>Tell us which excluded objects should be brought back into scope.</li>')
         [void]$customerHtml.AppendLine('        <li>Review flagged user accounts and confirm owner, purpose, and any special handling needs.</li>')
+        [void]$customerHtml.AppendLine('        <li>Review empty, single-member, and stale-member groups for cleanup or migration decisions.</li>')
         [void]$customerHtml.AppendLine('        <li>If duplicate conflicts are included, tell us which source or target object should remain authoritative.</li>')
         [void]$customerHtml.AppendLine('      </ol>')
         [void]$customerHtml.AppendLine('      <p><strong>Best way to respond:</strong> open the CSV files in Excel and fill in the <code>CustomerDecision</code>, <code>Owner</code>, <code>Comment</code>, and <code>RequiredAction</code> columns directly in each file.</p>')
@@ -514,7 +619,11 @@ function New-AdMigrationPlanningPackage {
         [void]$customerHtml.AppendLine('      <h2>File Guide</h2>')
         [void]$customerHtml.AppendLine('      <table>')
         [void]$customerHtml.AppendLine('        <tr><th>File</th><th>What It Means</th><th>What To Review</th><th>What We Need Back</th></tr>')
-        foreach ($row in @($actionChecklistRows.ToArray())) {
+        $fileGuideRows = @(
+            $actionChecklistRows.ToArray() |
+                Sort-Object FileName, Purpose, CustomerAction, WhatWeNeedBack -Unique
+        )
+        foreach ($row in $fileGuideRows) {
             [void]$customerHtml.AppendLine("        <tr><td>$(ConvertTo-HtmlText $row.FileName)</td><td>$(ConvertTo-HtmlText $row.Purpose)</td><td>$(ConvertTo-HtmlText $row.CustomerAction)</td><td>$(ConvertTo-HtmlText $row.WhatWeNeedBack)</td></tr>")
         }
         [void]$customerHtml.AppendLine('      </table>')
@@ -528,6 +637,9 @@ function New-AdMigrationPlanningPackage {
             [void]$customerHtml.AppendLine("      <span class=""pill"">Include Groups: $(ConvertTo-HtmlText $sourcePackage.IncludeGroupsCount)</span>")
             [void]$customerHtml.AppendLine("      <span class=""pill"">Include Computers: $(ConvertTo-HtmlText $sourcePackage.IncludeComputersCount)</span>")
             [void]$customerHtml.AppendLine("      <span class=""pill"">Reviewed User Accounts: $(ConvertTo-HtmlText $sourcePackage.UserReviewCount)</span>")
+            [void]$customerHtml.AppendLine("      <span class=""pill"">Empty Groups: $(ConvertTo-HtmlText $sourcePackage.EmptyGroupsCount)</span>")
+            [void]$customerHtml.AppendLine("      <span class=""pill"">Single-Member Groups: $(ConvertTo-HtmlText $sourcePackage.SingleMemberGroupsCount)</span>")
+            [void]$customerHtml.AppendLine("      <span class=""pill"">Groups With Disabled/Inactive Members: $(ConvertTo-HtmlText $sourcePackage.DisabledInactiveGroupsCount)</span>")
             $customerFolder = "Reports/$($sourcePackage.Label)"
             [void]$customerHtml.AppendLine('      <ul>')
             [void]$customerHtml.AppendLine("        <li><a href=""$(ConvertTo-HtmlText ($customerFolder -replace '\\','/'))/00-How-To-Review.txt"">Open the step-by-step review instructions for this environment</a></li>")
@@ -536,8 +648,11 @@ function New-AdMigrationPlanningPackage {
             [void]$customerHtml.AppendLine("        <li><a href=""$(ConvertTo-HtmlText ($customerFolder -replace '\\','/'))/03-Include-Computers.csv"">Open 03-Include-Computers.csv</a></li>")
             [void]$customerHtml.AppendLine("        <li><a href=""$(ConvertTo-HtmlText ($customerFolder -replace '\\','/'))/04-Excluded-Or-Needs-Review.csv"">Open 04-Excluded-Or-Needs-Review.csv</a></li>")
             [void]$customerHtml.AppendLine("        <li><a href=""$(ConvertTo-HtmlText ($customerFolder -replace '\\','/'))/05-User-Review.csv"">Open 05-User-Review.csv</a></li>")
+            [void]$customerHtml.AppendLine("        <li><a href=""$(ConvertTo-HtmlText ($customerFolder -replace '\\','/'))/06-Empty-Groups.csv"">Open 06-Empty-Groups.csv</a></li>")
+            [void]$customerHtml.AppendLine("        <li><a href=""$(ConvertTo-HtmlText ($customerFolder -replace '\\','/'))/07-Single-Member-Groups.csv"">Open 07-Single-Member-Groups.csv</a></li>")
+            [void]$customerHtml.AppendLine("        <li><a href=""$(ConvertTo-HtmlText ($customerFolder -replace '\\','/'))/08-Groups-With-Disabled-Or-Inactive-Members.csv"">Open 08-Groups-With-Disabled-Or-Inactive-Members.csv</a></li>")
             if ($sourcePackage.DuplicatePath) {
-                [void]$customerHtml.AppendLine("        <li><a href=""$(ConvertTo-HtmlText ($customerFolder -replace '\\','/'))/06-Duplicate-Conflicts.csv"">Open 06-Duplicate-Conflicts.csv</a></li>")
+                [void]$customerHtml.AppendLine("        <li><a href=""$(ConvertTo-HtmlText ($customerFolder -replace '\\','/'))/09-Duplicate-Conflicts.csv"">Open 09-Duplicate-Conflicts.csv</a></li>")
             }
             [void]$customerHtml.AppendLine('      </ul>')
         }
@@ -562,12 +677,16 @@ function New-AdMigrationPlanningPackage {
             '- 03-Include-Computers.csv: computer accounts currently proposed for migration',
             '- 04-Excluded-Or-Needs-Review.csv: objects currently excluded or needing a scope decision',
             '- 05-User-Review.csv: user accounts needing special handling, such as service accounts, privileged accounts, or UPN changes',
-            '- 06-Duplicate-Conflicts.csv: conflicts between source and target naming/identity, if present',
+            '- 06-Empty-Groups.csv: groups with no direct members',
+            '- 07-Single-Member-Groups.csv: groups with exactly one direct member',
+            '- 08-Groups-With-Disabled-Or-Inactive-Members.csv: groups containing disabled or inactive direct members',
+            '- 09-Duplicate-Conflicts.csv: conflicts between source and target naming/identity, if present',
             '',
             'What we need back from you:',
             '- Which rows should stay in scope',
             '- Which rows should be removed from scope',
             '- Owners and business purpose for flagged user accounts',
+            '- Cleanup or migration decisions for empty, single-member, and stale-member groups',
             '- Any rename, merge, defer, or exception decisions for duplicate conflicts',
             '',
             'Important:',
@@ -577,7 +696,7 @@ function New-AdMigrationPlanningPackage {
         ) | Set-Content -LiteralPath $customerReadmePath -Encoding UTF8
 
         if ($ZipCustomerPackage) {
-            $customerZipPath = Join-Path $OutputRoot ("MigrationPlanningCustomer_{0}.zip" -f $timestamp)
+            $customerZipPath = Join-Path $OutputRoot ("MigrationPlanning_{0}_{1}.zip" -f $safeCustomerName, $timestamp)
             if (Test-Path -LiteralPath $customerZipPath -PathType Leaf) {
                 Remove-Item -LiteralPath $customerZipPath -Force
             }

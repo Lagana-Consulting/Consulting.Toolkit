@@ -18,13 +18,13 @@ function Get-AdCrossDomainGroupMembership {
 
     $groups = @()
     try {
-        $groups = @(Get-ADGroup -Filter * -Server $server -Properties Members -ErrorAction Stop)
+        $groups = @(Get-ADGroup -Filter * -Server $server -Properties Members, objectSid -ErrorAction Stop)
     } catch {
         throw "Failed to enumerate groups for $domain via $server. $($_.Exception.Message)"
     }
 
     $results = @()
-    foreach ($g in $groups) {
+    foreach ($g in @($groups | Where-Object { -not (Test-AdBuiltInGroup -Group $_) })) {
         if (-not $g.Members -or $g.Members.Count -eq 0) { continue }
 
         $crossDomainMembers = @()

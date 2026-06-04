@@ -145,6 +145,62 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Description field'; Example = 'Finance workstation'; Notes = '' }
   )
 
+  # User status: disabled users
+  $schemas['UserStatus_DisabledUsers'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'User SAM account name'; Example = 'jdoe'; Notes = '' }
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'User display name'; Example = 'Jane Doe'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'User distinguished name'; Example = 'CN=Jane Doe,OU=Users,DC=contoso,DC=com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Enabled'; Type = 'bool'; Description = 'Account enabled state'; Example = 'False'; Notes = '' }
+    [pscustomobject]@{ Column = 'UserPrincipalName'; Type = 'string'; Description = 'UPN'; Example = 'jdoe@contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Mail'; Type = 'string'; Description = 'Mail attribute'; Example = 'jdoe@contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Object creation time'; Example = '2022-01-01'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Object last changed time'; Example = '2026-01-01'; Notes = '' }
+    [pscustomobject]@{ Column = 'LastLogonTimestampUtc'; Type = 'datetime'; Description = 'Last logon timestamp UTC'; Example = '2025-01-01T00:00:00Z'; Notes = 'Blank when unavailable' }
+    [pscustomobject]@{ Column = 'LastLogonDays'; Type = 'int'; Description = 'Days since last logon'; Example = '45'; Notes = 'Blank when unavailable' }
+    [pscustomobject]@{ Column = 'InactiveThresholdDays'; Type = 'int'; Description = 'Inactive threshold used by related user status exports'; Example = '180'; Notes = '' }
+    [pscustomobject]@{ Column = 'PasswordLastSetUtc'; Type = 'datetime'; Description = 'Password last set UTC'; Example = '2025-01-01T00:00:00Z'; Notes = '' }
+    [pscustomobject]@{ Column = 'PasswordAgeDays'; Type = 'int'; Description = 'Password age in days'; Example = '90'; Notes = '' }
+    [pscustomobject]@{ Column = 'AdminCount'; Type = 'int'; Description = 'adminCount value'; Example = '0'; Notes = '' }
+    [pscustomobject]@{ Column = 'SidHistoryCount'; Type = 'int'; Description = 'SIDHistory value count'; Example = '0'; Notes = '' }
+    [pscustomobject]@{ Column = 'SPNCount'; Type = 'int'; Description = 'SPN count'; Example = '0'; Notes = '' }
+    [pscustomobject]@{ Column = 'IsKnownUpnSuffix'; Type = 'bool'; Description = 'UPN suffix is known'; Example = 'True'; Notes = '' }
+    [pscustomobject]@{ Column = 'IsNonRoutableUpnSuffix'; Type = 'bool'; Description = 'UPN suffix is non-routable'; Example = 'False'; Notes = '' }
+    [pscustomobject]@{ Column = 'MsDsSupportedEncryptionTypes'; Type = 'int'; Description = 'Kerberos encryption bitmask'; Example = '28'; Notes = '' }
+    [pscustomobject]@{ Column = 'EncryptionTypes'; Type = 'string'; Description = 'Kerberos encryption types'; Example = 'AES128;AES256'; Notes = '' }
+    [pscustomobject]@{ Column = 'EncryptionRisk'; Type = 'string'; Description = 'Encryption risk'; Example = 'Low'; Notes = '' }
+    [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Description field'; Example = 'Department user'; Notes = '' }
+  )
+
+  # User status: inactive users
+  $schemas['UserStatus_InactiveUsers'] = $schemas['UserStatus_DisabledUsers']
+
+  # Computer status: inactive workstations
+  $schemas['ComputerStatus_InactiveWorkstations'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Computer name'; Example = 'PC-001'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'Computer SAM account name'; Example = 'PC-001$'; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Computer distinguished name'; Example = 'CN=PC-001,CN=Computers,DC=contoso,DC=com'; Notes = '' }
+    [pscustomobject]@{ Column = 'Enabled'; Type = 'bool'; Description = 'Computer account enabled state'; Example = 'True'; Notes = '' }
+    [pscustomobject]@{ Column = 'DnsHostName'; Type = 'string'; Description = 'DNS host name'; Example = 'pc-001.contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'OperatingSystem'; Type = 'string'; Description = 'Operating system'; Example = 'Windows 10 Enterprise'; Notes = '' }
+    [pscustomobject]@{ Column = 'OperatingSystemVersion'; Type = 'string'; Description = 'Operating system version'; Example = '10.0 (19045)'; Notes = '' }
+    [pscustomobject]@{ Column = 'IsServer'; Type = 'bool'; Description = 'Server classification'; Example = 'False'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Object creation time'; Example = '2022-01-01'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Object last changed time'; Example = '2026-01-01'; Notes = '' }
+    [pscustomobject]@{ Column = 'LastLogonTimestampUtc'; Type = 'datetime'; Description = 'Last logon timestamp UTC'; Example = '2025-01-01T00:00:00Z'; Notes = 'Blank when unavailable' }
+    [pscustomobject]@{ Column = 'LastLogonDays'; Type = 'int'; Description = 'Days since last logon'; Example = '120'; Notes = '' }
+    [pscustomobject]@{ Column = 'InactiveThresholdDays'; Type = 'int'; Description = 'Inactive threshold used by collector'; Example = '90'; Notes = '' }
+    [pscustomobject]@{ Column = 'SPNCount'; Type = 'int'; Description = 'SPN count'; Example = '0'; Notes = '' }
+    [pscustomobject]@{ Column = 'MsDsSupportedEncryptionTypes'; Type = 'int'; Description = 'Kerberos encryption bitmask'; Example = '28'; Notes = '' }
+    [pscustomobject]@{ Column = 'EncryptionTypes'; Type = 'string'; Description = 'Kerberos encryption types'; Example = 'AES128;AES256'; Notes = '' }
+    [pscustomobject]@{ Column = 'EncryptionRisk'; Type = 'string'; Description = 'Encryption risk'; Example = 'Low'; Notes = '' }
+    [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Description field'; Example = 'Finance workstation'; Notes = '' }
+  )
+
+  # Computer status: inactive servers
+  $schemas['ComputerStatus_InactiveServers'] = $schemas['ComputerStatus_InactiveWorkstations']
+
   # Groups (Identity)
   $schemas['Groups'] = @(
     [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
@@ -157,6 +213,64 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Object creation time'; Example = '2020-01-01'; Notes = '' }
     [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Object last changed'; Example = '2025-11-15'; Notes = '' }
     [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Description field'; Example = 'Administrative group'; Notes = '' }
+  )
+
+  # Group membership detail: empty groups
+  $schemas['GroupMembership_EmptyGroups'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupName'; Type = 'string'; Description = 'Group display name'; Example = 'Legacy App Users'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupSamAccountName'; Type = 'string'; Description = 'Group SAM account name'; Example = 'LegacyAppUsers'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupDistinguishedName'; Type = 'string'; Description = 'Group distinguished name'; Example = 'CN=Legacy App Users,OU=Groups,DC=contoso,DC=com'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupCategory'; Type = 'string'; Description = 'Group category'; Example = 'Security'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupScope'; Type = 'string'; Description = 'Group scope'; Example = 'Global'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberCount'; Type = 'int'; Description = 'Direct member count'; Example = '0'; Notes = 'Direct members only' }
+    [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Group creation time'; Example = '2020-01-01'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Group last changed time'; Example = '2026-01-01'; Notes = '' }
+    [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Group description'; Example = 'Legacy application access'; Notes = '' }
+  )
+
+  # Group membership detail: single-member groups
+  $schemas['GroupMembership_SingleMemberGroups'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupName'; Type = 'string'; Description = 'Group display name'; Example = 'Legacy App Owners'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupSamAccountName'; Type = 'string'; Description = 'Group SAM account name'; Example = 'LegacyAppOwners'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupDistinguishedName'; Type = 'string'; Description = 'Group distinguished name'; Example = 'CN=Legacy App Owners,OU=Groups,DC=contoso,DC=com'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupCategory'; Type = 'string'; Description = 'Group category'; Example = 'Security'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupScope'; Type = 'string'; Description = 'Group scope'; Example = 'Global'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberCount'; Type = 'int'; Description = 'Direct member count'; Example = '1'; Notes = 'Direct members only' }
+    [pscustomobject]@{ Column = 'MemberName'; Type = 'string'; Description = 'Only member display name'; Example = 'Jane Doe'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberSamAccountName'; Type = 'string'; Description = 'Only member SAM account name'; Example = 'jdoe'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberObjectClass'; Type = 'string'; Description = 'Only member object class'; Example = 'user'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberDistinguishedName'; Type = 'string'; Description = 'Only member distinguished name'; Example = 'CN=Jane Doe,OU=Users,DC=contoso,DC=com'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberEnabled'; Type = 'string'; Description = 'Only member enabled state when available'; Example = 'True'; Notes = 'Blank for objects without Enabled' }
+    [pscustomobject]@{ Column = 'LastLogonTimestampUtc'; Type = 'datetime'; Description = 'Only member last logon timestamp UTC'; Example = '2025-01-01T00:00:00.0000000Z'; Notes = 'Blank when unavailable' }
+    [pscustomobject]@{ Column = 'LastLogonDays'; Type = 'int'; Description = 'Days since only member last logon'; Example = '45'; Notes = 'Blank when unavailable' }
+    [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Group creation time'; Example = '2020-01-01'; Notes = '' }
+    [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Group last changed time'; Example = '2026-01-01'; Notes = '' }
+    [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Group description'; Example = 'Legacy application owners'; Notes = '' }
+  )
+
+  # Group membership detail: disabled or inactive direct members
+  $schemas['GroupMembership_DisabledOrInactiveMembers'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupName'; Type = 'string'; Description = 'Group display name'; Example = 'Finance Users'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupSamAccountName'; Type = 'string'; Description = 'Group SAM account name'; Example = 'FinanceUsers'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupDistinguishedName'; Type = 'string'; Description = 'Group distinguished name'; Example = 'CN=Finance Users,OU=Groups,DC=contoso,DC=com'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupCategory'; Type = 'string'; Description = 'Group category'; Example = 'Security'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupScope'; Type = 'string'; Description = 'Group scope'; Example = 'Global'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupMemberCount'; Type = 'int'; Description = 'Direct member count for the group'; Example = '12'; Notes = 'Direct members only' }
+    [pscustomobject]@{ Column = 'MemberName'; Type = 'string'; Description = 'Member display name'; Example = 'Jane Doe'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberSamAccountName'; Type = 'string'; Description = 'Member SAM account name'; Example = 'jdoe'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberObjectClass'; Type = 'string'; Description = 'Member object class'; Example = 'user'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberDistinguishedName'; Type = 'string'; Description = 'Member distinguished name'; Example = 'CN=Jane Doe,OU=Users,DC=contoso,DC=com'; Notes = '' }
+    [pscustomobject]@{ Column = 'MemberEnabled'; Type = 'string'; Description = 'Member enabled state when available'; Example = 'False'; Notes = 'Blank for objects without Enabled' }
+    [pscustomobject]@{ Column = 'LastLogonTimestampUtc'; Type = 'datetime'; Description = 'Member last logon timestamp UTC'; Example = '2024-01-01T00:00:00.0000000Z'; Notes = 'Blank when unavailable' }
+    [pscustomobject]@{ Column = 'LastLogonDays'; Type = 'int'; Description = 'Days since member last logon'; Example = '365'; Notes = 'Blank when unavailable' }
+    [pscustomobject]@{ Column = 'InactiveThresholdDays'; Type = 'int'; Description = 'Inactivity threshold used by the collector'; Example = '180'; Notes = '' }
+    [pscustomobject]@{ Column = 'IsDisabled'; Type = 'bool'; Description = 'Member is disabled'; Example = 'True'; Notes = '' }
+    [pscustomobject]@{ Column = 'IsInactive'; Type = 'bool'; Description = 'Member is inactive beyond threshold'; Example = 'True'; Notes = '' }
+    [pscustomobject]@{ Column = 'FindingReason'; Type = 'string'; Description = 'Reason member was exported'; Example = 'Disabled;Inactive'; Notes = '' }
+    [pscustomobject]@{ Column = 'LookupError'; Type = 'string'; Description = 'Lookup error, if member detail lookup failed'; Example = ''; Notes = '' }
   )
 
   # SPNs

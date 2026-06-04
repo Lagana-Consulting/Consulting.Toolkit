@@ -23,6 +23,7 @@ function New-AdMigrationExcludeFile {
     $excludedUserNames = @($rules.ExcludedUserSamAccountNames | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
     $privilegedUsers = @($runData.PrivilegedAccounts | ForEach-Object { ([string]$_.SamAccountName).Trim().ToLowerInvariant() } | Sort-Object -Unique)
     $serviceAccounts = @($runData.ServiceAccounts | ForEach-Object { ([string]$_.SamAccountName).Trim().ToLowerInvariant() } | Sort-Object -Unique)
+    $groupReviewSignals = Get-AdPlanningGroupReviewSignals -RunRoot $RunRoot
 
     foreach ($user in @($runData.Users)) {
         $sam = ([string]$user.SamAccountName).Trim().ToLowerInvariant()
@@ -64,6 +65,15 @@ function New-AdMigrationExcludeFile {
         if (Test-AdPlanningBuiltInGroup -Group $group -Rules $rules) {
             [void]$rows.Add([pscustomobject]@{
                 ObjectClass = 'Group'; DomainFqdn = [string]$group.DomainFqdn; SamAccountName = [string]$group.SamAccountName; Name = [string]$group.Name; DistinguishedName = [string]$group.DistinguishedName; Reason = 'BuiltInGroup'; Recommendation = 'Exclude built-in groups from standard migration scope.'; LastLogonDays = ''
+            })
+            continue
+        }
+
+        $groupKey = New-AdPlanningGroupKey -Group $group
+        if (-not [string]::IsNullOrWhiteSpace($groupKey) -and $groupReviewSignals.ContainsKey($groupKey)) {
+            $reasons = @($groupReviewSignals[$groupKey].ToArray() | Sort-Object)
+            [void]$rows.Add([pscustomobject]@{
+                ObjectClass = 'Group'; DomainFqdn = [string]$group.DomainFqdn; SamAccountName = [string]$group.SamAccountName; Name = [string]$group.Name; DistinguishedName = [string]$group.DistinguishedName; Reason = ($reasons -join ';'); Recommendation = 'Exclude from default group include scope and review group membership or lifecycle before migration.'; LastLogonDays = ''
             })
         }
     }

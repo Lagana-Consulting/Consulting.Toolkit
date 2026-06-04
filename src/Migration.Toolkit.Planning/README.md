@@ -61,12 +61,13 @@ If you want a customer-friendly handoff package and a zip you can send:
   - exclude candidates
   - a consolidated user-account review file with category flags instead of duplicate user rows across multiple review CSVs
   - duplicate-conflict review when a target run is supplied
-- optional `customer`
+- optional `<CustomerName>` handoff folder, for example `Versetal`
   - plain-language `index.html`
   - `README.txt`
   - `Customer-Action-Checklist.csv`
   - customer-friendly copies of the source review files
   - empty `CustomerDecision`, `Owner`, `Comment`, and `RequiredAction` columns added to the customer-facing CSVs so they can be filled in directly in Excel
+  - optional zip named `MigrationPlanning_<CustomerName>_<timestamp>.zip`
 
 ## Current assumptions
 

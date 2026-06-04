@@ -20,13 +20,13 @@ function Get-AdGroupNestingDepth {
 
     $groups = @()
     try {
-        $groups = @(Get-ADGroup -Filter * -Server $server -Properties MemberOf -ErrorAction Stop)
+        $groups = @(Get-ADGroup -Filter * -Server $server -Properties MemberOf, objectSid -ErrorAction Stop)
     } catch {
         throw "Failed to enumerate groups for $domain via $server. $($_.Exception.Message)"
     }
 
     $results = @()
-    foreach ($g in $groups) {
+    foreach ($g in @($groups | Where-Object { -not (Test-AdBuiltInGroup -Group $_) })) {
         $depth = 0
         $currentGroup = $g
         $visited = @{}

@@ -34,6 +34,15 @@ function Resolve-AdSchemaNameForCsv {
         @{ Pattern = '^AD__Domain__Security__ProtectedUsers__Domain-.*\.csv$'; Schema = 'Domain_Security_ProtectedUsers' }
         @{ Pattern = '^AD__Domain__Security__AdminSdHolderImpact__Domain-.*\.csv$'; Schema = 'AdminSdHolderImpact' }
 
+        # --- Domain Identity Group Membership Details ---
+        @{ Pattern = '^AD__Domain__Identity__UsersDisabled__Domain-.*\.csv$'; Schema = 'UserStatus_DisabledUsers' }
+        @{ Pattern = '^AD__Domain__Identity__UsersInactive__Domain-.*\.csv$'; Schema = 'UserStatus_InactiveUsers' }
+        @{ Pattern = '^AD__Domain__Identity__GroupsEmpty__Domain-.*\.csv$'; Schema = 'GroupMembership_EmptyGroups' }
+        @{ Pattern = '^AD__Domain__Identity__GroupsSingleMember__Domain-.*\.csv$'; Schema = 'GroupMembership_SingleMemberGroups' }
+        @{ Pattern = '^AD__Domain__Identity__GroupsWithDisabledOrInactiveMembers__Domain-.*\.csv$'; Schema = 'GroupMembership_DisabledOrInactiveMembers' }
+        @{ Pattern = '^AD__Domain__Identity__ComputersInactiveWorkstations__Domain-.*\.csv$'; Schema = 'ComputerStatus_InactiveWorkstations' }
+        @{ Pattern = '^AD__Domain__Identity__ComputersInactiveServers__Domain-.*\.csv$'; Schema = 'ComputerStatus_InactiveServers' }
+
         # --- Domain Security Phase 1 ---
         @{ Pattern = '^AD__Domain__Security__RecentlyCreatedObjects__Domain-.*\.csv$'; Schema = 'Domain_Security_RecentlyCreatedObjects' }
         @{ Pattern = '^AD__Domain__Security__BuiltInAdministratorSignals__Domain-.*\.csv$'; Schema = 'Domain_Security_BuiltInAdministratorSignals' }

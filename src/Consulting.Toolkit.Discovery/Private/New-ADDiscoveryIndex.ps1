@@ -58,8 +58,15 @@ function New-ADDiscoveryIndex {
             '^10_forest/AD__Forest__Identity__UpnSuffixes__Forest\.csv$' { return 'Forest.UpnSuffixes' }
 
             '^20_domains/Domain-[^/]+/AD__Domain__Identity__Users__.+\.csv$' { return 'Domain.Users' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Identity__UsersDisabled__.+\.csv$' { return 'Domain.Users.Disabled' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Identity__UsersInactive__.+\.csv$' { return 'Domain.Users.Inactive' }
             '^20_domains/Domain-[^/]+/AD__Domain__Identity__Groups__.+\.csv$' { return 'Domain.Groups' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Identity__GroupsEmpty__.+\.csv$' { return 'Domain.Groups.Empty' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Identity__GroupsSingleMember__.+\.csv$' { return 'Domain.Groups.SingleMember' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Identity__GroupsWithDisabledOrInactiveMembers__.+\.csv$' { return 'Domain.Groups.DisabledOrInactiveMembers' }
             '^20_domains/Domain-[^/]+/AD__Domain__Identity__ComputersAll__.+\.csv$' { return 'Domain.Computers.All' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Identity__ComputersInactiveWorkstations__.+\.csv$' { return 'Domain.Computers.InactiveWorkstations' }
+            '^20_domains/Domain-[^/]+/AD__Domain__Identity__ComputersInactiveServers__.+\.csv$' { return 'Domain.Computers.InactiveServers' }
             '^20_domains/Domain-[^/]+/AD__Domain__Identity__ComputersServers__.+\.csv$' { return 'Domain.Computers.Servers' }
             '^20_domains/Domain-[^/]+/AD__Domain__Identity__ComputersWorkstations__.+\.csv$' { return 'Domain.Computers.Workstations' }
 

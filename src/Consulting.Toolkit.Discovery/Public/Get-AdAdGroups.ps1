@@ -65,19 +65,19 @@ function Get-AdAdGroups {
 
   $groups = @()
   try {
-    $groups = @(Get-ADGroup -Filter * -Server $server -Properties mail, groupCategory, groupScope, whenCreated, whenChanged, description -ErrorAction Stop |
+    $groups = @(Get-ADGroup -Filter * -Server $server -Properties mail, groupCategory, groupScope, whenCreated, whenChanged, description, objectSid -ErrorAction Stop |
       Sort-Object Name)
   } catch {
     # Try without server parameter as fallback
     try {
-      $groups = @(Get-ADGroup -Filter * -Properties mail, groupCategory, groupScope, whenCreated, whenChanged, description -ErrorAction Stop |
+      $groups = @(Get-ADGroup -Filter * -Properties mail, groupCategory, groupScope, whenCreated, whenChanged, description, objectSid -ErrorAction Stop |
         Sort-Object Name)
     } catch {
       throw "Failed to enumerate groups for $domain. $($_.Exception.Message)"
     }
   }
 
-  foreach ($g in $groups) {
+  foreach ($g in @($groups | Where-Object { -not (Test-AdBuiltInGroup -Group $_) })) {
     [pscustomobject]@{
       DomainFqdn        = $domain
       Name              = [string]$g.Name

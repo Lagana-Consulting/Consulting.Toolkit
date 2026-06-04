@@ -27,6 +27,7 @@ function New-AdMigrationIncludeFile {
     $excludedUserNames = @($rules.ExcludedUserSamAccountNames | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() })
     $privilegedUsers = @($runData.PrivilegedAccounts | ForEach-Object { ([string]$_.SamAccountName).Trim().ToLowerInvariant() } | Sort-Object -Unique)
     $serviceAccounts = @($runData.ServiceAccounts | ForEach-Object { ([string]$_.SamAccountName).Trim().ToLowerInvariant() } | Sort-Object -Unique)
+    $groupReviewSignals = Get-AdPlanningGroupReviewSignals -RunRoot $RunRoot
 
     $rows = New-Object System.Collections.Generic.List[object]
 
@@ -73,6 +74,8 @@ function New-AdMigrationIncludeFile {
     if ($ObjectType -in @('All', 'Groups')) {
         foreach ($group in @($runData.Groups)) {
             if (Test-AdPlanningBuiltInGroup -Group $group -Rules $rules) { continue }
+            $groupKey = New-AdPlanningGroupKey -Group $group
+            if (-not [string]::IsNullOrWhiteSpace($groupKey) -and $groupReviewSignals.ContainsKey($groupKey)) { continue }
 
             [void]$rows.Add([pscustomobject]@{
                 ObjectClass       = 'Group'
