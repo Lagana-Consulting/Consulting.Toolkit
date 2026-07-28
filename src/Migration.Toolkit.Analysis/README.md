@@ -23,7 +23,7 @@ That package workflow produces:
 - an optional customer zip archive created with `-ZipCustomerPackage`
 - a neutral starter template in [ExecutiveSummary.Config.Standard.json](</C:/Users/paull/OneDrive - Lagana Consulting/Documents/GitHub/Consulting.Toolkit/src/Migration.Toolkit.Analysis/config/ExecutiveSummary.Config.Standard.json>)
 - optional executive-summary consultant overrides from [ExecutiveSummary.Config.example.json](</C:/Users/paull/OneDrive - Lagana Consulting/Documents/GitHub/Consulting.Toolkit/src/Migration.Toolkit.Analysis/config/ExecutiveSummary.Config.example.json>)
-- a reusable live example for current customer work in [ExecutiveSummary.Config.Versetal.json](</C:/Users/paull/OneDrive - Lagana Consulting/Documents/GitHub/Consulting.Toolkit/src/Migration.Toolkit.Analysis/config/ExecutiveSummary.Config.Versetal.json>)
+- a reusable live example for current customer work in [ExecutiveSummary.Config.Customer.json](</C:/Users/paull/OneDrive - Lagana Consulting/Documents/GitHub/Consulting.Toolkit/src/Migration.Toolkit.Analysis/config/ExecutiveSummary.Config.Customer.json>)
 
 For each source run it can generate:
 - Executive assessment report
@@ -66,13 +66,13 @@ Multiple source runs with a shared target:
 ```powershell
 & "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\Public\run-analysis.ps1" `
   -SourceRunRoot @(
-    "F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
-    "F:\Versetal\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625"
+    "F:\Customer\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
+    "F:\Customer\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625"
   ) `
-  -TargetRunRoot "F:\Versetal\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
-  -OutputRoot "F:\Versetal\AssessmentOutputs" `
-  -WorkspaceRoot "F:\Versetal\AnalysisWorkspace_Versetal" `
-  -CustomerName "Versetal"
+  -TargetRunRoot "F:\Customer\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
+  -OutputRoot "F:\Customer\AssessmentOutputs" `
+  -WorkspaceRoot "F:\Customer\AnalysisWorkspace_Customer" `
+  -CustomerName "Customer"
 ```
 
 Assessment package example:
@@ -80,12 +80,12 @@ Assessment package example:
 ```powershell
 & "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\Public\run-assessment-package.ps1" `
   -SourceRunRoot @(
-    "F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
-    "F:\Versetal\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625"
+    "F:\Customer\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
+    "F:\Customer\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625"
   ) `
-  -TargetRunRoot "F:\Versetal\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
-  -OutputRoot "F:\Versetal\AssessmentPackage" `
-  -CustomerName "Versetal" `
+  -TargetRunRoot "F:\Customer\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
+  -OutputRoot "F:\Customer\AssessmentPackage" `
+  -CustomerName "Customer" `
   -IncludeComprehensiveReport
 ```
 
@@ -93,27 +93,27 @@ Assessment package with executive-summary consultant input:
 
 ```powershell
 & "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\Public\run-assessment-package.ps1" `
-  -SourceRunRoot "F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723" `
-  -TargetRunRoot "F:\Versetal\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
-  -OutputRoot "F:\Versetal\AssessmentPackage" `
-  -CustomerName "Versetal" `
-  -ExecutiveSummaryConfigPath "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\config\ExecutiveSummary.Config.Versetal.json" `
+  -SourceRunRoot "F:\Customer\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723" `
+  -TargetRunRoot "F:\Customer\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
+  -OutputRoot "F:\Customer\AssessmentPackage" `
+  -CustomerName "Customer" `
+  -ExecutiveSummaryConfigPath "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\config\ExecutiveSummary.Config.Customer.json" `
   -CreateCustomerPackage
 ```
 
-For future customers, start with [ExecutiveSummary.Config.Standard.json](</C:/Users/paull/OneDrive - Lagana Consulting/Documents/GitHub/Consulting.Toolkit/src/Migration.Toolkit.Analysis/config/ExecutiveSummary.Config.Standard.json>) and update the `Metadata`, `Defaults`, and `PerForest` entries for the new engagement. Use [ExecutiveSummary.Config.Versetal.json](</C:/Users/paull/OneDrive - Lagana Consulting/Documents/GitHub/Consulting.Toolkit/src/Migration.Toolkit.Analysis/config/ExecutiveSummary.Config.Versetal.json>) as a live example of a filled-in engagement file.
+For future customers, start with [ExecutiveSummary.Config.Standard.json](</C:/Users/paull/OneDrive - Lagana Consulting/Documents/GitHub/Consulting.Toolkit/src/Migration.Toolkit.Analysis/config/ExecutiveSummary.Config.Standard.json>) and update the `Metadata`, `Defaults`, and `PerForest` entries for the new engagement. Use [ExecutiveSummary.Config.Customer.json](</C:/Users/paull/OneDrive - Lagana Consulting/Documents/GitHub/Consulting.Toolkit/src/Migration.Toolkit.Analysis/config/ExecutiveSummary.Config.Customer.json>) as a live example of a filled-in engagement file.
 
 Customer-friendly package example:
 
 ```powershell
 & "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\Public\run-assessment-package.ps1" `
   -SourceRunRoot @(
-    "F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
-    "F:\Versetal\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625"
+    "F:\Customer\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
+    "F:\Customer\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625"
   ) `
-  -TargetRunRoot "F:\Versetal\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
-  -OutputRoot "F:\Versetal\AssessmentPackage" `
-  -CustomerName "Versetal" `
+  -TargetRunRoot "F:\Customer\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
+  -OutputRoot "F:\Customer\AssessmentPackage" `
+  -CustomerName "Customer" `
   -CreateCustomerPackage `
   -ZipCustomerPackage
 ```
@@ -122,9 +122,9 @@ If you want the internal package without structured data:
 
 ```powershell
 & "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\Public\run-assessment-package.ps1" `
-  -SourceRunRoot "F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723" `
-  -OutputRoot "F:\Versetal\AssessmentPackage_NoData" `
-  -CustomerName "Versetal" `
+  -SourceRunRoot "F:\Customer\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723" `
+  -OutputRoot "F:\Customer\AssessmentPackage_NoData" `
+  -CustomerName "Customer" `
   -SkipStructuredData `
   -SkipWorkspace
 ```
@@ -135,24 +135,24 @@ Examples
 ```powershell
 & "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\Public\run-assessment-package.ps1" `
     -SourceRunRoot @(
-    "F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
-    "F:\Versetal\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625") `
-    -TargetRunRoot "F:\Versetal\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
-    -OutputRoot "F:\Versetal\AssessmentPackage_Internal" `
-    -CustomerName "Versetal" `
-    -ExecutiveSummaryConfigPath "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\config\ExecutiveSummary.Config.Versetal.json" `
+    "F:\Customer\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
+    "F:\Customer\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625") `
+    -TargetRunRoot "F:\Customer\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
+    -OutputRoot "F:\Customer\AssessmentPackage_Internal" `
+    -CustomerName "Customer" `
+    -ExecutiveSummaryConfigPath "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\config\ExecutiveSummary.Config.Customer.json" `
     -IncludeComprehensiveReport
 ```
 
 ```powershell 
 & "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\Public\run-assessment-package.ps1" `
     -SourceRunRoot @(
-    "F:\Versetal\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
-    "F:\Versetal\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625") `
-    -TargetRunRoot "F:\Versetal\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
-    -OutputRoot "F:\Versetal\AssessmentPackage_Customer" `
-    -CustomerName "Versetal" `
-    -ExecutiveSummaryConfigPath "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\config\ExecutiveSummary.Config.Versetal.json" `
+    "F:\Customer\rossoptical\Discovery\AD_rossoptical.local__rossoptical_20260428-085723",
+    "F:\Customer\lighthouse\Discovery\AD_lighthouseoptics.local__lighthouseoptical_20260428-141625") `
+    -TargetRunRoot "F:\Customer\poc.local\discovery\AD_poc.local__poc.local_20260428-142453" `
+    -OutputRoot "F:\Customer\AssessmentPackage_Customer" `
+    -CustomerName "Customer" `
+    -ExecutiveSummaryConfigPath "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Migration.Toolkit.Analysis\config\ExecutiveSummary.Config.Customer.json" `
     -CreateCustomerPackage `
     -SkipStructuredData `
     -ZipCustomerPackage `
