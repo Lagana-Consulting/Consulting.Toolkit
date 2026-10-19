@@ -43,7 +43,7 @@ Import-Module "C:\scripts\Consulting.Toolkit.Discovery\Consulting.Toolkit.Discov
 Invoke-AdDiscoveryExport `
   -Environment Lighthouseoptics `
   -OutputRoot "C:\scripts\Discovery" `
-  -CustomerName "Precision_Optical" `
+  -CustomerName "CustomerName" `
   -IncludeSecurity
 ```
 
@@ -72,9 +72,8 @@ domain in the forest.
 
 ## Commands
 
-- `Invoke-AdDiscoveryExport` - recommended wrapper for a full discovery run and
+- `Invoke-AdDiscoveryExport` - full discovery run command with
   `Discovery.Index.json` generation
-- `Invoke-AdDiscovery` - raw AD collector used by the wrapper
 - `Get-AdAdForest`
 - `Get-AdAdDomains`
 - `Get-AdAdDomainContext`
@@ -82,7 +81,7 @@ domain in the forest.
 - `Export-AdSchemas`
 
 Most `Get-Ad*` functions are lower-level collectors used by
-`Invoke-AdDiscovery`.
+`Invoke-AdDiscoveryExport`.
 
 ## Output Structure
 
@@ -146,8 +145,6 @@ $result.RunRoot
 
 If module import fails, confirm the path points to the `.psd1` file:
 
-```powershell
-Test-Path "C:\Users\paull\OneDrive - Lagana Consulting\Documents\GitHub\Consulting.Toolkit\src\Consulting.Toolkit.Discovery\Consulting.Toolkit.Discovery.psd1"
 ```
 
 If discovery cannot find AD commands, install or enable RSAT Active Directory

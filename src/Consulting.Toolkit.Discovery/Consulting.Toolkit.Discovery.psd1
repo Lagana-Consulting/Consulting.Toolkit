@@ -14,7 +14,6 @@
 
     # Make manifest match the contract surface (psm1 still controls Export-ModuleMember)
     FunctionsToExport    = @(
-        'Invoke-AdDiscovery',
         'Invoke-AdDiscoveryExport',
         'Get-AdAdForest',
         'Get-AdAdDomains',

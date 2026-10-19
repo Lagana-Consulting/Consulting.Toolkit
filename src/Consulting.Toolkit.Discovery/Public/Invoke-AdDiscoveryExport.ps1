@@ -4,7 +4,7 @@ function Invoke-AdDiscoveryExport {
     Executes a pure Active Directory discovery collection run.
 
     .DESCRIPTION
-    Performs live AD data collection using Invoke-AdDiscovery and
+    Performs live AD data collection using the module's internal collector and
     generates a Discovery Index file describing all collected datasets.
 
     This command:
@@ -60,7 +60,7 @@ function Invoke-AdDiscoveryExport {
     Write-Host "========================================"
     Write-Host ""
 
-    # Build parameter splat for Invoke-AdDiscovery
+    # Build parameter splat for the internal collector.
     $invokeParams = @{
         Environment  = $Environment
         OutputRoot   = $OutputRoot
@@ -89,7 +89,7 @@ function Invoke-AdDiscoveryExport {
 
     if (-not $result) {
         $types = ($raw | ForEach-Object { $_.GetType().FullName } | Sort-Object -Unique) -join ', '
-        throw "Invoke-AdDiscovery did not return a result object with RunRoot. Returned types: $types"
+        throw "AD discovery collector did not return a result object with RunRoot. Returned types: $types"
     }
 
     # Generate discovery index
