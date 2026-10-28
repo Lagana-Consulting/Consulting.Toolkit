@@ -49,6 +49,8 @@ function Invoke-AdDiscoveryExport {
         [Parameter()]
         [string]$Server,
 
+        [string[]]$Domain,
+
         [switch]$IncludeSecurity
     )
 
@@ -69,6 +71,10 @@ function Invoke-AdDiscoveryExport {
 
     if ($PSBoundParameters.ContainsKey('Server') -and -not [string]::IsNullOrWhiteSpace($Server)) {
         $invokeParams.Server = $Server
+    }
+
+    if ($Domain) {
+        $invokeParams.Domain = $Domain
     }
 
     if ($IncludeSecurity) {

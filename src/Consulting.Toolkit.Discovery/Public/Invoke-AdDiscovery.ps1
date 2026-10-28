@@ -34,6 +34,9 @@ function Invoke-AdDiscovery {
     .PARAMETER Server
     Optional specific DC/GC to use for initial forest discovery and domain context.
 
+    .PARAMETER Domain
+    Optional domain FQDN(s) to limit per-domain collection to. Forest-level datasets still cover the whole forest.
+
     .OUTPUTS
     PSCustomObject with:
       RunRoot, LogPath, Environment, ForestName, DomainCount, UserCount, ComputerCount, GroupCount, ExecutionTime
@@ -54,6 +57,8 @@ function Invoke-AdDiscovery {
 
         [Parameter()]
         [string]$Server,
+
+        [string[]]$Domain,
 
         [switch]$IncludeSecurity
     )
@@ -104,6 +109,12 @@ function Invoke-AdDiscovery {
         $forest = Get-AdAdForest @forestParams
         $domains = @(Get-AdAdDomains -Forest $forest)
         $suffixSet = Get-AdKnownUpnSuffixes -Forest $forest -Domains $domains -AsHashSet
+        $allForestDomains = $domains
+        if ($Domain) {
+            $wanted = @($Domain | ForEach-Object { $_.Trim().ToLowerInvariant() })
+            $domains = @($domains | Where-Object { $_ -in $wanted })
+            if (-not $domains) { throw "Domain(s) not found in forest: $($Domain -join ', ')" }
+        }
         Log-ExecutionStatus "Forest Discovery" "OK"
     } catch {
         Log-ExecutionStatus "Forest Discovery" "FAIL" $_.Exception.Message
@@ -226,7 +237,7 @@ function Invoke-AdDiscovery {
     Write-Host "Exporting forest-level data..." -ForegroundColor Cyan
 
     try { (Get-AdAdForestSummary -Forest $forest) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Summary__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Forest Summary" "FAIL" $_.Exception.Message }
-    try { (Get-AdAdForestUpnSuffixes -Forest $forest -Domains $domains) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Identity__UpnSuffixes__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Forest UPN Suffixes" "FAIL" $_.Exception.Message }
+    try { (Get-AdAdForestUpnSuffixes -Forest $forest -Domains $allForestDomains) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Identity__UpnSuffixes__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Forest UPN Suffixes" "FAIL" $_.Exception.Message }
     try { (Get-AdAdReplicationSites) | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Sites__Forest.csv') -Force -AllowEmpty } catch { Log-ExecutionStatus "Replication Sites" "FAIL" $_.Exception.Message }
 
     try { (Get-AdAdReplicationSubnets)   | Export-AdCsvSafe -Path (Join-Path $forestDir 'AD__Forest__Network__Subnets__Forest.csv')   -Force -AllowEmpty } catch { Log-ExecutionStatus "Replication Subnets" "FAIL" $_.Exception.Message }
