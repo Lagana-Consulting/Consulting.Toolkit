@@ -243,6 +243,38 @@ the recorded risk label differs. High-cost site links use numeric cost greater
 than 500. Disabled-account cleanup uses whole elapsed days and reports
 `CleanupCandidate=Unknown` when `WhenChanged` is missing.
 
+## Large Environments
+
+SPN and SID-history inventory use server-side presence filters. The run retains
+numeric forest totals and releases user/computer rows after their domain status
+exports instead of keeping every domain's inventory until completion.
+
+`Export-AdCsvSafe` serializes rows in batches of at most 256 to a unique
+`.partial` file beside the destination. The completed file is published with a
+same-directory rename or metadata-preserving replacement. A late invalid row or
+write failure leaves an existing destination intact. Schema headers, UTC date
+formatting, quoting, destination ACLs, and row order are preserved. Diagnostics
+report staging progress every 10,000 rows; staging progress is not successful
+publication. The writer closes between batches.
+
+An interrupted producer or terminated PowerShell process may leave an unpublished
+`.partial` file. These files are excluded from CSV manifests and the discovery
+index. After the run has stopped, they can be removed; they are not completed
+discovery datasets. Atomic replacement requires filesystem support and permission
+to preserve the destination's metadata. If replacement fails, the exporter
+reports the error rather than falling back to deleting the destination.
+
+Automatic DC selection excludes known read-only candidates and checks ADWS TCP
+9389 with a 1,500 ms per-probe limit and a 10,000 ms total connectivity-probe
+budget. Internal `Get-AdWritableDc` parameters `TimeoutMs` and `ProbeBudgetMs`
+can adjust those limits. DC enumeration and subsequent authenticated AD/GPO
+operations still use their native timeouts. A domain FQDN fallback retains the
+existing explicit-domain targeting and naming-context validation.
+
+These changes reduce avoidable work and bound connectivity probing. They do not
+yet enforce a hard deadline on an entire dataset or run; configurable paging,
+classified retries, and supervised operation deadlines remain separate work.
+
 ## Troubleshooting
 
 If module import fails, confirm the path points to the `.psd1` file.
@@ -276,6 +308,7 @@ Local regression checks (mocked AD queries, real export and logging code):
 & .\Tests\DiscoveryTargetIntegrity.Tests.ps1
 & .\Tests\DiscoveryContracts.Tests.ps1
 & .\Tests\DiscoveryAssessment.Tests.ps1
+& .\Tests\DiscoveryPerformance.Tests.ps1
 ```
 
 The contract suite checks all declared exports and registered schema shapes,
@@ -285,3 +318,14 @@ PowerShell 5.1 and PowerShell 7 when changing module contracts.
 The assessment suite verifies expected counts and flags before and after CSV
 import, threshold boundaries, missing values, and date exports under US, UK,
 and French locales.
+
+For a larger local CSV exercise (no AD queries):
+
+```powershell
+& .\Tests\DiscoveryPerformance.Tests.ps1 -RowCounts 10000,100000,500000
+```
+
+The performance suite verifies bounded buffering, atomic publication and ACL
+preservation, interrupted producers, filtered query contracts, and connection
+probe limits. Its timing and process peak-memory figures describe local CSV
+serialization, not customer AD throughput.

@@ -212,6 +212,12 @@ foreach ($case in $cases) {
     Assert-Condition ($result.FailedOperationCount -eq @($result.FailedOperations).Count) "$case failure count"
     $expectedFailures = if ($case -in @('Healthy', 'Empty', 'Retry', 'GpoSkipped', 'OuPartial', 'FgppRows', 'FgppSkipped')) { 0 } elseif ($case -in @('Security', 'FgppFailure')) { 2 } else { 1 }
     Assert-Condition ($result.FailedOperationCount -eq $expectedFailures) "$case records only expected failures"
+    $expectedUsers = if ($scenario.Empty) { 0 } else {
+        @($scenario.Domains | Where-Object { -not ($scenario.Failure -in @('Users','WrongDomainRows') -and $_ -eq $scenario.FailureDomain) }).Count
+    }
+    $expectedComputers = if ($scenario.Empty -or $case -eq 'Computers') { 0 } else { $scenario.Domains.Count }
+    $expectedGroups = if ($case -eq 'Groups') { 0 } else { $scenario.Domains.Count }
+    Assert-Condition ($result.UserCount -eq $expectedUsers -and $result.ComputerCount -eq $expectedComputers -and $result.GroupCount -eq $expectedGroups) "$case totals reflect collected rows, including export failures and domain isolation"
 
     foreach ($domain in $scenario.Domains) {
         $domainDir = Join-Path $result.RunRoot ("20_domains\Domain-$domain")

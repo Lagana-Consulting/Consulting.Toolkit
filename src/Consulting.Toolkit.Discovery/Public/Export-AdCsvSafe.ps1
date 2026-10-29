@@ -26,9 +26,6 @@ function Export-AdCsvSafe {
     )
 
     begin {
-        # Collect pipeline objects into a list so we can enforce column order / handle empty.
-        $items = New-Object System.Collections.Generic.List[object]
-
         # Resolve + ensure folder exists
         $outPath = $Path
         try {
@@ -40,6 +37,7 @@ function Export-AdCsvSafe {
             # fall back to raw path
             $outPath = $Path
         }
+        $outPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($outPath)
 
         Write-AdDiscoveryEvent -Kind Csv -Status START -OutputPath $outPath
         $dir = Split-Path -Path $outPath -Parent
@@ -76,68 +74,93 @@ function Export-AdCsvSafe {
             }
         }
 
-        $enc = if ($Encoding -eq 'Ascii') { 'ASCII' } else { 'UTF8' }
+        $csvEncoding = if ($Encoding -eq 'Ascii') { [System.Text.Encoding]::ASCII } else {
+            # Preserve the engine's existing UTF8 BOM convention.
+            New-Object System.Text.UTF8Encoding($PSVersionTable.PSVersion.Major -le 5)
+        }
+        $csvState = @{
+            Buffer = New-Object System.Collections.Generic.List[object]
+            Columns = $schemaColumns
+            TempPath = Join-Path $dir ('.' + [IO.Path]::GetFileName($outPath) + '.' + [guid]::NewGuid().ToString('N') + '.partial')
+            HeaderWritten = $false
+            RowCount = [long]0
+        }
+        function Write-AdCsvBuffer {
+            param($State, $TextEncoding)
+            if ($State.Buffer.Count -eq 0) { return }
+            $lines = @($State.Buffer.ToArray() | ConvertTo-Csv -NoTypeInformation -ErrorAction Stop)
+            $writer = New-Object System.IO.StreamWriter($State.TempPath, $true, $TextEncoding)
+            try {
+                $start = if ($State.HeaderWritten) { 1 } else { 0 }
+                for ($i = $start; $i -lt $lines.Count; $i++) { $writer.WriteLine($lines[$i]) }
+            } finally { $writer.Dispose() }
+            $State.HeaderWritten = $true
+            $State.Buffer.Clear()
+        }
     }
 
     process {
         if ($null -ne $InputObject) {
-            $items.Add($InputObject)
+            try {
+                if ($schemaColumns -and $schemaColumns.Count -gt 0) {
+                    $missing = @(foreach ($column in $schemaColumns) {
+                        if ($null -eq $InputObject.PSObject.Properties[$column]) { $column }
+                    })
+                    if ($missing.Count -gt 0) {
+                        throw "Schema '$SchemaName' cannot export '$outPath': row is missing column(s) $($missing -join ', '). Supply explicit null values when a field is unknown."
+                    }
+                }
+                if (-not $csvState.Columns) { $csvState.Columns = @($InputObject.PSObject.Properties.Name) }
+                $row = [ordered]@{}
+                foreach ($column in $csvState.Columns) {
+                    $property = $InputObject.PSObject.Properties[$column]
+                    $value = if ($null -ne $property) { $property.Value } else { $null }
+                    if ($value -is [datetime] -or $value -is [datetimeoffset]) {
+                        $value = $value.ToUniversalTime().ToString('o', [Globalization.CultureInfo]::InvariantCulture)
+                    }
+                    $row[$column] = $value
+                }
+                $csvState.Buffer.Add([pscustomobject]$row)
+                $csvState.RowCount++
+                if ($csvState.Buffer.Count -ge 256) { Write-AdCsvBuffer $csvState $csvEncoding }
+                if (($csvState.RowCount % 10000) -eq 0) {
+                    Write-AdDiscoveryEvent -Kind Csv -Status INFO -OutputPath $outPath -RowCount $csvState.RowCount -Details @{ Phase = 'Staging'; Published = $false }
+                }
+            } catch {
+                # No writer remains open between process calls, including on interruption.
+                $csvState.Buffer.Clear()
+                Remove-Item -LiteralPath $csvState.TempPath -Force -ErrorAction SilentlyContinue
+                throw
+            }
         }
     }
 
     end {
-        # Handle empty output
-        if ($items.Count -eq 0) {
-            if (-not $AllowEmpty) {
-                # Do nothing by default (prevents creating lots of empty files unless you want them)
-                return $outPath
-            }
+        try {
+            if ($csvState.RowCount -eq 0) {
+                if (-not $AllowEmpty) { return $outPath }
+                if ($schemaColumns -and $schemaColumns.Count -gt 0) {
+                    $emptyRow = [ordered]@{}
+                    foreach ($column in $schemaColumns) { $emptyRow[$column] = $null }
+                    $headerLine = [pscustomobject]$emptyRow | ConvertTo-Csv -NoTypeInformation | Select-Object -First 1
+                    [IO.File]::WriteAllText($csvState.TempPath, $headerLine + [Environment]::NewLine, $csvEncoding)
+                } else {
+                    [IO.File]::WriteAllBytes($csvState.TempPath, [byte[]]@())
+                }
+            } else { Write-AdCsvBuffer $csvState $csvEncoding }
 
-            if ($schemaColumns -and $schemaColumns.Count -gt 0) {
-                # Write header-only CSV based on schema
-                $emptyRow = [ordered]@{}
-                foreach ($column in $schemaColumns) { $emptyRow[$column] = $null }
-                $headerLine = [pscustomobject]$emptyRow | ConvertTo-Csv -NoTypeInformation | Select-Object -First 1
-                Set-Content -LiteralPath $outPath -Value $headerLine -Encoding $enc -Force
-                Write-AdDiscoveryCsvResult -Path $outPath -RowCount 0
-                return $outPath
-            }
-
-            # If AllowEmpty but no schema, write an empty file (0 bytes)
-            Set-Content -LiteralPath $outPath -Value @() -Encoding $enc -Force
-            Write-AdDiscoveryCsvResult -Path $outPath -RowCount 0
+            # Staging in the destination folder permits an atomic rename/replace.
+            # Recheck existence so a concurrent writer cannot bypass -Force.
+            if ([IO.File]::Exists($outPath)) {
+                if (-not $Force) { throw "File already exists: $outPath (use -Force to overwrite)" }
+                # Preserve destination metadata/ACLs; fail instead of ignoring
+                # metadata errors when the caller lacks replacement permissions.
+                [IO.File]::Replace($csvState.TempPath, $outPath, [NullString]::Value, $false)
+            } else { [IO.File]::Move($csvState.TempPath, $outPath) }
+            Write-AdDiscoveryCsvResult -Path $outPath -RowCount $csvState.RowCount
             return $outPath
+        } finally {
+            Remove-Item -LiteralPath $csvState.TempPath -Force -ErrorAction SilentlyContinue
         }
-
-        # Enforce schema column order if requested
-        if ($schemaColumns -and $schemaColumns.Count -gt 0) {
-            foreach ($it in $items) {
-                $missing = @($schemaColumns | Where-Object { $null -eq $it.PSObject.Properties[$_] })
-                if ($missing.Count -gt 0) {
-                    throw "Schema '$SchemaName' cannot export '$outPath': row is missing column(s) $($missing -join ', '). Supply explicit null values when a field is unknown."
-                }
-            }
-        }
-
-        # CSV has no date type. Write native dates in UTC ISO 8601 so reimporting
-        # on another locale does not swap day/month or lose timezone information.
-        $columns = if ($schemaColumns -and $schemaColumns.Count -gt 0) {
-            @($schemaColumns)
-        } else { @($items[0].PSObject.Properties.Name) }
-        $rows = foreach ($it in $items) {
-            $row = [ordered]@{}
-            foreach ($c in $columns) {
-                $p = $it.PSObject.Properties[$c]
-                $value = if ($null -ne $p) { $p.Value } else { $null }
-                if ($value -is [datetime] -or $value -is [datetimeoffset]) {
-                    $value = $value.ToUniversalTime().ToString('o', [Globalization.CultureInfo]::InvariantCulture)
-                }
-                $row[$c] = $value
-            }
-            [pscustomobject]$row
-        }
-        $rows | Export-Csv -LiteralPath $outPath -NoTypeInformation -Encoding $enc -Force
-        Write-AdDiscoveryCsvResult -Path $outPath -RowCount $items.Count
-        return $outPath
     }
 }

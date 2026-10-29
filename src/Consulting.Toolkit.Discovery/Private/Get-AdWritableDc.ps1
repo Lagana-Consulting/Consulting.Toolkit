@@ -5,7 +5,10 @@ function Get-AdWritableDc {
     [ValidateNotNullOrEmpty()]
     [string]$DomainFqdn,
 
-    [int]$TimeoutMs = 1500
+    [ValidateRange(1,60000)][int]$TimeoutMs = 1500,
+
+    # Total budget for connectivity probes; AD enumeration has its native timeout.
+    [ValidateRange(1,60000)][int]$ProbeBudgetMs = 10000
   )
 
   if (-not (Get-Command Get-ADDomainController -ErrorAction SilentlyContinue)) {
@@ -17,6 +20,7 @@ function Get-AdWritableDc {
 
   try {
     $candidates = @(Get-ADDomainController -Filter * -Server $DomainFqdn -ErrorAction Stop |
+      Where-Object { -not ($_.PSObject.Properties['IsReadOnly'] -and $_.IsReadOnly) } |
       Sort-Object -Property IsPdc, IsGlobalCatalog -Descending)
   }
   catch {
@@ -26,14 +30,22 @@ function Get-AdWritableDc {
     return $DomainFqdn
   }
 
+  $probeTimer = [System.Diagnostics.Stopwatch]::StartNew()
   foreach ($dc in $candidates) {
     $hostName = $dc.HostName
     if (-not $hostName) { continue }
 
-    # Quick reachability check (no ICMP requirement)
+    $remainingMs = $ProbeBudgetMs - [int]$probeTimer.ElapsedMilliseconds
+    if ($remainingMs -le 0) {
+      Write-AdDiscoveryEvent -Kind Query -Operation 'DC Reachability' -Status INFO -Details @{ ProbeBudgetMs = $ProbeBudgetMs; Reason = 'Probe budget exhausted'; NextTarget = $DomainFqdn }
+      break
+    }
+
+    # AD cmdlets use ADWS; LDAP alone does not establish its availability.
     try {
-      $ok = Test-NetConnection -ComputerName $hostName -Port 389 -InformationLevel Quiet -WarningAction SilentlyContinue
-      Write-AdDiscoveryEvent -Kind Query -Operation 'DC Reachability' -Status INFO -Details @{ Server = $hostName; Port = 389; Reachable = [bool]$ok }
+      $attemptTimeoutMs = [math]::Min($TimeoutMs, $remainingMs)
+      $ok = Test-AdTcpPort -ComputerName $hostName -Port 9389 -TimeoutMs $attemptTimeoutMs
+      Write-AdDiscoveryEvent -Kind Query -Operation 'DC Reachability' -Status INFO -Details @{ Server = $hostName; Port = 9389; Reachable = [bool]$ok; TimeoutMs = $attemptTimeoutMs; ProbeBudgetMs = $ProbeBudgetMs }
       if ($ok) { return $hostName }
     }
     catch {

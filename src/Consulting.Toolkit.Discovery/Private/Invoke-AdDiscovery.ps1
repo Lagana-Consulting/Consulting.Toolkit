@@ -281,9 +281,10 @@ function Invoke-AdDiscovery {
     # -------------------------
     # Domain loop (collector)
     # -------------------------
-    $allUsers = @()
-    $allComputers = @()
-    $allGroups = @()
+    # Only totals are needed across domains; retain rows for their local consumers.
+    [long]$userCount = 0
+    [long]$computerCount = 0
+    [long]$groupCount = 0
 
     foreach ($d in $domains) {
         Write-Host "`nProcessing domain: $d" -ForegroundColor Cyan
@@ -460,18 +461,19 @@ function Invoke-AdDiscovery {
             Log-ExecutionStatus "Groups ($d)" 'START'
             try {
                 $groups = @(Get-AdAdGroups -DomainContext $ctx)
-                $allGroups += $groups
+                $groupCount += $groups.Count
                 $groups | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Groups__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
                 Log-ExecutionStatus "Groups ($d)" 'OK'
             } catch {
                 Log-ExecutionStatus "Groups ($d)" 'FAIL' $_.Exception.Message -ErrorRecord $_
             }
+            $groups = $null
 
             Log-ExecutionStatus "Users ($d)" 'START'
             try {
                 $users = @(Get-AdAdUsers -DomainContext $ctx -Now $Now -KnownUpnSuffixSet $suffixSet)
                 $usersCollected = $true
-                $allUsers += $users
+                $userCount += $users.Count
                 $users | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__Users__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
                 Log-ExecutionStatus "Users ($d)" 'OK'
             } catch {
@@ -482,7 +484,7 @@ function Invoke-AdDiscovery {
             try {
                 $comps = @(Get-AdAdComputers -DomainContext $ctx -Now $Now)
                 $computersCollected = $true
-                $allComputers += $comps
+                $computerCount += $comps.Count
                 $comps | Export-AdCsvSafe -Path (Join-Path $domainDir ("AD__Domain__Identity__ComputersAll__{0}.csv" -f $scopeTag)) -Force -AllowEmpty
                 Log-ExecutionStatus "Computers ($d)" 'OK'
             } catch {
@@ -510,6 +512,8 @@ function Invoke-AdDiscovery {
             } else {
                 Log-ExecutionStatus "Computer Status Details ($d)" 'SKIP' 'Computer collection failed; dependent exports were not attempted.'
             }
+            $computerStatus = $null
+            $comps = $null
 
             if ($usersCollected) {
                 Log-ExecutionStatus "User Status Details ($d)" 'START'
@@ -532,6 +536,8 @@ function Invoke-AdDiscovery {
             } else {
                 Log-ExecutionStatus "User Status Details ($d)" 'SKIP' 'User collection failed; dependent exports were not attempted.'
             }
+            $userStatus = $null
+            $users = $null
 
             Log-ExecutionStatus "Group Membership Details ($d)" 'START'
             try {
@@ -554,6 +560,7 @@ function Invoke-AdDiscovery {
             } catch {
                 Log-ExecutionStatus "Group Membership Details ($d)" "FAIL" $_.Exception.Message -ErrorRecord $_
             }
+            $groupDetails = $null
 
             # Published resources (collector)
             Write-Host "  - Published resources" -ForegroundColor Gray
@@ -717,9 +724,9 @@ function Invoke-AdDiscovery {
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host "Forest: $($forest.Name)" -ForegroundColor Yellow
     Write-Host "Domains: $($domains.Count)" -ForegroundColor Yellow
-    Write-Host "Users: $($allUsers.Count)" -ForegroundColor Yellow
-    Write-Host "Computers: $($allComputers.Count)" -ForegroundColor Yellow
-    Write-Host "Groups: $($allGroups.Count)" -ForegroundColor Yellow
+    Write-Host "Users: $userCount" -ForegroundColor Yellow
+    Write-Host "Computers: $computerCount" -ForegroundColor Yellow
+    Write-Host "Groups: $groupCount" -ForegroundColor Yellow
     Write-Host "Outputs in: $($layout.RunRoot)" -ForegroundColor Yellow
     Write-Host ""
 
@@ -738,9 +745,9 @@ function Invoke-AdDiscovery {
         Environment          = $Environment
         ForestName           = $forest.Name
         DomainCount          = $domains.Count
-        UserCount            = $allUsers.Count
-        ComputerCount        = $allComputers.Count
-        GroupCount           = $allGroups.Count
+        UserCount            = $userCount
+        ComputerCount        = $computerCount
+        GroupCount           = $groupCount
         ExecutionTime        = $Now
     }
 }

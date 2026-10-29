@@ -17,7 +17,7 @@ function Get-AdAdSpns {
   $server = [string]$DomainContext.Server
 
   # Objects that can have SPNs: user and computer
-  $filter = "(|(objectClass=user)(objectClass=computer))"
+  $filter = "(&(|(objectClass=user)(objectClass=computer))(servicePrincipalName=*))"
 
   $objs = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADObject' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
       param($queryServer)

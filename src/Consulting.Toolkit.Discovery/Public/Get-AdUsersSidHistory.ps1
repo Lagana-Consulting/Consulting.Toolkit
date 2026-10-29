@@ -16,7 +16,10 @@ function Get-AdUsersSidHistory {
   $domain = [string]$DomainContext.DomainFqdn
   $server = [string]$DomainContext.Server
 
-  $users = @(Get-ADUser -Filter * -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $server -Properties SIDHistory -ErrorAction Stop)
+  $users = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADUser SID history' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
+    param($queryServer)
+    Get-ADUser -LDAPFilter '(sIDHistory=*)' -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $queryServer -Properties SIDHistory -ErrorAction Stop
+  })
 
   foreach ($u in $users) {
     $hist = @($u.SIDHistory)
