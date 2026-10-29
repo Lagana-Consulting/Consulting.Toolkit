@@ -94,6 +94,7 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'PdcEmulator'; Type = 'string'; Description = 'PDC emulator FSMO holder'; Example = 'dc1.contoso.com'; Notes = '' }
     [pscustomobject]@{ Column = 'RidMaster'; Type = 'string'; Description = 'RID master FSMO holder'; Example = 'dc1.contoso.com'; Notes = '' }
     [pscustomobject]@{ Column = 'InfrastructureMaster'; Type = 'string'; Description = 'Infrastructure master FSMO holder'; Example = 'dc1.contoso.com'; Notes = '' }
+    [pscustomobject]@{ Column = 'ServerUsed'; Type = 'string'; Description = 'Query endpoint used'; Example = ''; Notes = '' }
   )
 
   # Users (Identity)
@@ -280,17 +281,18 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'Object class'; Example = 'user'; Notes = 'user or computer' }
     [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'AD distinguished name'; Example = 'CN=sqlsvc,OU=ServiceAccounts,DC=contoso,DC=com'; Notes = '' }
     [pscustomobject]@{ Column = 'ServicePrincipalName'; Type = 'string'; Description = 'Service principal name'; Example = 'MSSQLSvc/sql.contoso.com:1433'; Notes = 'Kerberos service identifier' }
+    [pscustomobject]@{ Column = 'ObjectType'; Type = 'string'; Description = 'Legacy object-type alias'; Example = ''; Notes = 'Compatibility alias for ObjectClass, using User/Computer labels' }
+    [pscustomobject]@{ Column = 'SPN'; Type = 'string'; Description = 'Legacy SPN alias'; Example = ''; Notes = 'Compatibility alias for ServicePrincipalName' }
   )
 
   # Privileged Accounts
   $schemas['PrivilegedAccounts'] = @(
-    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
-    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'SAM account name'; Example = 'jdoe'; Notes = '' }
-    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Display name'; Example = 'Jane Doe'; Notes = '' }
-    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'AD distinguished name'; Example = 'CN=Jane Doe,OU=Users,DC=contoso,DC=com'; Notes = '' }
-    [pscustomobject]@{ Column = 'ObjectClass'; Type = 'string'; Description = 'Object class'; Example = 'user'; Notes = 'user or computer' }
-    [pscustomobject]@{ Column = 'Enabled'; Type = 'bool'; Description = 'Enabled status'; Example = 'True'; Notes = '' }
-    [pscustomobject]@{ Column = 'PrivilegeGroups'; Type = 'string'; Description = 'Semicolon-separated privileged group memberships'; Example = 'Domain Admins;Administrators'; Notes = 'Derived by recursive group membership + adminCount' }
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS name'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'SAM account name'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Account DN'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'InPrivGroups'; Type = 'bool'; Description = 'Member of a privileged group'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'PrivGroups'; Type = 'string'; Description = 'Privileged groups'; Example = ''; Notes = 'Semicolon-delimited' }
+    [pscustomobject]@{ Column = 'AdminCount'; Type = 'bool'; Description = 'adminCount-derived flag'; Example = ''; Notes = '' }
   )
 
   # Assessment Summary
@@ -448,17 +450,7 @@ function Get-AdSchemaDefinitions {
   )
 
   # Empty Groups
-  $schemas['EmptyGroups'] = @(
-    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'Domain DNS root'; Example = 'contoso.com'; Notes = '' }
-    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Group name'; Example = 'OldGroup'; Notes = '' }
-    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'SAM account name'; Example = 'OldGroup'; Notes = '' }
-    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'AD DN'; Example = 'CN=OldGroup,OU=Groups,DC=contoso,DC=com'; Notes = '' }
-    [pscustomobject]@{ Column = 'GroupCategory'; Type = 'string'; Description = 'Group category'; Example = 'Security'; Notes = '' }
-    [pscustomobject]@{ Column = 'GroupScope'; Type = 'string'; Description = 'Group scope'; Example = 'Universal'; Notes = '' }
-    [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Creation time'; Example = '2021-01-01'; Notes = '' }
-    [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Last changed'; Example = '2024-12-12'; Notes = '' }
-    [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Description'; Example = 'Unused group'; Notes = '' }
-  )
+  $schemas['EmptyGroups'] = @($schemas['GroupMembership_EmptyGroups'])
 
   # Duplicate SPNs
   $schemas['DuplicateSPNs'] = @(
@@ -651,6 +643,7 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'MemberSamAccountName'; Type = 'string'; Description = 'Member sAMAccountName'; Example = 'jdoe'; Notes = '' }
     [pscustomobject]@{ Column = 'MemberDn'; Type = 'string'; Description = 'Member DN'; Example = 'CN=John Doe,OU=Users,DC=...'; Notes = '' }
     [pscustomobject]@{ Column = 'MemberObjectClass'; Type = 'string'; Description = 'user/group'; Example = 'user'; Notes = '' }
+    [pscustomobject]@{ Column = 'GroupName'; Type = 'string'; Description = 'Protected group name'; Example = ''; Notes = '' }
   )
 
   # Domain: Delegation - Unconstrained
@@ -660,6 +653,8 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Object name'; Example = 'APP01$'; Notes = '' }
     [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=APP01,OU=Servers,DC=...'; Notes = '' }
     [pscustomobject]@{ Column = 'TrustedForDelegation'; Type = 'bool'; Description = 'Unconstrained delegation flag'; Example = 'true'; Notes = '' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'SAM account name'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'SPNCount'; Type = 'int'; Description = 'Number of registered SPNs'; Example = ''; Notes = '' }
   )
 
   # Domain: Delegation - Constrained
@@ -669,6 +664,8 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Object name'; Example = 'WEB01$'; Notes = '' }
     [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=WEB01,OU=Servers,DC=...'; Notes = '' }
     [pscustomobject]@{ Column = 'AllowedToDelegateTo'; Type = 'string'; Description = 'SPNs in msDS-AllowedToDelegateTo'; Example = 'HTTP/app01.contoso.com'; Notes = 'Semicolon-delimited' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'SAM account name'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'TargetCount'; Type = 'int'; Description = 'Number of allowed delegation targets'; Example = ''; Notes = '' }
   )
 
   # Domain: Delegation - Protocol Transition (S4U2Self)
@@ -679,6 +676,8 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'Object DN'; Example = 'CN=svc_web,OU=Svc,DC=...'; Notes = '' }
     [pscustomobject]@{ Column = 'TrustedToAuthForDelegation'; Type = 'bool'; Description = 'Protocol transition enabled'; Example = 'true'; Notes = '' }
     [pscustomobject]@{ Column = 'AllowedToDelegateTo'; Type = 'string'; Description = 'SPNs in msDS-AllowedToDelegateTo'; Example = 'HTTP/app01.contoso.com'; Notes = 'Semicolon-delimited' }
+    [pscustomobject]@{ Column = 'SamAccountName'; Type = 'string'; Description = 'SAM account name'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'TargetCount'; Type = 'int'; Description = 'Number of allowed delegation targets'; Example = ''; Notes = '' }
   )
 
   # Domain: Resource-Based Constrained Delegation (RBCD)
@@ -700,6 +699,8 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'SPNs'; Type = 'string'; Description = 'ServicePrincipalName values'; Example = 'MSSQLSvc/sql01.contoso.com:1433'; Notes = 'Semicolon-delimited' }
     [pscustomobject]@{ Column = 'Enabled'; Type = 'bool'; Description = 'Account enabled'; Example = 'true'; Notes = 'If available in your collector' }
     [pscustomobject]@{ Column = 'PasswordLastSetUtc'; Type = 'datetime'; Description = 'Password last set (UTC)'; Example = '2025-12-10T01:02:03Z'; Notes = 'If you collect it' }
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Account name'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'SPNCount'; Type = 'int'; Description = 'Number of registered SPNs'; Example = ''; Notes = '' }
   )
 
   # Domain: Domain Controller security signals (best-effort)
@@ -774,6 +775,44 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'TrusteeType'; Type = 'string'; Description = 'Trustee type'; Example = 'Group'; Notes = '' }
     [pscustomobject]@{ Column = 'Permission'; Type = 'string'; Description = 'Permission'; Example = 'GpoEditDeleteModifySecurity'; Notes = '' }
     [pscustomobject]@{ Column = 'Inherited'; Type = 'bool'; Description = 'Inherited'; Example = 'false'; Notes = 'May be null depending on platform' }
+  )
+
+  $schemas['GpoInventory'] = @(
+    [pscustomobject]@{ Column = 'DomainFqdn'; Type = 'string'; Description = 'DomainFqdn'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'DisplayName'; Type = 'string'; Description = 'DisplayName'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'Id'; Type = 'string'; Description = 'Id'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'Owner'; Type = 'string'; Description = 'Owner'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'CreationTime'; Type = 'datetime'; Description = 'CreationTime'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'ModificationTime'; Type = 'datetime'; Description = 'ModificationTime'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'GpoStatus'; Type = 'string'; Description = 'GpoStatus'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Description'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'UserVersion'; Type = 'int'; Description = 'UserVersion'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'ComputerVersion'; Type = 'int'; Description = 'ComputerVersion'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'WmiFilter'; Type = 'string'; Description = 'WmiFilter'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'GpoId'; Type = 'string'; Description = 'GpoId'; Example = ''; Notes = '' }
+  )
+
+  $schemas['Forest_Sites'] = @(
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Name'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'DistinguishedName'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Description'; Example = ''; Notes = '' }
+  )
+
+  $schemas['Forest_Subnets'] = @(
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Name'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'Site'; Type = 'string'; Description = 'Site'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'Location'; Type = 'string'; Description = 'Location'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'DistinguishedName'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Description'; Example = ''; Notes = '' }
+  )
+
+  $schemas['Forest_SiteLinks'] = @(
+    [pscustomobject]@{ Column = 'Name'; Type = 'string'; Description = 'Name'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'Cost'; Type = 'int'; Description = 'Cost'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'ReplicationFrequencyInMinutes'; Type = 'int'; Description = 'ReplicationFrequencyInMinutes'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'SitesIncluded'; Type = 'string'; Description = 'SitesIncluded'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'DistinguishedName'; Example = ''; Notes = '' }
+    [pscustomobject]@{ Column = 'Description'; Type = 'string'; Description = 'Description'; Example = ''; Notes = '' }
   )
 
   return $schemas

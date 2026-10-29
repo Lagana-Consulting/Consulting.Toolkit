@@ -7,24 +7,28 @@ function Get-AdDnsZoneInventory {
     [string]$Server
   )
 
-  if (-not (Get-Command Get-ADObject -ErrorAction SilentlyContinue)) {
+  if (-not (Get-Command Get-ADObject -ErrorAction Stop)) {
     throw "ActiveDirectory module not available. Install RSAT AD tools."
   }
 
   $results = @()
 
   try {
-    $domainDn = (Get-ADDomain -Identity $DomainFqdn -Server $Server -ErrorAction Stop).DistinguishedName
+    $ctx = Get-AdAdDomainContext -DomainFqdn $DomainFqdn -Server $Server
+    $Server = $ctx.Server
+    $domainDn = $ctx.DomainDn
+    $forestDn = (Get-ADRootDSE -Server $Server -ErrorAction Stop).rootDomainNamingContext
     $dnsZonesContainers = @(
-      "CN=MicrosoftDNS,DC=DomainDnsZones,$domainDn",
-      "CN=MicrosoftDNS,DC=ForestDnsZones,$domainDn"
+      @{ Path = "CN=MicrosoftDNS,DC=DomainDnsZones,$domainDn"; Server = $Server; Scope = 'Domain' },
+      @{ Path = "CN=MicrosoftDNS,DC=ForestDnsZones,$forestDn"; Server = ($forestDn -replace '^DC=', '' -replace ',DC=', '.'); Scope = 'Forest' }
     )
 
-    foreach ($container in $dnsZonesContainers) {
-      $scope = if ($container -match 'ForestDnsZones') { 'Forest' } else { 'Domain' }
+    foreach ($partition in $dnsZonesContainers) {
+      $container = $partition.Path
+      $scope = $partition.Scope
 
       try {
-        $zones = Get-ADObject -SearchBase $container -Filter "objectClass -eq 'dnsZone'" -Properties name, whenCreated, whenChanged -Server $Server -ErrorAction SilentlyContinue
+        $zones = @(Get-ADObject -SearchBase $container -Filter "objectClass -eq 'dnsZone'" -Properties name, whenCreated, whenChanged -Server $partition.Server -ErrorAction Stop)
 
         foreach ($zone in $zones) {
           $results += [pscustomobject]@{
@@ -38,12 +42,12 @@ function Get-AdDnsZoneInventory {
           }
         }
       } catch {
-        Write-Verbose "Could not enumerate $scope DNS zones: $($_.Exception.Message)"
+        Write-AdDiscoveryCollectionIssue -Message "Could not enumerate $scope DNS zones for $DomainFqdn." -ErrorRecord $_ -Details @{ SearchBase = $container; Server = $partition.Server }
       }
     }
 
   } catch {
-    Write-Warning "Failed to enumerate DNS zones for $DomainFqdn`: $($_.Exception.Message)"
+    throw
   }
 
   return $results

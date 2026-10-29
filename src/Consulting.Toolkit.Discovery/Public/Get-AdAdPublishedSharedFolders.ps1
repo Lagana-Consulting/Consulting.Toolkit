@@ -36,31 +36,33 @@ function Get-AdAdPublishedSharedFolders {
                 $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Server $server -Properties $propsFallback -ErrorAction Stop |
                     Sort-Object Name)
             } catch {
-                # Try without server parameter as final fallback
+                # Retry against the requested domain as final fallback
                 try {
-                    $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Properties $propsFallback -ErrorAction Stop |
+                    $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Server $DomainContext.DomainFqdn -Properties $propsFallback -ErrorAction Stop |
                         Sort-Object Name)
                 } catch {
-                    throw "Failed to enumerate published shared folders for $($DomainContext.DomainFqdn). $($_.Exception.Message)"
+                    throw
                 }
             }
         } else {
-            # Try without server parameter as fallback
+            # Retry against the requested domain as fallback
             try {
-                $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Properties $propsPreferred -ErrorAction Stop |
+                $shares = @(Get-ADObject -LDAPFilter '(objectClass=volume)' -SearchBase $domainDn -Server $DomainContext.DomainFqdn -Properties $propsPreferred -ErrorAction Stop |
                     Sort-Object Name)
             } catch {
-                throw "Failed to enumerate published shared folders for $($DomainContext.DomainFqdn). $($_.Exception.Message)"
+                throw
             }
         }
     }
+
+    Assert-AdDiscoveryDomainRows -Rows $shares -ExpectedDomainDn $domainDn
 
     foreach ($s in $shares) {
         [pscustomobject]@{
             DomainFqdn        = [string]$DomainContext.DomainFqdn
             Name              = [string]$s.Name
             UNCName           = [string]$s.uNCName
-            VolumePath        = [string]$s.volumePath
+            VolumePath        = $(if ($s.PSObject.Properties['volumePath']) { [string]$s.volumePath } else { '' })
             Description       = [string]$s.Description
             DistinguishedName = [string]$s.DistinguishedName
             WhenCreated       = $s.whenCreated

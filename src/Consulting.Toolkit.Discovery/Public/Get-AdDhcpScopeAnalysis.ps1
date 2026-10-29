@@ -14,14 +14,15 @@ function Get-AdDhcpScopeAnalysis {
   $results = @()
 
   try {
-    $domainDn = (Get-ADDomain -Identity $DomainFqdn -Server $Server -ErrorAction Stop).DistinguishedName
-    $configNc = (Get-ADRootDSE -Server $Server).configurationNamingContext
+    $ctx = Get-AdAdDomainContext -DomainFqdn $DomainFqdn -Server $Server
+    $Server = $ctx.Server
+    $configNc = (Get-ADRootDSE -Server $Server -ErrorAction Stop).configurationNamingContext
 
     # Find authorized DHCP servers in the domain
     $dhcpContainer = "CN=NetServices,CN=Services,$configNc"
 
     try {
-      $authorizedServers = Get-ADObject -SearchBase $dhcpContainer -Filter "objectClass -eq 'dHCPClass'" -Properties name, dNSHostName -Server $Server -ErrorAction SilentlyContinue
+      $authorizedServers = @(Get-ADObject -SearchBase $dhcpContainer -Filter "objectClass -eq 'dHCPClass'" -Properties name, dNSHostName -Server $Server -ErrorAction Stop)
 
       foreach ($dhcpServer in $authorizedServers) {
         $serverName = if ($dhcpServer.dNSHostName) { $dhcpServer.dNSHostName } else { $dhcpServer.name }
@@ -49,11 +50,11 @@ function Get-AdDhcpScopeAnalysis {
       }
 
     } catch {
-      Write-Verbose "Could not enumerate DHCP servers: $($_.Exception.Message)"
+      throw
     }
 
   } catch {
-    Write-Warning "Failed to analyze DHCP for $DomainFqdn`: $($_.Exception.Message)"
+    throw
   }
 
   return $results

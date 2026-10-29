@@ -70,21 +70,10 @@ function Get-AdAdOrganizationalUnits {
   $server = [string]$DomainContext.Server
   $baseDn = [string]$DomainContext.DomainDn
 
-  $ous = @()
-  try {
-    $ous = @(Get-ADOrganizationalUnit -Filter * -SearchBase $baseDn -SearchScope Subtree -Server $server -Properties whenCreated, whenChanged, description -ErrorAction Stop |
-      Sort-Object DistinguishedName)
-  }
-  catch {
-    # Try without server parameter as fallback
-    try {
-      $ous = @(Get-ADOrganizationalUnit -Filter * -SearchBase $baseDn -SearchScope Subtree -Properties whenCreated, whenChanged, description -ErrorAction Stop |
-        Sort-Object DistinguishedName)
-    }
-    catch {
-      throw "Failed to enumerate OUs for $domain. $($_.Exception.Message)"
-    }
-  }
+  $ous = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADOrganizationalUnit' -Server $server -DomainFqdn $domain -ExpectedDomainDn $baseDn -RetryInDomain -Query {
+      param($queryServer)
+      Get-ADOrganizationalUnit -Filter * -SearchBase $baseDn -SearchScope Subtree -Server $queryServer -Properties whenCreated,whenChanged,description -ErrorAction Stop | Sort-Object DistinguishedName
+  })
 
   foreach ($ou in $ous) {
     $dn = [string]$ou.DistinguishedName

@@ -13,19 +13,11 @@ function Get-AdAdDefaultPasswordPolicy {
   $domain = [string]$DomainContext.DomainFqdn
   $server = [string]$DomainContext.Server
 
-  $pol = $null
-  try {
-    $pol = Get-ADDefaultDomainPasswordPolicy -Server $server -ErrorAction Stop
-  }
-  catch {
-    # If specified server failed, try with domain identity without server parameter
-    try {
-      $pol = Get-ADDefaultDomainPasswordPolicy -Identity $domain -ErrorAction Stop
-    }
-    catch {
-      throw "Failed to get default domain password policy for $domain. $($_.Exception.Message)"
-    }
-  }
+  $pol = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADDefaultDomainPasswordPolicy' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
+      param($queryServer)
+      Get-ADDefaultDomainPasswordPolicy -Identity $domain -Server $queryServer -ErrorAction Stop
+  })
+  $pol = $pol | Select-Object -First 1
 
   [pscustomobject]@{
     DomainFqdn                      = $domain

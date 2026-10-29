@@ -10,24 +10,23 @@ function Get-AdSysvolSizeAnalysis {
     [int]$CriticalSizeGB = 5
   )
 
-  if (-not (Get-Command Get-ADDomainController -ErrorAction SilentlyContinue)) {
+  if (-not (Get-Command Get-ADDomain -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available. Install RSAT AD tools."
   }
 
   $results = @()
 
   try {
-    # Get a writable DC for the domain
-    $dc = Get-ADDomainController -DomainName $DomainFqdn -Discover -Service PrimaryDC -ErrorAction Stop
-    $dcName = $dc.HostName.Split('.')[0]
+    $ctx = Get-AdAdDomainContext -DomainFqdn $DomainFqdn -Server $Server
+    $serverTarget = $ctx.Server
 
     # SYSVOL path: \\domain\SYSVOL\domain
-    $sysvolPath = "\\$DomainFqdn\SYSVOL\$DomainFqdn"
+    $sysvolPath = "\\$serverTarget\SYSVOL\$DomainFqdn"
 
     try {
-      if (Test-Path $sysvolPath -ErrorAction SilentlyContinue) {
+      if (Test-Path $sysvolPath -ErrorAction Stop) {
         # Calculate total size
-        $totalSizeBytes = (Get-ChildItem -Path $sysvolPath -Recurse -File -ErrorAction SilentlyContinue |
+        $totalSizeBytes = (Get-ChildItem -Path $sysvolPath -Recurse -File -ErrorAction Stop |
           Measure-Object -Property Length -Sum).Sum
 
         $totalSizeGB = [math]::Round($totalSizeBytes / 1GB, 2)
@@ -42,7 +41,7 @@ function Get-AdSysvolSizeAnalysis {
         # Count GPOs in SYSVOL
         $policiesPath = Join-Path $sysvolPath 'Policies'
         $gpoFolders = if (Test-Path $policiesPath) {
-          (Get-ChildItem -Path $policiesPath -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^\{[A-F0-9\-]+\}$' }).Count
+          (Get-ChildItem -Path $policiesPath -Directory -ErrorAction Stop | Where-Object { $_.Name -match '^\{[A-F0-9\-]+\}$' }).Count
         } else { 0 }
 
         $results += [pscustomobject]@{
@@ -56,6 +55,7 @@ function Get-AdSysvolSizeAnalysis {
                           else { 'No action needed' }
         }
       } else {
+        Write-AdDiscoveryCollectionIssue -Message "SYSVOL path is inaccessible: $sysvolPath"
         $results += [pscustomobject]@{
           DomainFqdn     = $DomainFqdn
           SysvolPath     = $sysvolPath
@@ -66,7 +66,7 @@ function Get-AdSysvolSizeAnalysis {
         }
       }
     } catch {
-      Write-Warning "Failed to measure SYSVOL size: $($_.Exception.Message)"
+      Write-AdDiscoveryCollectionIssue -Message "Failed to measure SYSVOL size for $DomainFqdn." -ErrorRecord $_
       $results += [pscustomobject]@{
         DomainFqdn     = $DomainFqdn
         SysvolPath     = $sysvolPath
@@ -78,7 +78,7 @@ function Get-AdSysvolSizeAnalysis {
     }
 
   } catch {
-    Write-Warning "Failed to analyze SYSVOL for $DomainFqdn`: $($_.Exception.Message)"
+    throw
   }
 
   return $results

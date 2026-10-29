@@ -1,14 +1,17 @@
 function Get-AdAdReplicationSiteLinks {
   [CmdletBinding()]
-  param()
+  param([string]$Server)
 
   if (-not (Get-Command Get-ADReplicationSiteLink -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available (Get-ADReplicationSiteLink missing). Install RSAT AD tools / Import-Module ActiveDirectory."
   }
 
+  $queryParams = @{ Filter = '*'; ErrorAction = 'Stop' }
+  if ($Server) { $queryParams.Server = $Server }
+
   $rows = @()
   try {
-    $links = Get-ADReplicationSiteLink -Filter * -ErrorAction Stop
+    $links = Get-ADReplicationSiteLink @queryParams
     foreach ($l in $links) {
       $rows += [pscustomobject]@{
         Name             = [string]$l.Name
@@ -20,7 +23,7 @@ function Get-AdAdReplicationSiteLinks {
       }
     }
   } catch {
-    throw "Failed to enumerate site links. $($_.Exception.Message)"
+    throw
   }
 
   return $rows

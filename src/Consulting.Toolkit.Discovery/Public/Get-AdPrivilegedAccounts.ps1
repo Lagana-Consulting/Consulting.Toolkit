@@ -80,7 +80,11 @@ function Get-AdPrivilegedAccounts {
       $g = Get-ADGroup -Identity $gn -Server $server -ErrorAction Stop
       $groups += $g
     } catch {
-      # group not found in domain, skip
+      if (Test-AdDiscoveryIdentityNotFound -ErrorRecord $_) {
+        Write-AdDiscoveryEvent -Status INFO -Message "Privileged group is not present in this domain: $gn"
+      } else {
+        Write-AdDiscoveryCollectionIssue -ErrorRecord $_ -Details @{ Group = $gn }
+      }
     }
   }
 
@@ -108,8 +112,9 @@ function Get-AdPrivilegedAccounts {
   # 2) adminCount=1 users
   $adminUsers = @()
   try {
-    $adminUsers = @(Get-ADUser -LDAPFilter '(adminCount=1)' -Server $server -Properties adminCount -ErrorAction Stop)
+    $adminUsers = @(Get-ADUser -LDAPFilter '(adminCount=1)' -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $server -Properties adminCount -ErrorAction Stop)
   } catch {
+    Write-AdDiscoveryCollectionIssue -ErrorRecord $_ -Message 'The adminCount user query failed; privileged account coverage is incomplete.'
     $adminUsers = @()
   }
 

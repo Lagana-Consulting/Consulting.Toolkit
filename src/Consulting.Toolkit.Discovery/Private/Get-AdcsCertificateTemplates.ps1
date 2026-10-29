@@ -1,8 +1,8 @@
 function Get-AdcsCertificateTemplates {
     [CmdletBinding()]
-    param([Parameter(Mandatory)] $Forest)
+    param([Parameter(Mandatory)] $Forest, [string]$Server)
 
-    $server = $Forest.SchemaMaster
+    $server = if ($Server) { $Server } else { [string]$Forest.SchemaMaster }
     $root = Get-ADRootDSE -Server $server -ErrorAction Stop
     $configNC = $root.configurationNamingContext
 
@@ -13,7 +13,7 @@ function Get-AdcsCertificateTemplates {
         'name', 'distinguishedName')
 
     $templates = @(Get-ADObject -SearchBase $base -LDAPFilter '(objectClass=pKICertificateTemplate)' `
-            -Server $server -Properties $props -ErrorAction SilentlyContinue)
+            -Server $server -Properties $props -ErrorAction Stop)
 
     foreach ($t in $templates) {
         $nameFlag = [int]($t.'msPKI-Certificate-Name-Flag' -as [int])

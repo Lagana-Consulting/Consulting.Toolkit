@@ -16,7 +16,7 @@ function Get-AdUsersSidHistory {
   $domain = [string]$DomainContext.DomainFqdn
   $server = [string]$DomainContext.Server
 
-  $users = @(Get-ADUser -Filter * -Server $server -Properties SIDHistory -ErrorAction Stop)
+  $users = @(Get-ADUser -Filter * -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $server -Properties SIDHistory -ErrorAction Stop)
 
   foreach ($u in $users) {
     $hist = @($u.SIDHistory)

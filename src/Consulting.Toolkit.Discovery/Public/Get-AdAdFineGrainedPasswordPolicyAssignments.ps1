@@ -12,28 +12,20 @@ function Get-AdAdFineGrainedPasswordPolicyAssignments {
   }
 
   if (-not (Get-Command Get-ADFineGrainedPasswordPolicy -ErrorAction SilentlyContinue)) {
-    if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message "FGPP cmdlets not available; skipping FGPP assignments." }
-    return @()
+    Stop-AdDiscoveryCollection -Message 'FGPP cmdlets not available; FGPP assignments were not collected.'
   }
 
   $domain = [string]$DomainContext.DomainFqdn
   $server = [string]$DomainContext.Server
 
-  $pols = @()
-  try {
-    $pols = @(Get-ADFineGrainedPasswordPolicy -Filter * -Server $server -ErrorAction Stop)
-  } catch {
-    # Try without server parameter as fallback
-    try {
-      $pols = @(Get-ADFineGrainedPasswordPolicy -Filter * -ErrorAction Stop)
-    } catch {
-      if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Failed to enumerate FGPP assignments for {0}. {1}" -f $domain, $_.Exception.Message) }
-      return @()
-    }
-  }
+  $pols = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADFineGrainedPasswordPolicy' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
+    param($queryServer)
+    $queryParams = @{ Filter = '*'; SearchBase = $DomainContext.DomainDn; SearchScope = 'Subtree'; ErrorAction = 'Stop' }
+    if ($queryServer) { $queryParams.Server = $queryServer }
+    Get-ADFineGrainedPasswordPolicy @queryParams
+  })
 
   $rows = @()
-
   foreach ($p in $pols) {
     $appliesTo = @($p.AppliesTo)
     if (-not $appliesTo -or $appliesTo.Count -eq 0) { continue }

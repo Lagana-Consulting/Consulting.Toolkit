@@ -11,13 +11,10 @@ function Get-AdSecurityDomainControllerSignals {
     $server = $DomainContext.Server
     $domain = $DomainContext.DomainFqdn
 
-    $dcs = @()
-    try {
-        $dcs = @(Get-ADDomainController -Filter * -Server $server -ErrorAction Stop)
-    } catch {
-        # fallback: try without -Server
-        $dcs = @(Get-ADDomainController -Filter * -ErrorAction Stop)
-    }
+    $dcs = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADDomainController' -Server $server -DomainFqdn $domain -RetryInDomain -Query {
+        param($queryServer)
+        Get-ADDomainController -Filter * -Server $queryServer -ErrorAction Stop
+    })
 
     foreach ($dc in $dcs) {
         $dcName = if ($dc.HostName) { [string]$dc.HostName } else { [string]$dc.Name }

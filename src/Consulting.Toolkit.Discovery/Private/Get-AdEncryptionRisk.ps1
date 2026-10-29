@@ -5,7 +5,7 @@ function Get-AdEncryptionRisk {
     [object]$EncryptionTypeValue
   )
 
-  $types = Convert-AdEncryptionTypes -EncryptionTypeValue $EncryptionTypeValue
+  $types = @(Convert-AdEncryptionTypes -EncryptionTypeValue $EncryptionTypeValue)
 
   if (-not $types -or $types.Count -eq 0) {
     # Not set often means "defaults", but defaults vary. Keep neutral.

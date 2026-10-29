@@ -17,10 +17,17 @@ function Get-AdPrivilegedGroupMembers {
         try {
             $g = Get-ADGroup -Identity $gName -Server $server -ErrorAction Stop
         } catch {
+            if (-not (Test-AdDiscoveryIdentityNotFound -ErrorRecord $_)) { throw }
+            Write-AdDiscoveryEvent -Status INFO -Message "Privileged group is absent in this domain: $gName"
             continue
         }
 
-        $members = @(Get-ADGroupMember -Identity $g.DistinguishedName -Recursive -Server $server -ErrorAction Stop)
+        try {
+            $members = @(Get-ADGroupMember -Identity $g.DistinguishedName -Recursive -Server $server -ErrorAction Stop)
+        } catch {
+            Write-AdDiscoveryCollectionIssue -Message "Could not read members of privileged group: $($g.DistinguishedName)" -ErrorRecord $_
+            continue
+        }
 
         foreach ($m in $members) {
             $rows += [pscustomobject]@{

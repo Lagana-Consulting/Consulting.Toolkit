@@ -9,6 +9,8 @@ function Get-AdProtectedUsersMembers {
     try {
         $g = Get-ADGroup -Identity 'Protected Users' -Server $server -ErrorAction Stop
     } catch {
+        if (-not (Test-AdDiscoveryIdentityNotFound -ErrorRecord $_)) { throw }
+        Write-AdDiscoveryEvent -Status INFO -Message 'Protected Users group is absent in this domain.'
         return @()
     }
 

@@ -2,21 +2,23 @@ function Get-AdCertificateServicesInventory {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    $Forest
+    $Forest,
+    [string]$Server
   )
 
-  if (-not (Get-Command Get-ADObject -ErrorAction SilentlyContinue)) {
+  if (-not (Get-Command Get-ADObject -ErrorAction Stop)) {
     throw "ActiveDirectory module not available. Install RSAT AD tools."
   }
 
   $results = @()
 
   try {
-    $configNc = $Forest.PartitionsContainer -replace '^CN=Partitions,', ''
+    $serverTarget = if ($Server) { $Server } else { [string]$Forest.SchemaMaster }
+    $configNc = (Get-ADRootDSE -Server $serverTarget -ErrorAction Stop).configurationNamingContext
     $pkiContainer = "CN=Public Key Services,CN=Services,$configNc"
 
     # Enumerate Certificate Templates
-    $templates = Get-ADObject -SearchBase "CN=Certificate Templates,$pkiContainer" -Filter * -Properties displayName, msPKI-Cert-Template-OID, flags -ErrorAction SilentlyContinue
+    $templates = Get-ADObject -SearchBase "CN=Certificate Templates,$pkiContainer" -Filter * -Server $serverTarget -Properties displayName, msPKI-Cert-Template-OID, flags -ErrorAction Stop
     foreach ($template in $templates) {
       $results += [pscustomobject]@{
         ItemType    = 'CertificateTemplate'
@@ -29,7 +31,7 @@ function Get-AdCertificateServicesInventory {
     }
 
     # Enumerate Enterprise CAs
-    $cas = Get-ADObject -SearchBase "CN=Enrollment Services,$pkiContainer" -Filter * -Properties dNSHostName, displayName -ErrorAction SilentlyContinue
+    $cas = Get-ADObject -SearchBase "CN=Enrollment Services,$pkiContainer" -Filter * -Server $serverTarget -Properties dNSHostName, displayName -ErrorAction Stop
     foreach ($ca in $cas) {
       $results += [pscustomobject]@{
         ItemType    = 'EnterpriseCA'
@@ -42,7 +44,7 @@ function Get-AdCertificateServicesInventory {
     }
 
     # Enumerate NTAuth Certificates
-    $ntAuthStore = Get-ADObject "CN=NTAuthCertificates,$pkiContainer" -Properties cACertificate -ErrorAction SilentlyContinue
+    $ntAuthStore = Get-ADObject "CN=NTAuthCertificates,$pkiContainer" -Server $serverTarget -Properties cACertificate -ErrorAction Stop
     $certCount = if ($ntAuthStore.cACertificate) { $ntAuthStore.cACertificate.Count } else { 0 }
     $results += [pscustomobject]@{
       ItemType    = 'NTAuthStore'
@@ -54,7 +56,7 @@ function Get-AdCertificateServicesInventory {
     }
 
   } catch {
-    Write-Warning "Failed to enumerate Certificate Services: $($_.Exception.Message)"
+    throw
   }
 
   return $results

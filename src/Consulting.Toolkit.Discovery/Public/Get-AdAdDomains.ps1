@@ -70,7 +70,7 @@ function Get-AdAdDomains {
     # Get-ADForest.Domains is typically a string collection
     $domains = @($Forest.Domains | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
   } catch {
-    throw "Could not read domains from forest object. $($_.Exception.Message)"
+    throw
   }
 
   # Normalize to lower-case and distinct

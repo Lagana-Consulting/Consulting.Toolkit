@@ -21,7 +21,7 @@ function Get-AdServiceAccountCandidates {
 
   $props = @('Enabled', 'UserPrincipalName', 'ServicePrincipalName', 'PasswordLastSet', 'PasswordNeverExpires', 'LastLogonTimestamp', 'whenCreated', 'description')
 
-  $users = @(Get-ADUser -Filter * -Server $server -Properties $props -ErrorAction Stop)
+  $users = @(Get-ADUser -Filter * -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $server -Properties $props -ErrorAction Stop)
 
   foreach ($u in $users) {
     $spnCount = @($u.ServicePrincipalName).Count

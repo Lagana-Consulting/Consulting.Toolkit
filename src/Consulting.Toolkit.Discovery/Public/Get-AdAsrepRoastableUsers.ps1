@@ -15,7 +15,7 @@ function Get-AdAsrepRoastableUsers {
   # UF_DONT_REQUIRE_PREAUTH = 0x00400000 (4194304)
   $flag = 4194304
 
-  $users = @(Get-ADUser -Filter * -Server $server -Properties userAccountControl,Enabled,PasswordLastSet,objectGuid -ErrorAction Stop |
+  $users = @(Get-ADUser -Filter * -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $server -Properties userAccountControl,Enabled,PasswordLastSet,objectGuid -ErrorAction Stop |
     Where-Object { (($_.userAccountControl -band $flag) -ne 0) })
 
   foreach ($u in $users) {

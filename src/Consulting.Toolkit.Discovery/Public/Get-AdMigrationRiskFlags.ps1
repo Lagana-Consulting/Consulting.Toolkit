@@ -76,9 +76,11 @@ function Get-AdMigrationRiskFlags {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$AllUsers,
 
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$AllComputers,
 
         [int]$StaleUserThresholdDays = 180,

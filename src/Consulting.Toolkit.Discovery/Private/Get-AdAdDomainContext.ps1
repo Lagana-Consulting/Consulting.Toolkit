@@ -28,25 +28,20 @@ function Get-AdAdDomainContext {
     Write-AdLog -Path $LogPath -Level INFO -Message ("Domain context: Domain={0} Server/DC={1}" -f $domain, $dc)
   }
 
-  # Query domain object
-  $dobj = $null
-  try {
-    $dobj = Get-ADDomain -Identity $domain -Server $dc -ErrorAction Stop
-  } catch {
-    # If specified server failed, try without server parameter (use default context)
-    if (-not [string]::IsNullOrWhiteSpace($dc) -and $dc -ne $domain) {
-      try {
-        if ($LogPath) {
-          Write-AdLog -Path $LogPath -Level WARN -Message ("Server '$dc' unreachable. Retrying with default domain context for $domain")
-        }
-        $dobj = Get-ADDomain -Identity $domain -ErrorAction Stop
-      } catch {
-        throw "Failed to query domain '$domain'. $($_.Exception.Message)"
-      }
-    } else {
-      throw "Failed to query domain '$domain' using server '$dc'. $($_.Exception.Message)"
+  # Validate both the requested domain object and the server's default naming
+  # context. A root-domain DC is not a valid implicit target for child inventory.
+  $selection = @{ Server = $dc }
+  $dobj = Invoke-AdDiscoveryQuery -Operation 'Domain Context' -Server $dc -DomainFqdn $domain -RetryInDomain -Query {
+    param($queryServer)
+    $object = Get-ADDomain -Identity $domain -Server $queryServer -ErrorAction Stop
+    $root = Get-ADRootDSE -Server $queryServer -ErrorAction Stop
+    if ($object.DNSRoot -ne $domain -or $root.defaultNamingContext -ne $object.DistinguishedName) {
+      throw "Server '$queryServer' does not provide the requested domain naming context '$domain'."
     }
+    $selection.Server = $queryServer
+    $object
   }
+  $dc = $selection.Server
 
   # Build a reusable context object
   [pscustomobject]@{

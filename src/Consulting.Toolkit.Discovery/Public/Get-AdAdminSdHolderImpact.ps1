@@ -24,7 +24,7 @@ function Get-AdAdminSdHolderImpact {
     try {
         $objects = @(Get-ADObject -Filter $filter -Server $server -Properties $props -ErrorAction Stop)
     } catch {
-        throw "Failed to query adminCount objects for $domain via $server. $($_.Exception.Message)"
+        throw
     }
 
     $results = @()

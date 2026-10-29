@@ -21,6 +21,20 @@ function Resolve-AdSchemaNameForCsv {
 
     # Ordered patterns: first match wins
     $map = @(
+        # Core discovery datasets
+        @{ Pattern = '^AD__Forest__Summary__Forest\.csv$'; Schema = 'Forest_Summary' }
+        @{ Pattern = '^AD__Forest__Identity__UpnSuffixes__Forest\.csv$'; Schema = 'Forest_UPNSuffixes' }
+        @{ Pattern = '^AD__Forest__Network__Sites__Forest\.csv$'; Schema = 'Forest_Sites' }
+        @{ Pattern = '^AD__Forest__Network__Subnets__Forest\.csv$'; Schema = 'Forest_Subnets' }
+        @{ Pattern = '^AD__Forest__Network__SiteLinks__Forest\.csv$'; Schema = 'Forest_SiteLinks' }
+        @{ Pattern = '^AD__Domain__Summary__Domain-.*\.csv$'; Schema = 'Domain_Summary' }
+        @{ Pattern = '^AD__Domain__Identity__Users__Domain-.*\.csv$'; Schema = 'Users' }
+        @{ Pattern = '^AD__Domain__Identity__Groups__Domain-.*\.csv$'; Schema = 'Groups' }
+        @{ Pattern = '^AD__Domain__Identity__ComputersAll__Domain-.*\.csv$'; Schema = 'Computers' }
+        @{ Pattern = '^AD__Domain__Identity__Spns__Domain-.*\.csv$'; Schema = 'SPNs' }
+        @{ Pattern = '^AD__Domain__Security__PrivilegedAccounts__Domain-.*\.csv$'; Schema = 'PrivilegedAccounts' }
+        @{ Pattern = '^AD__Domain__GPO__Inventory__Domain-.*\.csv$'; Schema = 'GpoInventory' }
+
         # --- Forest Security ADCS ---
         @{ Pattern = '^AD__Forest__Security__ADCS__EnterpriseCAs__Forest\.csv$'; Schema = 'Forest_Security_ADCS_EnterpriseCAs' }
         @{ Pattern = '^AD__Forest__Security__ADCS__EnrollmentServicesTemplates__Forest\.csv$'; Schema = 'Forest_Security_ADCS_EnrollmentServicesTemplates' }

@@ -4,7 +4,9 @@ function Get-AdTopSpnsByType {
         [Parameter(Mandatory)]
         $DomainContext,
 
-        [int]$Top = 10
+        [int]$Top = 10,
+
+        [AllowEmptyCollection()][object[]]$Spns
     )
 
     if (-not $DomainContext) {
@@ -14,11 +16,11 @@ function Get-AdTopSpnsByType {
     $domain = [string]$DomainContext.DomainFqdn
 
     # Get all SPNs
-    $allSpns = Get-AdAdSpns -DomainContext $DomainContext
+    $allSpns = if ($PSBoundParameters.ContainsKey('Spns')) { @($Spns) } else { @(Get-AdAdSpns -DomainContext $DomainContext) }
 
     # Extract service type (first part before /)
     $spnTypes = $allSpns | ForEach-Object {
-        $spnValue = $_.SPN
+        $spnValue = Resolve-AdSpnValue -Row $_
         $serviceType = if ($spnValue -match '^([^/]+)/') { $Matches[1] } else { 'Unknown' }
 
         [pscustomobject]@{

@@ -35,36 +35,38 @@ function Get-AdAdPublishedPrinters {
                 $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Server $server -Properties $propsFallback -ErrorAction Stop |
                     Sort-Object Name)
             } catch {
-                # Try without server parameter as final fallback
+                # Retry against the requested domain as final fallback
                 try {
-                    $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Properties $propsFallback -ErrorAction Stop |
+                    $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Server $DomainContext.DomainFqdn -Properties $propsFallback -ErrorAction Stop |
                         Sort-Object Name)
                 } catch {
-                    throw "Failed to enumerate published printers for $($DomainContext.DomainFqdn). $($_.Exception.Message)"
+                    throw
                 }
             }
         } else {
-            # Try without server parameter as fallback
+            # Retry against the requested domain as fallback
             try {
-                $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Properties $propsPreferred -ErrorAction Stop |
+                $printers = @(Get-ADObject -LDAPFilter '(objectClass=printQueue)' -SearchBase $domainDn -Server $DomainContext.DomainFqdn -Properties $propsPreferred -ErrorAction Stop |
                     Sort-Object Name)
             } catch {
-                throw "Failed to enumerate published printers for $($DomainContext.DomainFqdn). $($_.Exception.Message)"
+                throw
             }
         }
     }
+
+    Assert-AdDiscoveryDomainRows -Rows $printers -ExpectedDomainDn $domainDn
 
     foreach ($p in $printers) {
         [pscustomobject]@{
             DomainFqdn        = [string]$DomainContext.DomainFqdn
             Name              = [string]$p.Name
-            DisplayName       = [string]$p.DisplayName
-            ServerName        = [string]$p.ServerName
-            UNCName           = [string]$p.uNCName
-            PrintShareName    = [string]$p.printShareName
-            DriverName        = [string]$p.DriverName
-            Location          = [string]$p.Location
-            Description       = [string]$p.Description
+            DisplayName       = $(if ($p.PSObject.Properties['DisplayName']) { [string]$p.DisplayName } else { '' })
+            ServerName        = $(if ($p.PSObject.Properties['ServerName']) { [string]$p.ServerName } else { '' })
+            UNCName           = $(if ($p.PSObject.Properties['uNCName']) { [string]$p.uNCName } else { '' })
+            PrintShareName    = $(if ($p.PSObject.Properties['printShareName']) { [string]$p.printShareName } else { '' })
+            DriverName        = $(if ($p.PSObject.Properties['DriverName']) { [string]$p.DriverName } else { '' })
+            Location          = $(if ($p.PSObject.Properties['Location']) { [string]$p.Location } else { '' })
+            Description       = $(if ($p.PSObject.Properties['Description']) { [string]$p.Description } else { '' })
             DistinguishedName = [string]$p.DistinguishedName
             WhenCreated       = $p.whenCreated
             WhenChanged       = $p.whenChanged

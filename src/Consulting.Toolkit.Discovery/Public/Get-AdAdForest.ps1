@@ -65,7 +65,6 @@ function Get-AdAdForest {
   try {
     return (Get-ADForest @params -ErrorAction Stop)
   } catch {
-    $target = if ($ForestName) { $ForestName } else { 'current forest' }
-    throw "Failed to query AD forest ($target). $($_.Exception.Message)"
+    throw
   }
 }

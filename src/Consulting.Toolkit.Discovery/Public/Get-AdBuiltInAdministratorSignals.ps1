@@ -15,7 +15,7 @@ function Get-AdBuiltInAdministratorSignals {
   $rid500Sid = "$domainSid-500"
 
   # RID 500 (built-in Administrator)
-  $u = Get-ADUser -LDAPFilter "(objectSid=$rid500Sid)" -Server $server -Properties `
+  $u = Get-ADUser -LDAPFilter "(objectSid=$rid500Sid)" -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $server -Properties `
         Enabled,PasswordLastSet,pwdLastSet,lastLogonTimestamp,lastLogonDate,whenChanged,whenCreated,objectGuid,userAccountControl `
         -ErrorAction Stop | Select-Object -First 1
 

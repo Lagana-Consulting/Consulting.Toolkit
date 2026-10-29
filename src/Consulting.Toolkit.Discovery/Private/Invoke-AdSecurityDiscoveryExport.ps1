@@ -22,11 +22,18 @@ function Invoke-AdSecurityDiscoveryExport {
     }
 
     function Try-Export([scriptblock]$Action, [string]$Operation) {
+        $context = Get-Variable -Name adDiscoveryLogContext -ValueOnly -ErrorAction SilentlyContinue
+        if ($context) { Set-AdDiscoveryOperationStatus -Context $context -Operation $Operation -Status START }
         try {
             & $Action
+            if ($context) { Set-AdDiscoveryOperationStatus -Context $context -Operation $Operation -Status OK }
             Write-Host "    [OK] $Operation" -ForegroundColor Green
             Write-SecLog "OK  $Operation"
         } catch {
+            if ($context) {
+                $status = if ($_.Exception.Data['DiscoveryStatus'] -eq 'SKIP') { 'SKIP' } else { 'FAIL' }
+                Set-AdDiscoveryOperationStatus -Context $context -Operation $Operation -Status $status -ErrorRecord $_
+            }
             Write-Host "    [WARN] $Operation : $($_.Exception.Message)" -ForegroundColor Yellow
             Write-SecLog "WARN $Operation : $($_.Exception.Message)"
         }

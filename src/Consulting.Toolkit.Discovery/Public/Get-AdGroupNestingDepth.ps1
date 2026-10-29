@@ -49,6 +49,7 @@ function Get-AdGroupNestingDepth {
             try {
                 $currentGroup = Get-ADGroup -Identity $parentDn -Server $server -Properties MemberOf -ErrorAction Stop
             } catch {
+                Write-AdDiscoveryCollectionIssue -Message "Could not read parent group '$parentDn'; nesting depth is incomplete." -ErrorRecord $_
                 # Parent not found, stop traversal
                 break
             }

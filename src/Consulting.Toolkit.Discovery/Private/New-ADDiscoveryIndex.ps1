@@ -18,15 +18,23 @@ function New-ADDiscoveryIndex {
     function Get-RowCountFast([System.IO.FileInfo]$File) {
         if ($File.Extension -ne '.csv') { return $null }
         try {
-            $lines = 0
+            $records = 0
+            $inQuotes = $false
             $reader = [System.IO.File]::OpenText($File.FullName)
             try {
-                while ($null -ne $reader.ReadLine()) { $lines++ }
+                while ($null -ne ($line = $reader.ReadLine())) {
+                    if (-not $inQuotes -and $line.Length -eq 0) { continue }
+                    # CSV error messages and stack traces can span physical lines.
+                    # Escaped quote pairs do not change the quoted-field state.
+                    $quotes = $line.Length - $line.Replace('"', '').Length
+                    if (($quotes % 2) -ne 0) { $inQuotes = -not $inQuotes }
+                    if (-not $inQuotes) { $records++ }
+                }
             } finally {
                 $reader.Dispose()
             }
-            if ($lines -le 1) { return 0 }
-            return ($lines - 1)
+            if ($inQuotes) { return $null }
+            return [math]::Max(0, $records - 1)
         } catch {
             return $null
         }

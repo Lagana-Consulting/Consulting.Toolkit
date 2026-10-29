@@ -19,19 +19,10 @@ function Get-AdAdSpns {
   # Objects that can have SPNs: user and computer
   $filter = "(|(objectClass=user)(objectClass=computer))"
 
-  $objs = @()
-  try {
-    $objs = @(Get-ADObject -LDAPFilter $filter -Server $server -Properties servicePrincipalName, sAMAccountName -ErrorAction Stop)
-  }
-  catch {
-    # Try without server parameter as fallback
-    try {
-      $objs = @(Get-ADObject -LDAPFilter $filter -Properties servicePrincipalName, sAMAccountName -ErrorAction Stop)
-    }
-    catch {
-      throw "Failed to enumerate SPN-bearing objects for $domain. $($_.Exception.Message)"
-    }
-  }
+  $objs = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADObject' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
+      param($queryServer)
+      Get-ADObject -LDAPFilter $filter -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $queryServer -Properties servicePrincipalName,sAMAccountName -ErrorAction Stop
+  })
 
   foreach ($o in $objs) {
     $spns = @($o.servicePrincipalName)
@@ -44,6 +35,9 @@ function Get-AdAdSpns {
 
       [pscustomobject]@{
         DomainFqdn        = $domain
+        ObjectClass       = [string]$o.ObjectClass
+        ServicePrincipalName = [string]$spn
+        # Compatibility aliases retained for consumers of earlier raw CSVs.
         ObjectType        = $otype
         SamAccountName    = [string]$o.sAMAccountName
         DistinguishedName = [string]$o.DistinguishedName

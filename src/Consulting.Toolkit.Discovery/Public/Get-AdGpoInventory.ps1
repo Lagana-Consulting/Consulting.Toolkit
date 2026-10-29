@@ -12,18 +12,18 @@ function Get-AdGpoInventory {
   }
 
   if (-not (Get-Command Get-GPO -ErrorAction SilentlyContinue)) {
-    if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message "GroupPolicy module not available; skipping GPO inventory." }
-    return @()
+    Stop-AdDiscoveryCollection -Message 'GroupPolicy module not available; GPO inventory was not collected.'
   }
 
   $domain = [string]$DomainContext.DomainFqdn
 
   $gpos = @()
   try {
-    $gpos = @(Get-GPO -All -Domain $domain -ErrorAction Stop | Sort-Object DisplayName)
+    Write-AdDiscoveryEvent -Kind Query -Status START -Details @{ Command = 'Get-GPO'; Domain = $domain; Server = $DomainContext.Server }
+    $gpos = @(Get-GPO -All -Domain $domain -Server $DomainContext.Server -ErrorAction Stop | Sort-Object DisplayName)
+    Write-AdDiscoveryEvent -Kind Query -Status OK -RowCount $gpos.Count -Details @{ Command = 'Get-GPO'; Server = $DomainContext.Server }
   } catch {
-    if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Failed to enumerate GPOs for {0}. {1}" -f $domain, $_.Exception.Message) }
-    return @()
+    throw
   }
 
   foreach ($g in $gpos) {
@@ -36,9 +36,10 @@ function Get-AdGpoInventory {
       ModificationTime = $g.ModificationTime
       GpoStatus        = [string]$g.GpoStatus
       Description      = [string]$g.Description
-      UserVersion      = if ($g.PSObject.Properties['UserVersion']) { [string]$g.UserVersion } else { $null }
-      ComputerVersion  = if ($g.PSObject.Properties['ComputerVersion']) { [string]$g.ComputerVersion } else { $null }
-      WmiFilter        = if ($g.PSObject.Properties['WmiFilter']) { [string]$g.WmiFilter } else { $null }
+      UserVersion      = Get-AdGpoVersionNumber -Gpo $g -Section User
+      ComputerVersion  = Get-AdGpoVersionNumber -Gpo $g -Section Computer
+      WmiFilter        = if ($g.PSObject.Properties['WmiFilter'] -and $g.WmiFilter) { if ($g.WmiFilter.PSObject.Properties['Name']) { [string]$g.WmiFilter.Name } else { [string]$g.WmiFilter } } else { $null }
+      GpoId            = [string]$g.Id
     }
   }
 }

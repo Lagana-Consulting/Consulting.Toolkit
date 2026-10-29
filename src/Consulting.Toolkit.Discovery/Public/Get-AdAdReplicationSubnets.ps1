@@ -1,14 +1,17 @@
 function Get-AdAdReplicationSubnets {
   [CmdletBinding()]
-  param()
+  param([string]$Server)
 
   if (-not (Get-Command Get-ADReplicationSubnet -ErrorAction SilentlyContinue)) {
     throw "ActiveDirectory module not available (Get-ADReplicationSubnet missing). Install RSAT AD tools / Import-Module ActiveDirectory."
   }
 
+  $queryParams = @{ Filter = '*'; ErrorAction = 'Stop' }
+  if ($Server) { $queryParams.Server = $Server }
+
   $rows = @()
   try {
-    $subnets = Get-ADReplicationSubnet -Filter * -ErrorAction Stop
+    $subnets = Get-ADReplicationSubnet @queryParams
     foreach ($sn in $subnets) {
       $rows += [pscustomobject]@{
         Name             = [string]$sn.Name
@@ -19,7 +22,7 @@ function Get-AdAdReplicationSubnets {
       }
     }
   } catch {
-    throw "Failed to enumerate replication subnets. $($_.Exception.Message)"
+    throw
   }
 
   return $rows

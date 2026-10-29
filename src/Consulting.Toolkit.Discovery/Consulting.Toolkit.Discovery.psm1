@@ -25,14 +25,14 @@ if (Test-Path -LiteralPath $publicDir) {
   }
 }
 
-# Export ONLY functions that exist in Public\
-$publicFunctions = @()
-if (Test-Path -LiteralPath $publicDir) {
-  $publicFunctions =
-  Get-ChildItem -LiteralPath $publicDir -Filter '*.ps1' -File |
-  ForEach-Object { $_.BaseName } |
-  Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } |
-  Sort-Object -Unique
+# The manifest is the single source of truth for the supported public API.
+# Some supported helpers live in Private for historical source-path compatibility.
+$manifest = Import-PowerShellDataFile -LiteralPath (Join-Path $moduleRoot 'Consulting.Toolkit.Discovery.psd1')
+$publicFunctions = @($manifest.FunctionsToExport)
+foreach ($name in $publicFunctions) {
+  $command = Get-Command -Name $name -CommandType Function -ErrorAction SilentlyContinue
+  if (-not $command -or $command.ModuleName -ne $ExecutionContext.SessionState.Module.Name) {
+    throw "Declared discovery export '$name' is missing from this module. Check the module package."
+  }
 }
-
 Export-ModuleMember -Function $publicFunctions

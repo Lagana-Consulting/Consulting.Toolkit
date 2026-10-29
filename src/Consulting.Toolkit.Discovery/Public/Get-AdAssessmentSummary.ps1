@@ -120,15 +120,19 @@ function Get-AdAssessmentSummary {
         [string]$ForestName,
 
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$AllUsers,
 
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$AllComputers,
 
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$AllGroups,
 
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$PrivilegedAccounts,
 
         [int]$StaleUserThresholdDays = 180,

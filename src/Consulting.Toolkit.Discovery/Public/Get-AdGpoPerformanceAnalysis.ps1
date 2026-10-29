@@ -13,8 +13,8 @@ function Get-AdGpoPerformanceAnalysis {
 
   foreach ($gpo in $AllGpos) {
     # Calculate total version changes (user + computer)
-    $userVersion = if ($gpo.PSObject.Properties['UserVersion']) { $gpo.UserVersion } else { 0 }
-    $computerVersion = if ($gpo.PSObject.Properties['ComputerVersion']) { $gpo.ComputerVersion } else { 0 }
+    $userVersion = if ($gpo.PSObject.Properties['UserVersion']) { [int]$gpo.UserVersion } else { 0 }
+    $computerVersion = if ($gpo.PSObject.Properties['ComputerVersion']) { [int]$gpo.ComputerVersion } else { 0 }
     $totalVersions = $userVersion + $computerVersion
 
     # Assess GPO size if SysvolSize is available (would need to be added to Get-AdGpoInventory)
@@ -56,7 +56,7 @@ function Get-AdGpoPerformanceAnalysis {
       $results += [pscustomobject]@{
         GpoName          = $gpo.DisplayName
         DomainFqdn       = $gpo.DomainFqdn
-        GpoId            = $gpo.GpoId
+        GpoId            = if ($gpo.PSObject.Properties['GpoId']) { $gpo.GpoId } else { $gpo.Id }
         UserVersion      = $userVersion
         ComputerVersion  = $computerVersion
         TotalVersions    = $totalVersions

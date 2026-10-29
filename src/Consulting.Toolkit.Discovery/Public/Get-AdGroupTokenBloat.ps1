@@ -2,6 +2,7 @@ function Get-AdGroupTokenBloat {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
+    [AllowEmptyCollection()]
     [array]$AllUsers,
 
     [int]$WarningSidCount = 800,

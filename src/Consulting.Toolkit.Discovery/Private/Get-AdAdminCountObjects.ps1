@@ -15,7 +15,7 @@ function Get-AdAdminCountObjects {
         $objs = @(Get-ADObject -LDAPFilter '(adminCount=1)' -SearchBase $baseDn -Server $server `
                 -Properties objectClass, adminCount, distinguishedName, name, samAccountName -ErrorAction Stop)
     } catch {
-        $objs = @()
+        throw
     }
 
     foreach ($o in $objs) {

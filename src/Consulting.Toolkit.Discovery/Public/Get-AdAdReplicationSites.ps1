@@ -8,9 +8,12 @@ function Get-AdAdReplicationSites {
     throw "ActiveDirectory module not available (Get-ADReplicationSite missing). Install RSAT AD tools / Import-Module ActiveDirectory."
   }
 
+  $queryParams = @{ Filter = '*'; ErrorAction = 'Stop' }
+  if ($Server) { $queryParams.Server = $Server }
+
   $rows = @()
   try {
-    $sites = Get-ADReplicationSite -Filter * -ErrorAction Stop
+    $sites = Get-ADReplicationSite @queryParams
     foreach ($s in $sites) {
       $rows += [pscustomobject]@{
         Name        = [string]$s.Name
@@ -19,7 +22,7 @@ function Get-AdAdReplicationSites {
       }
     }
   } catch {
-    throw "Failed to enumerate replication sites. $($_.Exception.Message)"
+    throw
   }
 
   return $rows

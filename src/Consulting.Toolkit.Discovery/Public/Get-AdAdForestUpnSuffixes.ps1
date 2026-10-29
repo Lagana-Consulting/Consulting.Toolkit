@@ -21,6 +21,7 @@ function Get-AdAdForestUpnSuffixes {
 
   foreach ($s in ($suffixes | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Sort-Object -Unique)) {
     [pscustomobject]@{
+      ForestName      = [string]$Forest.Name
       Suffix          = $s
       IsKnownSuffix   = [bool]$knownSet.ContainsKey($s)
       IsNonRoutable   = [bool](Test-AdNonRoutableSuffix -Suffix $s)

@@ -24,6 +24,7 @@ function Get-AdGroupMembersRecursive {
     try {
       $members = @(Get-ADGroupMember -Identity $current -Server $Server -ErrorAction Stop)
     } catch {
+      Write-AdDiscoveryCollectionIssue -Message "Could not expand group membership: $current" -ErrorRecord $_ -Details @{ GroupDn = $current; Server = $Server }
       continue
     }
 
@@ -56,7 +57,7 @@ function Get-AdGroupMembershipMemberDetail {
   try {
     $params = @{
       Identity    = $MemberDn
-      Properties  = @('SamAccountName', 'Name', 'ObjectClass', 'Enabled', 'LastLogonTimestamp', 'Description', 'DistinguishedName')
+      Properties  = @('SamAccountName', 'Name', 'ObjectClass', 'userAccountControl', 'LastLogonTimestamp', 'Description', 'DistinguishedName')
       ErrorAction = 'Stop'
     }
     if (-not [string]::IsNullOrWhiteSpace($Server)) {
@@ -67,22 +68,28 @@ function Get-AdGroupMembershipMemberDetail {
   }
   catch {
     $lookupError = $_.Exception.Message
+    Write-AdDiscoveryCollectionIssue -Message "Could not read group member: $MemberDn" -ErrorRecord $_ -Details @{ GroupDn = $Group.DistinguishedName; MemberDn = $MemberDn; Server = $Server }
   }
 
   $lastLogonUtc = $null
   $lastLogonDays = $null
-  if ($member -and $member.LastLogonTimestamp) {
+  if ($member -and $member.PSObject.Properties['LastLogonTimestamp'] -and $member.LastLogonTimestamp) {
     try {
       $lastLogonUtc = [DateTime]::FromFileTimeUtc([int64]$member.LastLogonTimestamp)
       $lastLogonDays = [int]([TimeSpan]($Now.ToUniversalTime() - $lastLogonUtc)).TotalDays
     }
     catch {
+      Write-AdDiscoveryCollectionIssue -Message "Could not interpret the last-logon timestamp for $MemberDn" -ErrorRecord $_
       $lastLogonUtc = $null
       $lastLogonDays = $null
     }
   }
 
-  $enabledValue = if ($member -and $member.PSObject.Properties['Enabled']) { $member.Enabled } else { $null }
+  $enabledValue = if ($member -and $member.PSObject.Properties['userAccountControl'] -and $null -ne $member.userAccountControl) {
+    ($member.userAccountControl -band 2) -eq 0
+  } elseif ($member -and $member.PSObject.Properties['Enabled']) {
+    $member.Enabled
+  } else { $null }
   $isDisabled = if ($null -eq $enabledValue) { $false } else { -not [bool]$enabledValue }
   $isInactive = if ($null -ne $lastLogonDays) { $lastLogonDays -gt $InactiveDays } else { $false }
 

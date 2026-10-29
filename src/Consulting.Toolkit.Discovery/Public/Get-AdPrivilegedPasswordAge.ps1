@@ -36,7 +36,7 @@ function Get-AdPrivilegedPasswordAge {
         PasswordAgeDays    = $ageDays
       }
     } catch {
-      # best effort: skip if user cannot be read
+      Write-AdDiscoveryCollectionIssue -Message "Could not read privileged account password age: $($p.DistinguishedName)" -ErrorRecord $_
     }
   }
 }

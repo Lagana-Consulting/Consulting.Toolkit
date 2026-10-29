@@ -1,14 +1,14 @@
 function Get-AdcsTemplatePermissions {
     [CmdletBinding()]
-    param([Parameter(Mandatory)] $Forest)
+    param([Parameter(Mandatory)] $Forest, [string]$Server)
 
-    $server = $Forest.SchemaMaster
+    $server = if ($Server) { $Server } else { [string]$Forest.SchemaMaster }
     $root = Get-ADRootDSE -Server $server -ErrorAction Stop
     $configNC = $root.configurationNamingContext
     $base = "CN=Certificate Templates,CN=Public Key Services,CN=Services,$configNC"
 
     $templates = @(Get-ADObject -SearchBase $base -LDAPFilter '(objectClass=pKICertificateTemplate)' `
-            -Server $server -Properties nTSecurityDescriptor, name, displayName -ErrorAction SilentlyContinue)
+            -Server $server -Properties nTSecurityDescriptor, name, displayName -ErrorAction Stop)
 
     $rows = @()
 
@@ -18,7 +18,9 @@ function Get-AdcsTemplatePermissions {
             $sd = Get-ADObject -Identity $t.DistinguishedName -Server $server `
                 -Properties nTSecurityDescriptor -ErrorAction Stop |
             Select-Object -ExpandProperty nTSecurityDescriptor
+            if (-not $sd) { throw "No security descriptor was returned for '$($t.DistinguishedName)'." }
         } catch {
+            Write-AdDiscoveryCollectionIssue -Message "Could not read certificate template permissions: $($t.DistinguishedName)" -ErrorRecord $_
             continue
         }
 

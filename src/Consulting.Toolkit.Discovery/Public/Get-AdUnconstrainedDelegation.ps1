@@ -47,16 +47,10 @@ function Get-AdUnconstrainedDelegation {
     $ldapFilter = '(userAccountControl:1.2.840.113556.1.4.803:=524288)'
     $props = @('TrustedForDelegation', 'ServicePrincipalName', 'Enabled')
 
-    $computers = @()
-    try {
-        $computers = @(Get-ADComputer -LDAPFilter $ldapFilter -Server $server -Properties $props -ErrorAction Stop)
-    } catch {
-        try {
-            $computers = @(Get-ADComputer -LDAPFilter $ldapFilter -Properties $props -ErrorAction Stop)
-        } catch {
-            throw "Failed to query computers for unconstrained delegation in $domain. $($_.Exception.Message)"
-        }
-    }
+    $computers = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADComputer' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
+        param($queryServer)
+        Get-ADComputer -LDAPFilter $ldapFilter -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $queryServer -Properties $props -ErrorAction Stop
+    })
 
     foreach ($c in $computers) {
         $results += [pscustomobject]@{
@@ -70,16 +64,10 @@ function Get-AdUnconstrainedDelegation {
         }
     }
 
-    $users = @()
-    try {
-        $users = @(Get-ADUser -LDAPFilter $ldapFilter -Server $server -Properties $props -ErrorAction Stop)
-    } catch {
-        try {
-            $users = @(Get-ADUser -LDAPFilter $ldapFilter -Properties $props -ErrorAction Stop)
-        } catch {
-            throw "Failed to query users for unconstrained delegation in $domain. $($_.Exception.Message)"
-        }
-    }
+    $users = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADUser' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
+        param($queryServer)
+        Get-ADUser -LDAPFilter $ldapFilter -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $queryServer -Properties $props -ErrorAction Stop
+    })
 
     foreach ($u in $users) {
         $results += [pscustomobject]@{

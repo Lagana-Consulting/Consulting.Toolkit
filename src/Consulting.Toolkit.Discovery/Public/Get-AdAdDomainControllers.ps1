@@ -62,19 +62,10 @@ function Get-AdAdDomainControllers {
   $domain = [string]$DomainContext.DomainFqdn
   $server = [string]$DomainContext.Server
 
-  $dcs = @()
-  try {
-    $dcs = @(Get-ADDomainController -Filter * -Server $domain -ErrorAction Stop |
-      Sort-Object HostName)
-  } catch {
-    # Try without server parameter as fallback
-    try {
-      $dcs = @(Get-ADDomainController -Filter * -ErrorAction Stop |
-        Sort-Object HostName)
-    } catch {
-      throw "Failed to enumerate domain controllers for $domain. $($_.Exception.Message)"
-    }
-  }
+  $dcs = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADDomainController' -Server $server -DomainFqdn $domain -RetryInDomain -Query {
+      param($queryServer)
+      Get-ADDomainController -Filter * -Server $queryServer -ErrorAction Stop | Sort-Object HostName
+  })
 
   foreach ($dc in $dcs) {
     [pscustomobject]@{

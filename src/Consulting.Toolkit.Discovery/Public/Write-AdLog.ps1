@@ -65,6 +65,13 @@ function Write-AdLog {
   )
 
   $logPath = Resolve-AdPath -Path $Path
+  $context = Get-Variable -Name adDiscoveryLogContext -ValueOnly -ErrorAction SilentlyContinue
+  if ($context -and $context.LogPath -eq $logPath) {
+    # Legacy collector warnings indicate incomplete coverage, rather than an
+    # empty successful dataset. Retry notices use explicit RETRY events instead.
+    Write-AdDiscoveryEvent -Context $context -Status $Level -Message $Message -MarkIncomplete:($Level -in @('WARN', 'ERROR'))
+    return
+  }
   $ts = Get-AdTimestamp -Format Iso
 
   $line = "{0} [{1}] {2}" -f $ts, $Level, $Message

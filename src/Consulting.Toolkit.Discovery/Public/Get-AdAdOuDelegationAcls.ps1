@@ -12,8 +12,8 @@ function Get-AdAdOuDelegationAcls {
     throw "DomainContext cannot be null."
   }
 
-  if (-not (Get-Command Get-Acl -ErrorAction SilentlyContinue)) {
-    throw "Get-Acl not available."
+  if (-not (Get-Command Get-ADObject -ErrorAction SilentlyContinue)) {
+    throw "ActiveDirectory module not available (Get-ADObject missing)."
   }
 
   $domain = [string]$DomainContext.DomainFqdn
@@ -26,13 +26,13 @@ function Get-AdAdOuDelegationAcls {
   foreach ($ou in $ous) {
     $dn = [string]$ou.DistinguishedName
 
-    # LDAP path for ACL reads
-    $ldapPath = "AD:\$dn"
-
     $acl = $null
     try {
-      $acl = Get-Acl -Path $ldapPath -ErrorAction Stop
+      # Read through the selected DC, rather than the runner's default AD: drive.
+      $acl = (Get-ADObject -Identity $dn -Server $server -Properties nTSecurityDescriptor -ErrorAction Stop).nTSecurityDescriptor
+      if (-not $acl) { throw "No security descriptor was returned for '$dn'." }
     } catch {
+      Write-AdDiscoveryCollectionIssue -Message "OU ACL could not be read: $dn. $($_.Exception.Message)" -ErrorRecord $_
       continue
     }
 

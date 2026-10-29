@@ -2,6 +2,7 @@ function Get-AdMigrationRiskFlagsSummary {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$RiskFlagsData
     )
 

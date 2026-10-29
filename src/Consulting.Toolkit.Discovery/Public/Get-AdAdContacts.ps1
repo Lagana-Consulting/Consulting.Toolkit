@@ -9,15 +9,10 @@ function Get-AdAdContacts {
   and mail routing analysis.
 
   .PARAMETER DomainName
-  Domain to query. If not specified, queries the current domain.
+  Domain to query. Required.
 
   .PARAMETER Server
-  Domain controller or global catalog to query. Optional.
-
-  .EXAMPLE
-  Get-AdAdContacts
-
-  Gets all AD contacts in the current domain.
+  Domain controller to query. Required; domain-scoped failover is supported.
 
   .EXAMPLE
   Get-AdAdContacts -DomainName "corp.contoso.com" -Server "dc01.corp.contoso.com"
@@ -47,23 +42,19 @@ function Get-AdAdContacts {
 
     Set-StrictMode -Version Latest
 
-    # Base properties that are always safe
-    $baseProps = @(
-        'displayName',
-        'mail',
-        'proxyAddresses'
-    )
-    # Only include Exchange-style attributes if they exist
-    $schemaAttrs = Get-ADObject `
-        -SearchBase (Get-ADRootDSE).schemaNamingContext `
-        -LDAPFilter "(lDAPDisplayName=targetAddress)" `
-        -ErrorAction SilentlyContinue
+    $ctx = Get-AdAdDomainContext -DomainFqdn $DomainName -Server $Server
+    $root = Get-ADRootDSE -Server $ctx.Server -ErrorAction Stop
+    $baseProps = @('displayName', 'mail', 'proxyAddresses')
+    # Absence of an optional schema attribute is a valid result. A failed schema
+    # read must propagate rather than silently changing the requested properties.
+    $schemaAttrs = @(Get-ADObject -SearchBase $root.schemaNamingContext -Server $ctx.Server `
+        -LDAPFilter '(lDAPDisplayName=targetAddress)' -ErrorAction Stop)
+    if ($schemaAttrs.Count -gt 0) { $baseProps += 'targetAddress' }
 
-    if ($schemaAttrs) {
-        $baseProps += 'targetAddress'
+    Invoke-AdDiscoveryQuery -Operation 'Contacts' -Server $ctx.Server -DomainFqdn $ctx.DomainFqdn `
+        -ExpectedDomainDn $ctx.DomainDn -RetryInDomain -Query {
+        param($queryServer)
+        Get-ADObject -LDAPFilter '(objectClass=contact)' -SearchBase $ctx.DomainDn -SearchScope Subtree `
+            -Server $queryServer -Properties $baseProps -ErrorAction Stop
     }
-
-    Get-ADObject -LDAPFilter "(objectClass=contact)" `
-        -Properties $baseProps
 }
-

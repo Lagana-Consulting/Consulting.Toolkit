@@ -9,9 +9,7 @@ function Get-AdAdForestTrusts {
   )
 
   if (-not (Get-Command Get-ADTrust -ErrorAction SilentlyContinue)) {
-    $msg = "ActiveDirectory module missing Get-ADTrust. Skipping trusts inventory."
-    if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message $msg }
-    return @()
+    Stop-AdDiscoveryCollection -Message 'Get-ADTrust is unavailable; trusts inventory was not collected.'
   }
 
   # Prefer a forest context if supplied; otherwise trusts are typically queried per-domain.
@@ -23,9 +21,7 @@ function Get-AdAdForestTrusts {
   try {
     $trusts = Get-ADTrust -Filter * @params -ErrorAction Stop
   } catch {
-    $msg = "Failed to enumerate trusts (may be permissions or query scope). $($_.Exception.Message)"
-    if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message $msg }
-    return @()
+    throw
   }
 
   $rows = foreach ($t in $trusts) {

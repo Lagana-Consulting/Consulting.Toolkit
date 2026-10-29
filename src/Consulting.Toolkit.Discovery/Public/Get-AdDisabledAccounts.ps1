@@ -2,9 +2,11 @@ function Get-AdDisabledAccounts {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$AllUsers,
 
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$AllComputers,
 
         [int]$StaleThresholdDays = 180

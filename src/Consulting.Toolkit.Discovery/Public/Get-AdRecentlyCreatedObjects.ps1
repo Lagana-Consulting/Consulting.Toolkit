@@ -66,6 +66,7 @@ function Get-AdRecentlyCreatedObjects {
     foreach ($u in $users) { Add-RecentRow -Obj $u -ObjectClass 'user' }
     $counts.user = $users.Count
   } catch {
+    Write-AdDiscoveryCollectionIssue -ErrorRecord $_
     if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Recently created users query failed for {0} on {1}. {2}" -f $domain, $server, $_.Exception.Message) }
   }
 
@@ -78,6 +79,7 @@ function Get-AdRecentlyCreatedObjects {
     foreach ($g in $groups) { Add-RecentRow -Obj $g -ObjectClass 'group' }
     $counts.group = $groups.Count
   } catch {
+    Write-AdDiscoveryCollectionIssue -ErrorRecord $_
     if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Recently created groups query failed for {0} on {1}. {2}" -f $domain, $server, $_.Exception.Message) }
   }
 
@@ -89,6 +91,7 @@ function Get-AdRecentlyCreatedObjects {
     foreach ($c in $computers) { Add-RecentRow -Obj $c -ObjectClass 'computer' }
     $counts.computer = $computers.Count
   } catch {
+    Write-AdDiscoveryCollectionIssue -ErrorRecord $_
     if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Recently created computers query failed for {0} on {1}. {2}" -f $domain, $server, $_.Exception.Message) }
   }
 
@@ -106,6 +109,7 @@ function Get-AdRecentlyCreatedObjects {
       }
       $counts.gpo = $gpos.Count
     } catch {
+      Write-AdDiscoveryCollectionIssue -ErrorRecord $_
       if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Recently created GPO query failed for {0} on {1}. {2}" -f $domain, $server, $_.Exception.Message) }
     }
   }

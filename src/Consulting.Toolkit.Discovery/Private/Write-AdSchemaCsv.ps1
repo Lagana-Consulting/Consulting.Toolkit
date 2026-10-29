@@ -42,6 +42,8 @@ function Write-AdSchemaCsv {
   }
 
   # Always overwrite
+  Write-AdDiscoveryEvent -Kind Csv -Status START -OutputPath $outPath
   $rows | Export-Csv -Path $outPath -NoTypeInformation -Encoding UTF8 -Force
+  Write-AdDiscoveryCsvResult -Path $outPath -RowCount @($rows).Count
   return $outPath
 }

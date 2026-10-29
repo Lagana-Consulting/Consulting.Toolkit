@@ -25,10 +25,10 @@ function New-AdRunLayout {
   New-AdDirectory -Path $runRoot | Out-Null
 
   # Standard subfolders
-  $schemasDir = Join-Path $runRoot 'schemas'
+  $schemasDir = Join-Path $runRoot '00_schemas'
   New-AdDirectory -Path $schemasDir | Out-Null
 
-  $logsDir = Join-Path $runRoot 'logs'
+  $logsDir = Join-Path $runRoot '90_logs'
   New-AdDirectory -Path $logsDir | Out-Null
 
   $logPath = $null

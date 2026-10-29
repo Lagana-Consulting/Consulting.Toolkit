@@ -9,10 +9,10 @@ function Export-AdSchemas {
     )
 
     if (-not (Get-Command Get-AdSchemaDefinitions -ErrorAction SilentlyContinue)) {
-        throw "Get-AdSchemaDefinitions is not available. Import the Migration.Toolkit module."
+        throw "Get-AdSchemaDefinitions is not available. Import Consulting.Toolkit.Discovery."
     }
     if (-not (Get-Command Write-AdSchemaCsv -ErrorAction SilentlyContinue)) {
-        throw "Write-AdSchemaCsv is not available. Import the Migration.Toolkit module."
+        throw "Write-AdSchemaCsv is not available. Import Consulting.Toolkit.Discovery."
     }
 
     $defs = Get-AdSchemaDefinitions
@@ -21,6 +21,8 @@ function Export-AdSchemas {
     }
 
     $names = if ($Include -and $Include.Count -gt 0) { $Include } else { $defs.Keys }
+    $missing = @($names | Where-Object { -not $defs.ContainsKey($_) })
+    if ($missing.Count -gt 0) { throw "Unknown discovery schema(s): $($missing -join ', '). No schemas were exported." }
 
     $written = @()
     foreach ($name in $names) {

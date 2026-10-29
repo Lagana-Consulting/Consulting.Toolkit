@@ -43,18 +43,16 @@ function Get-AdGpoUserRightsAssignments {
     }
 
     if (-not (Get-Command Get-GPO -ErrorAction SilentlyContinue)) {
-        if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message "GroupPolicy module not available; skipping GPO user rights parsing." }
-        return @()
+        Stop-AdDiscoveryCollection -Message 'GroupPolicy module not available; GPO user rights were not collected.'
     }
 
     $domain = [string]$DomainContext.DomainFqdn
 
     $gpos = @()
     try {
-        $gpos = @(Get-GPO -All -Domain $domain -ErrorAction Stop)
+        $gpos = @(Get-GPO -All -Domain $domain -Server $DomainContext.Server -ErrorAction Stop)
     } catch {
-        if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Failed to enumerate GPOs for {0}. {1}" -f $domain, $_.Exception.Message) }
-        return @()
+        throw
     }
 
     $results = @()
@@ -62,8 +60,9 @@ function Get-AdGpoUserRightsAssignments {
     foreach ($gpo in $gpos) {
         $report = $null
         try {
-            $report = Get-GPOReport -Guid $gpo.Id -Domain $domain -ReportType Xml -ErrorAction Stop
+            $report = Get-GPOReport -Guid $gpo.Id -Domain $domain -Server $DomainContext.Server -ReportType Xml -ErrorAction Stop
         } catch {
+            Write-AdDiscoveryCollectionIssue -Message "Could not collect user rights for GPO '$($gpo.Id)'." -ErrorRecord $_
             if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Failed to read GPO report for {0} ({1}). {2}" -f $gpo.DisplayName, $gpo.Id, $_.Exception.Message) }
             continue
         }
@@ -74,6 +73,7 @@ function Get-AdGpoUserRightsAssignments {
         try {
             $xml = [xml]$report
         } catch {
+            Write-AdDiscoveryCollectionIssue -Message "Could not collect user rights for GPO '$($gpo.Id)'." -ErrorRecord $_
             if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Failed to parse GPO report XML for {0} ({1})." -f $gpo.DisplayName, $gpo.Id) }
             continue
         }

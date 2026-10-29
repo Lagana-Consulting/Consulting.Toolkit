@@ -1,8 +1,8 @@
 function Get-AdcsEnterpriseCAsFromConfigurationPartition {
     [CmdletBinding()]
-    param([Parameter(Mandatory)] $Forest)
+    param([Parameter(Mandatory)] $Forest, [string]$Server)
 
-    $server = $Forest.SchemaMaster
+    $server = if ($Server) { $Server } else { [string]$Forest.SchemaMaster }
     $root = Get-ADRootDSE -Server $server -ErrorAction Stop
     $configNC = $root.configurationNamingContext
 
@@ -10,7 +10,7 @@ function Get-AdcsEnterpriseCAsFromConfigurationPartition {
     $props = @('dNSHostName', 'cACertificateDN', 'certificateTemplates', 'displayName', 'name', 'distinguishedName')
 
     $cas = @(Get-ADObject -SearchBase $base -LDAPFilter '(objectClass=pKIEnrollmentService)' `
-            -Server $server -Properties $props -ErrorAction SilentlyContinue)
+            -Server $server -Properties $props -ErrorAction Stop)
 
     foreach ($ca in $cas) {
         [pscustomobject]@{

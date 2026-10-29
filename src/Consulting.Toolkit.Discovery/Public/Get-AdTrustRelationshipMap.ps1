@@ -63,12 +63,12 @@ function Get-AdTrustRelationshipMap {
                     }
                 }
             } catch {
-                Write-Warning "Failed to enumerate trusts for $($domainFqdn): $($_.Exception.Message)"
+                Write-AdDiscoveryCollectionIssue -Message "Failed to enumerate trusts for $($domainFqdn): $($_.Exception.Message)" -ErrorRecord $_
             }
         }
 
     } catch {
-        Write-Warning "Failed to map trust relationships: $($_.Exception.Message)"
+        throw
     }
 
     return $results

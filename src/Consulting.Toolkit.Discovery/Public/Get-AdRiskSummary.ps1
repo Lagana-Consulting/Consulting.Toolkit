@@ -2,12 +2,8 @@ function Get-AdRiskSummary {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)]
-    $RiskRows
+    [AllowEmptyCollection()][object[]]$RiskRows
   )
-
-  if (-not $RiskRows) {
-    throw "RiskRows cannot be null."
-  }
 
   $RiskRows |
     Group-Object -Property RiskCategory, RiskName, RiskLevel |

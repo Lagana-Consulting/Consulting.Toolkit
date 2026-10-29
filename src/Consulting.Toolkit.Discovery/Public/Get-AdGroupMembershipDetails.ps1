@@ -29,18 +29,10 @@ function Get-AdGroupMembershipDetails {
     $server = [string]$DomainContext.Server
     $now = Get-Date
 
-    $groups = @()
-    try {
-        $groups = @(Get-ADGroup -Filter * -Server $server -Properties Members, GroupCategory, GroupScope, WhenCreated, WhenChanged, Description, objectSid -ErrorAction Stop | Sort-Object Name)
-    }
-    catch {
-        try {
-            $groups = @(Get-ADGroup -Filter * -Properties Members, GroupCategory, GroupScope, WhenCreated, WhenChanged, Description, objectSid -ErrorAction Stop | Sort-Object Name)
-        }
-        catch {
-            throw "Failed to enumerate groups for $domain. $($_.Exception.Message)"
-        }
-    }
+    $groups = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADGroup' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
+        param($queryServer)
+        Get-ADGroup -Filter * -SearchBase $DomainContext.DomainDn -SearchScope Subtree -Server $queryServer -Properties Members,GroupCategory,GroupScope,WhenCreated,WhenChanged,Description,objectSid -ErrorAction Stop | Sort-Object Name
+    })
 
     $emptyGroups = New-Object System.Collections.Generic.List[object]
     $singleMemberGroups = New-Object System.Collections.Generic.List[object]

@@ -10,10 +10,11 @@ function Export-AdCsvSafe {
         [ValidateNotNullOrEmpty()]
         [string]$Path,
 
-        # Optional: Schema name from Get-AdSchemaDefinitions to enforce column order
+        # Optional schema; known discovery filenames resolve automatically.
+        # Enforces column order and requires every declared property on each row.
         [string]$SchemaName,
 
-        # If specified, writes even when there are no rows (header only if SchemaName provided)
+        # Writes even when there are no rows (header only when a schema resolves).
         [switch]$AllowEmpty,
 
         # Overwrite if exists
@@ -40,6 +41,7 @@ function Export-AdCsvSafe {
             $outPath = $Path
         }
 
+        Write-AdDiscoveryEvent -Kind Csv -Status START -OutputPath $outPath
         $dir = Split-Path -Path $outPath -Parent
         if ($dir -and -not (Test-Path -LiteralPath $dir)) {
             New-Item -ItemType Directory -Path $dir -Force | Out-Null
@@ -47,6 +49,11 @@ function Export-AdCsvSafe {
 
         if ((Test-Path -LiteralPath $outPath) -and -not $Force) {
             throw "File already exists: $outPath (use -Force to overwrite)"
+        }
+
+        # Known discovery filenames use the same contract as explicit schema exports.
+        if (-not $SchemaName -and (Get-Command Resolve-AdSchemaNameForCsv -ErrorAction SilentlyContinue)) {
+            $SchemaName = Resolve-AdSchemaNameForCsv -Path $outPath
         }
 
         # Load schemas only if needed
@@ -88,18 +95,28 @@ function Export-AdCsvSafe {
 
             if ($schemaColumns -and $schemaColumns.Count -gt 0) {
                 # Write header-only CSV based on schema
-                $headerLine = ($schemaColumns -join ',')
-                Set-Content -Path $outPath -Value $headerLine -Encoding $enc -Force
+                $emptyRow = [ordered]@{}
+                foreach ($column in $schemaColumns) { $emptyRow[$column] = $null }
+                $headerLine = [pscustomobject]$emptyRow | ConvertTo-Csv -NoTypeInformation | Select-Object -First 1
+                Set-Content -LiteralPath $outPath -Value $headerLine -Encoding $enc -Force
+                Write-AdDiscoveryCsvResult -Path $outPath -RowCount 0
                 return $outPath
             }
 
             # If AllowEmpty but no schema, write an empty file (0 bytes)
-            Set-Content -Path $outPath -Value @() -Encoding $enc -Force
+            Set-Content -LiteralPath $outPath -Value @() -Encoding $enc -Force
+            Write-AdDiscoveryCsvResult -Path $outPath -RowCount 0
             return $outPath
         }
 
         # Enforce schema column order if requested
         if ($schemaColumns -and $schemaColumns.Count -gt 0) {
+            foreach ($it in $items) {
+                $missing = @($schemaColumns | Where-Object { $null -eq $it.PSObject.Properties[$_] })
+                if ($missing.Count -gt 0) {
+                    throw "Schema '$SchemaName' cannot export '$outPath': row is missing column(s) $($missing -join ', '). Supply explicit null values when a field is unknown."
+                }
+            }
             $ordered = foreach ($it in $items) {
                 $row = [ordered]@{}
                 foreach ($c in $schemaColumns) {
@@ -109,12 +126,14 @@ function Export-AdCsvSafe {
                 [pscustomobject]$row
             }
 
-            $ordered | Export-Csv -Path $outPath -NoTypeInformation -Encoding $enc -Force
+            $ordered | Export-Csv -LiteralPath $outPath -NoTypeInformation -Encoding $enc -Force
+            Write-AdDiscoveryCsvResult -Path $outPath -RowCount $items.Count
             return $outPath
         }
 
         # Default: export as-is
-        $items | Export-Csv -Path $outPath -NoTypeInformation -Encoding $enc -Force
+        $items | Export-Csv -LiteralPath $outPath -NoTypeInformation -Encoding $enc -Force
+        Write-AdDiscoveryCsvResult -Path $outPath -RowCount $items.Count
         return $outPath
     }
 }

@@ -11,20 +11,17 @@ function Get-AdGpoDelegation {
   $server = if ($DomainContext.Server) { [string]$DomainContext.Server } else { [string]$DomainContext.DomainController }
 
   if (-not (Get-Command Get-GPO -ErrorAction SilentlyContinue)) {
-    if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message "GroupPolicy module not available; skipping GPO delegation." }
-    return @()
+    Stop-AdDiscoveryCollection -Message 'GroupPolicy module not available; GPO delegation was not collected.'
   }
   if (-not (Get-Command Get-GPPermission -ErrorAction SilentlyContinue)) {
-    if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message "Get-GPPermission not available; skipping GPO delegation." }
-    return @()
+    Stop-AdDiscoveryCollection -Message 'Get-GPPermission is unavailable; GPO delegation was not collected.'
   }
 
   $gpos = @()
   try {
     $gpos = @(Get-GPO -All -Domain $domain -Server $server -ErrorAction Stop)
   } catch {
-    if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Failed to enumerate GPOs for {0} via {1}. {2}" -f $domain, $server, $_.Exception.Message) }
-    return @()
+    throw
   }
 
   $rows = @()
@@ -89,6 +86,7 @@ function Get-AdGpoDelegation {
         $rows += New-GpoDelegationRow -Gpo $g -Permission $p -DomainName $domain
       }
     } catch {
+      Write-AdDiscoveryEvent -Kind Query -Status RETRY -ErrorRecord $_ -Details @{ Gpo = [string]$g.Id; NextLookup = 'DisplayName' }
       # Fallback for environments where -Guid can fail unexpectedly.
       try {
         $permParams = @{
@@ -104,6 +102,7 @@ function Get-AdGpoDelegation {
           $rows += New-GpoDelegationRow -Gpo $g -Permission $p -DomainName $domain
         }
       } catch {
+        Write-AdDiscoveryCollectionIssue -ErrorRecord $_ -Details @{ Gpo = [string]$g.Id }
         $failed++
         if ($LogPath) { Write-AdLog -Path $LogPath -Level WARN -Message ("Failed GPPermission for {0}. {1}" -f $g.DisplayName, $_.Exception.Message) }
       }

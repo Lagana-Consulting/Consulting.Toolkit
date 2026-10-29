@@ -89,21 +89,13 @@ function Get-AdAdUsers {
     'ServicePrincipalName', 'msDS-SupportedEncryptionTypes', 'Description'
   )
 
-  $users = @()
-  try {
-    $users = @(Get-ADUser -Filter * -Server $server -Properties $props -ErrorAction Stop |
-      Sort-Object SamAccountName)
-  }
-  catch {
-    # Try without server parameter as fallback
-    try {
-      $users = @(Get-ADUser -Filter * -Properties $props -ErrorAction Stop |
-        Sort-Object SamAccountName)
-    }
-    catch {
-      throw "Failed to enumerate users for $domain. $($_.Exception.Message)"
-    }
-  }
+  $users = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADUser' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
+    param($queryServer)
+    $queryParams = @{ Filter = '*'; SearchBase = $DomainContext.DomainDn; SearchScope = 'Subtree'; ErrorAction = 'Stop' }
+    $queryParams.Properties = $props
+    if ($queryServer) { $queryParams.Server = $queryServer }
+    Get-ADUser @queryParams | Sort-Object SamAccountName
+  })
 
   foreach ($u in $users) {
     $upnSuffix = Get-AdUpnSuffix -UserPrincipalName $u.UserPrincipalName

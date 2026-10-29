@@ -83,20 +83,13 @@ function Get-AdAdComputers {
     'ServicePrincipalName', 'msDS-SupportedEncryptionTypes', 'Description'
   )
 
-  $computers = @()
-  try {
-    $computers = @(Get-ADComputer -Filter * -Server $server -Properties $props -ErrorAction Stop |
-      Sort-Object Name)
-  }
-  catch {
-    # Try without server parameter as fallback
-    try {
-      $computers = @(Get-ADComputer -Filter * -Properties $props -ErrorAction Stop |
-        Sort-Object Name)
-    } catch {
-      throw "Failed to enumerate computers for $domain. $($_.Exception.Message)"
-    }
-  }
+  $computers = @(Invoke-AdDiscoveryQuery -Operation 'Get-ADComputer' -Server $server -DomainFqdn $domain -ExpectedDomainDn $DomainContext.DomainDn -RetryInDomain -Query {
+    param($queryServer)
+    $queryParams = @{ Filter = '*'; SearchBase = $DomainContext.DomainDn; SearchScope = 'Subtree'; ErrorAction = 'Stop' }
+    $queryParams.Properties = $props
+    if ($queryServer) { $queryParams.Server = $queryServer }
+    Get-ADComputer @queryParams | Sort-Object Name
+  })
 
   foreach ($c in $computers) {
     $lltUtc = ConvertFrom-AdFileTime -FileTime $c.LastLogonTimestamp

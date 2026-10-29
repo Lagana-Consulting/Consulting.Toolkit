@@ -20,6 +20,7 @@ function Get-AdWritableDc {
       Sort-Object -Property IsPdc, IsGlobalCatalog -Descending)
   }
   catch {
+    Write-AdDiscoveryEvent -Kind Query -Operation 'DC Selection' -Status RETRY -ErrorRecord $_ -Details @{ NextTarget = $DomainFqdn }
     # If we can't enumerate DCs (network issue), just use domain as fallback
     # The subsequent Get-ADDomain or other cmdlets may still work if called locally
     return $DomainFqdn
@@ -32,9 +33,11 @@ function Get-AdWritableDc {
     # Quick reachability check (no ICMP requirement)
     try {
       $ok = Test-NetConnection -ComputerName $hostName -Port 389 -InformationLevel Quiet -WarningAction SilentlyContinue
+      Write-AdDiscoveryEvent -Kind Query -Operation 'DC Reachability' -Status INFO -Details @{ Server = $hostName; Port = 389; Reachable = [bool]$ok }
       if ($ok) { return $hostName }
     }
     catch {
+      Write-AdDiscoveryEvent -Kind Query -Operation 'DC Reachability' -Status RETRY -ErrorRecord $_ -Details @{ Server = $hostName; NextTarget = 'Next DC candidate' }
       # ignore and continue
     }
   }
