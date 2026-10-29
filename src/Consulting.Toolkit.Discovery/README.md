@@ -10,6 +10,23 @@ migration readiness scoring, compare environments, or generate HTML reports.
 
 ## Quick Start
 
+To use the Windows GUI, double-click `Start-AdDiscoveryGui.cmd` in the module
+folder, or launch it from PowerShell:
+
+```powershell
+& .\Start-AdDiscoveryGui.ps1
+```
+
+After importing the module, the GUI is also available with:
+
+```powershell
+Show-AdDiscoveryGui
+```
+
+The GUI opens without querying AD. Configure the options, then select
+**Start discovery** to collect inventory. The command-line workflow below remains
+available.
+
 Open PowerShell from a machine that can query Active Directory, then import the
 module:
 
@@ -50,6 +67,17 @@ Invoke-AdDiscoveryExport `
 The command prints the completed `RunRoot` and the generated discovery index
 path when the run finishes.
 
+Use an alternate directory account with a secure PowerShell prompt:
+
+```powershell
+$credential = Get-Credential -UserName 'CONTOSO\DiscoveryReader'
+Invoke-AdDiscoveryExport `
+  -OutputRoot 'C:\Discovery' `
+  -Server 'dc01.contoso.com' `
+  -Credential $credential `
+  -IncludeSecurity
+```
+
 ## Prerequisites
 
 - Windows PowerShell 5.1 or PowerShell 7+
@@ -74,6 +102,7 @@ domain in the forest.
 
 - `Invoke-AdDiscoveryExport` - full discovery run command with
   `Discovery.Index.json` generation
+- `Show-AdDiscoveryGui` - Windows desktop discovery launcher
 - `Get-AdAdForest`
 - `Get-AdAdDomains`
 - `Get-AdAdDomainContext`
@@ -87,9 +116,93 @@ domain in the forest.
 - `New-AdLog`
 - `Write-AdLog`
 
-The manifest defines these 13 supported exports. Import verifies that every
+The manifest defines these 14 supported exports. Import verifies that every
 declared command is available. Other collectors are internal implementation
 functions used by `Invoke-AdDiscoveryExport`.
+
+## Discovery GUI
+
+The Configure tab exposes every discovery parameter:
+
+| GUI field | Command parameter | Behavior |
+| --- | --- | --- |
+| Environment | `-Environment` | Editable label; defaults to Source |
+| Output folder | `-OutputRoot` | Absolute local or UNC path with a folder browser; defaults to `C:\Discovery` |
+| Customer name | `-CustomerName` | Optional run metadata |
+| Domain controller / server | `-Server` | Optional initial DC; blank selects automatically |
+| Domains to collect | `-Domain` | DNS names separated by lines, commas, semicolons, or spaces; blank collects all forest domains |
+| Include security inventory | `-IncludeSecurity` | Enables optional security collectors |
+| Use alternate directory credentials | `-Credential` | Account name plus a masked password field; uses an isolated network logon session |
+
+Advanced PowerShell options include all common parameters available in the
+selected engine: Verbose, Debug, stream action preferences, stream variables,
+OutBuffer, and PipelineVariable. PowerShell 7.4+ also exposes ProgressAction.
+These options apply within the background runner. Interactive preferences such
+as Inquire cannot prompt through the GUI and can fail in the noninteractive
+runner. Persistent troubleshooting output is available through the logs.
+
+The command preview updates as fields change and can be copied. **Save settings**
+and **Load settings** use JSON files; a saved configuration can also be opened
+directly:
+
+```powershell
+Show-AdDiscoveryGui -SettingsPath 'C:\Discovery\Customer.settings.json'
+```
+
+Select Windows PowerShell 5.1 (recommended for native RSAT modules) or an available
+PowerShell 7 installation. By default, discovery uses the signed-in Windows
+account. The GUI does not install RSAT or change directory permissions.
+
+For alternate access, select **Use alternate directory credentials**, enter
+`DOMAIN\user` or `user@domain`, and enter the password in the masked field.
+For a different forest, specify a server in that forest. The password is read
+through WPF's `SecurePassword` property and cleared after each launch attempt.
+Saved settings retain the choice to use alternate credentials, but omit the
+account name and password. Re-enter them after loading settings. The copied
+command uses `-Credential (Get-Credential)` and contains neither value.
+
+Both the GUI and CLI credential option start a worker using Windows
+`LOGON_NETCREDENTIALS_ONLY`. This applies the supplied credentials to network
+access across AD and Group Policy collectors, including cmdlets without their
+own Credential parameter. Local identity, local permissions, and local output
+file ownership remain those of the signed-in account. Access to a UNC output
+folder uses the worker's network credentials. Windows checks these credentials
+when a network resource is accessed; successful process creation does not prove
+the password or directory permissions are valid. Authentication failures remain
+visible and never trigger a fallback to the original network credentials.
+
+The password is passed to the Windows logon API through a temporary unmanaged
+buffer that is zeroed immediately afterward. It is not placed in command-line
+arguments, environment variables, JSON requests, saved settings, logs, or result
+files. The selected account name and authentication mode are recorded for
+troubleshooting; `RunAs` continues to describe the local Windows identity.
+This credential mode requires Windows network logon support and a caller token
+with a logon SID. The Windows API does not support LocalSystem callers.
+
+The CLI returns the worker's serialized discovery result, preserving its data
+properties. Ctrl+C stops the owned worker and its descendants. The supplied
+PSCredential remains owned by the caller and can be reused by the caller.
+
+Collection runs in an owned background process, keeping the window responsive.
+**Live output** shows collector output and elapsed time. The **Results** tab
+distinguishes Complete, Partial, Failed, and Stopped, displays inventory totals
+and collection issues, and provides buttons for the run folder, discovery log,
+execution status CSV, and discovery index when those files exist.
+
+**Stop run** terminates the owned runner and its descendants. Completed exports
+remain; interrupted datasets may leave unpublished `.partial` files. Closing a
+window during collection asks whether to stop the run. A stopped run is never
+reported as complete.
+
+**Open launcher logs** opens the per-launch files under
+`%TEMP%\ConsultingDiscoveryGui\<launch-id>`, including `console.log`, `errors.log`,
+the submitted settings, and the result envelope. The on-screen console retains
+a bounded amount of recent output; the log files retain the full output. Fatal
+startup errors remain visible even if discovery never creates a run folder.
+The GUI adds manual cancellation; it does not add automatic dataset timeouts.
+
+Deploy the complete module folder, including `Gui`, `Private`, `Public`, and the
+launcher scripts. The module import itself does not load WPF or open a window.
 
 ## Output Structure
 
@@ -309,6 +422,8 @@ Local regression checks (mocked AD queries, real export and logging code):
 & .\Tests\DiscoveryContracts.Tests.ps1
 & .\Tests\DiscoveryAssessment.Tests.ps1
 & .\Tests\DiscoveryPerformance.Tests.ps1
+& .\Tests\DiscoveryGui.Tests.ps1
+& .\Tests\DiscoveryCredentials.Tests.ps1
 ```
 
 The contract suite checks all declared exports and registered schema shapes,
@@ -329,3 +444,19 @@ The performance suite verifies bounded buffering, atomic publication and ACL
 preservation, interrupted producers, filtered query contracts, and connection
 probe limits. Its timing and process peak-memory figures describe local CSV
 serialization, not customer AD throughput.
+
+The GUI suite checks every parameter against command metadata, saved settings,
+literal argument handling, Complete/Partial/Failed/Stopped outcomes, output
+capture, process ownership, and final window state using mocked collectors in
+both available engines. For an interactive mock window with no AD queries:
+
+```powershell
+& .\Tests\DiscoveryGui.Tests.ps1 -ShowMockGui
+```
+
+The credential suite uses synthetic credentials with a local fake collector. It
+checks the Windows network logon identifier, unchanged local identity, password
+clearing, password non-persistence, CLI delegation, and cancellation. Live AD/GPO
+authentication and target permissions require validation in the customer domain.
+
+Windows behavior: [CreateProcessWithLogonW](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createprocesswithlogonw).

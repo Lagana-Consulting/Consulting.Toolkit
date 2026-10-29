@@ -7,7 +7,7 @@
     Copyright            = '(c) 2026 Lagana Consulting'
     Description          = 'Discovery collectors and export pipeline for AD/cloud inventory outputs (contract-first).'
     PowerShellVersion    = '5.1'
-    CompatiblePSEditions = @('Core')
+    CompatiblePSEditions = @('Desktop', 'Core')
 
     # Keep empty in monorepo unless you enforce PSModulePath in build/dev bootstrap
     RequiredModules      = @()
@@ -15,6 +15,7 @@
     # Make manifest match the contract surface (psm1 still controls Export-ModuleMember)
     FunctionsToExport    = @(
         'Invoke-AdDiscoveryExport',
+        'Show-AdDiscoveryGui',
         'Get-AdAdForest',
         'Get-AdAdDomains',
         'Get-AdAdDomainContext',

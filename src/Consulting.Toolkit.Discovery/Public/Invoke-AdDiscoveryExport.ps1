@@ -37,6 +37,12 @@ function Invoke-AdDiscoveryExport {
     Failed queries may retry using that domain's FQDN, never the runner's
     implicit domain. Rows outside the requested domain are rejected.
 
+    .PARAMETER Credential
+    Optional alternate account for network access to AD and Group Policy. Use
+    Get-Credential to obtain a PSCredential. Discovery runs in an isolated Windows
+    network logon session; local identity and local file permissions are unchanged.
+    Passwords are never serialized into runner requests or passed on a command line.
+
     .EXAMPLE
     Invoke-AdDiscoveryExport -Environment Source -OutputRoot C:\Discovery
     #>
@@ -57,11 +63,28 @@ function Invoke-AdDiscoveryExport {
 
         [string[]]$Domain,
 
-        [switch]$IncludeSecurity
+        [switch]$IncludeSecurity,
+
+        [ValidateNotNull()]
+        # Validate explicitly before conversion: the Windows PowerShell 5.1
+        # PSCredential binder can prompt on null, even in noninteractive hosts.
+        [object]$Credential
     )
 
     Set-StrictMode -Version Latest
     $ErrorActionPreference = 'Stop'
+
+    if ($PSBoundParameters.ContainsKey('Credential')) {
+        if ($Credential -isnot [System.Management.Automation.PSCredential]) {
+            throw 'Credential must be a PSCredential obtained with Get-Credential.'
+        }
+        $credentialParameters=@{Environment=$Environment;OutputRoot=$OutputRoot}
+        foreach ($name in $PSBoundParameters.Keys) {
+            if ($name -ne 'Credential') { $credentialParameters[$name]=$PSBoundParameters[$name] }
+        }
+        return Invoke-AdDiscoveryCredentialExport -Parameters $credentialParameters -Credential $Credential `
+            -ManifestPath (Join-Path $PSScriptRoot '..\Consulting.Toolkit.Discovery.psd1')
+    }
 
     Write-Host "========================================"
     Write-Host "Consulting.Toolkit.Discovery Collector"
@@ -89,6 +112,7 @@ function Invoke-AdDiscoveryExport {
 
     # Create durable startup diagnostics before any forest queries can fail.
     $module = $MyInvocation.MyCommand.Module
+    $networkCredentialUser=Get-Variable -Name adDiscoveryNetworkCredentialUserName -Scope Script -ValueOnly -ErrorAction SilentlyContinue
     $metadata = @{
         PowerShellVersion = $PSVersionTable.PSVersion.ToString()
         PSEdition = $PSVersionTable.PSEdition
@@ -96,6 +120,8 @@ function Invoke-AdDiscoveryExport {
         Is64BitProcess = [Environment]::Is64BitProcess
         MachineName = [Environment]::MachineName
         RunAs = "{0}\{1}" -f [Environment]::UserDomainName, [Environment]::UserName
+        AuthenticationMode = if ($networkCredentialUser) { 'AlternateNetwork' } else { 'CurrentWindows' }
+        NetworkCredentialUserName = [string]$networkCredentialUser
         ModuleVersion = if ($module) { $module.Version.ToString() } else { 'DotSourced' }
         CollectorSha256 = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot '..\Private\Invoke-AdDiscovery.ps1') -Algorithm SHA256).Hash
         Environment = $Environment
