@@ -297,7 +297,7 @@ function Get-AdSchemaDefinitions {
 
   # Assessment Summary
   $schemas['Assessment_Summary'] = @(
-    [pscustomobject]@{ Column = 'RunTimestamp'; Type = 'datetime'; Description = 'Timestamp of assessment run'; Example = '1/12/2026 1:01:56 PM'; Notes = '' }
+    [pscustomobject]@{ Column = 'RunTimestamp'; Type = 'datetime'; Description = 'UTC timestamp of assessment run'; Example = '2026-01-12T13:01:56.0000000Z'; Notes = 'ISO 8601' }
     [pscustomobject]@{ Column = 'ForestName'; Type = 'string'; Description = 'Forest name'; Example = 'SOURCELAB.COM'; Notes = '' }
     [pscustomobject]@{ Column = 'ForestRootDomain'; Type = 'string'; Description = 'Forest root domain'; Example = 'SOURCELAB.COM'; Notes = '' }
     [pscustomobject]@{ Column = 'DomainsCount'; Type = 'int'; Description = 'Number of domains'; Example = '2'; Notes = '' }
@@ -312,7 +312,7 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'UsersSIDHistoryPct'; Type = 'decimal'; Description = 'Users with SID history percentage'; Example = '0'; Notes = '' }
     [pscustomobject]@{ Column = 'UsersNonRoutableUPNCount'; Type = 'int'; Description = 'Users with non-routable UPN suffix'; Example = '13'; Notes = 'Cloud sync blocker' }
     [pscustomobject]@{ Column = 'UsersNonRoutableUPNPct'; Type = 'decimal'; Description = 'Non-routable UPN percentage'; Example = '59.09'; Notes = '' }
-    [pscustomobject]@{ Column = 'ObjectsRC4OnlyCount'; Type = 'int'; Description = 'Objects with RC4-only encryption'; Example = '0'; Notes = 'Security risk' }
+    [pscustomobject]@{ Column = 'ObjectsRC4OnlyCount'; Type = 'int'; Description = 'Objects advertising RC4 without AES'; Example = '0'; Notes = 'Based on explicit encryption capabilities; unset values are not classified as RC4-only' }
     [pscustomobject]@{ Column = 'ObjectsRC4OnlyPct'; Type = 'decimal'; Description = 'RC4-only percentage'; Example = '0'; Notes = '' }
     [pscustomobject]@{ Column = 'PrivilegedAccountsCount'; Type = 'int'; Description = 'Privileged account count'; Example = '10'; Notes = 'Security surface area' }
     [pscustomobject]@{ Column = 'EmptyGroupsCount'; Type = 'int'; Description = 'Groups with zero members'; Example = '5'; Notes = 'Cleanup candidate' }
@@ -489,8 +489,8 @@ function Get-AdSchemaDefinitions {
     [pscustomobject]@{ Column = 'DistinguishedName'; Type = 'string'; Description = 'DN'; Example = 'CN=Old User,OU=Users,DC=contoso,DC=com'; Notes = '' }
     [pscustomobject]@{ Column = 'WhenCreated'; Type = 'datetime'; Description = 'Created'; Example = '2020-01-01'; Notes = '' }
     [pscustomobject]@{ Column = 'WhenChanged'; Type = 'datetime'; Description = 'Changed'; Example = '2024-12-01'; Notes = '' }
-    [pscustomobject]@{ Column = 'DaysSinceChange'; Type = 'int'; Description = 'Days since last change'; Example = '120'; Notes = '' }
-    [pscustomobject]@{ Column = 'CleanupCandidate'; Type = 'string'; Description = 'Cleanup candidate'; Example = 'Yes'; Notes = '' }
+    [pscustomobject]@{ Column = 'DaysSinceChange'; Type = 'int'; Description = 'Whole elapsed days since last change'; Example = '120'; Notes = 'Blank when the change date is unknown; future dates yield zero' }
+    [pscustomobject]@{ Column = 'CleanupCandidate'; Type = 'string'; Description = 'Cleanup candidate'; Example = 'Yes'; Notes = 'Yes/No; Unknown when the change date is missing' }
   )
 
   # AdminSDHolder Impact

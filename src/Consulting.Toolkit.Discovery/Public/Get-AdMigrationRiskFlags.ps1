@@ -46,13 +46,13 @@ function Get-AdMigrationRiskFlags {
     Generates risk flags with default thresholds.
 
     .EXAMPLE
-    $riskFlags | Where-Object { $_.RiskFlags -contains 'UPN_NonRoutableSuffix' } |
-      Select-Object ObjectClass, SamAccountName, RiskFlags
+    $riskFlags | Where-Object { ($_.Flags -split ';') -contains 'UPN_NonRoutableSuffix' } |
+      Select-Object ObjectClass, SamAccountName, Flags
 
     Filters to objects with non-routable UPN suffixes.
 
     .EXAMPLE
-    $highRisk = $riskFlags | Where-Object { $_.RiskFlags.Count -ge 3 }
+    $highRisk = $riskFlags | Where-Object { @($_.Flags -split ';').Count -ge 3 }
 
     Finds objects with 3+ risk flags (high complexity for migration).
 
@@ -60,12 +60,13 @@ function Get-AdMigrationRiskFlags {
     PSCustomObject[] with properties:
     - ObjectClass (user/computer)
     - DomainFqdn, SamAccountName, DistinguishedName
-    - RiskFlags (array of flag strings)
-    - RiskCount (total number of flags)
+    - UserPrincipalName (blank for computers)
+    - Flags (semicolon-delimited flag strings)
 
     .NOTES
     Use for pre-migration risk assessment and remediation prioritization.
-    Risk flag counts help estimate migration complexity and effort.
+    Kerberos_NoAES requires explicit DES or RC4 capability without AES.
+    Unset encryption capabilities and blank Boolean states remain unknown.
     Consider filtering disabled/stale accounts from migration scope.
 
     .LINK
@@ -83,9 +84,9 @@ function Get-AdMigrationRiskFlags {
         [AllowEmptyCollection()]
         [array]$AllComputers,
 
-        [int]$StaleUserThresholdDays = 180,
+        [ValidateRange(0, [int]::MaxValue)][int]$StaleUserThresholdDays = 180,
 
-        [int]$PasswordAgeThresholdDays = 365,
+        [ValidateRange(0, [int]::MaxValue)][int]$PasswordAgeThresholdDays = 365,
 
         [string]$LegacyWorkstationOsRegex = '(?i)Windows (XP|Vista|7|8|8\.1|2000)',
 
@@ -99,15 +100,15 @@ function Get-AdMigrationRiskFlags {
         $flags = @()
 
         # UPN checks
-        if ($u.IsNonRoutableUpnSuffix -eq $true) {
+        if ((ConvertTo-AdAssessmentBoolean $u.IsNonRoutableUpnSuffix -Field 'IsNonRoutableUpnSuffix') -eq $true) {
             $flags += 'UPN_NonRoutableSuffix'
         }
-        if ($u.IsKnownUpnSuffix -eq $false -and $u.UserPrincipalName) {
+        if ((ConvertTo-AdAssessmentBoolean $u.IsKnownUpnSuffix -Field 'IsKnownUpnSuffix') -eq $false -and $u.UserPrincipalName) {
             $flags += 'UPN_SuffixNotInForestList'
         }
 
         # Enabled status
-        if ($u.Enabled -eq $false) {
+        if ((ConvertTo-AdAssessmentBoolean $u.Enabled -Field 'Enabled') -eq $false) {
             $flags += 'Disabled'
         }
 
@@ -115,22 +116,22 @@ function Get-AdMigrationRiskFlags {
         # Note: PasswordNeverExpires not in current schema - would need to add to Get-AdAdUsers
 
         # Password age
-        if ($u.PasswordAgeDays -and [int]$u.PasswordAgeDays -gt $PasswordAgeThresholdDays) {
+        if ((ConvertTo-AdAssessmentInteger $u.PasswordAgeDays -Field 'PasswordAgeDays') -gt $PasswordAgeThresholdDays) {
             $flags += 'PasswordAgeOver365d'
         }
 
         # Staleness
-        if ($u.LastLogonDays -and [int]$u.LastLogonDays -gt $StaleUserThresholdDays) {
+        if ((ConvertTo-AdAssessmentInteger $u.LastLogonDays -Field 'LastLogonDays') -gt $StaleUserThresholdDays) {
             $flags += 'StaleLastLogonOver180d'
         }
 
         # SPN / service account candidate
-        if ($u.SPNCount -and [int]$u.SPNCount -gt 0) {
+        if ((ConvertTo-AdAssessmentInteger $u.SPNCount -Field 'SPNCount') -gt 0) {
             $flags += 'HasSPN(ServiceAcctCandidate)'
         }
 
         # Kerberos encryption
-        if ($u.EncryptionRisk -eq 'High' -or ($u.EncryptionTypes -and $u.EncryptionTypes -notmatch 'AES')) {
+        if ((Get-AdAssessmentEncryptionState $u.EncryptionTypes).NoAes) {
             $flags += 'Kerberos_NoAES'
         }
 
@@ -151,30 +152,31 @@ function Get-AdMigrationRiskFlags {
         $flags = @()
 
         # SPN
-        if ($c.SPNCount -and [int]$c.SPNCount -gt 0) {
+        if ((ConvertTo-AdAssessmentInteger $c.SPNCount -Field 'SPNCount') -gt 0) {
             $flags += 'HasSPN'
         }
 
         # Kerberos encryption
-        if ($c.EncryptionRisk -eq 'High' -or ($c.EncryptionTypes -and $c.EncryptionTypes -notmatch 'AES')) {
+        if ((Get-AdAssessmentEncryptionState $c.EncryptionTypes).NoAes) {
             $flags += 'Kerberos_NoAES'
         }
 
         # Enabled status
-        if ($c.Enabled -eq $false) {
+        if ((ConvertTo-AdAssessmentBoolean $c.Enabled -Field 'Enabled') -eq $false) {
             $flags += 'Disabled'
         }
 
         # Stale logon
-        if ($c.LastLogonDays -and [int]$c.LastLogonDays -gt 90) {
+        if ((ConvertTo-AdAssessmentInteger $c.LastLogonDays -Field 'LastLogonDays') -gt 90) {
             $flags += 'StaleLastLogonOver90d'
         }
 
         # Legacy OS detection
-        if ($c.IsServer -eq $true -and $c.OperatingSystem -match $LegacyServerOsRegex) {
+        $isServer = ConvertTo-AdAssessmentBoolean $c.IsServer -Field 'IsServer'
+        if ($isServer -eq $true -and $c.OperatingSystem -match $LegacyServerOsRegex) {
             $flags += 'LegacyServerOS'
         }
-        elseif ($c.IsServer -eq $false -and $c.OperatingSystem -match $LegacyWorkstationOsRegex) {
+        elseif ($isServer -eq $false -and $c.OperatingSystem -match $LegacyWorkstationOsRegex) {
             $flags += 'LegacyWorkstationOS'
         }
 

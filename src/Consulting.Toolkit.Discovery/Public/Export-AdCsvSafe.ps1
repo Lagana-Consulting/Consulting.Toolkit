@@ -117,22 +117,26 @@ function Export-AdCsvSafe {
                     throw "Schema '$SchemaName' cannot export '$outPath': row is missing column(s) $($missing -join ', '). Supply explicit null values when a field is unknown."
                 }
             }
-            $ordered = foreach ($it in $items) {
-                $row = [ordered]@{}
-                foreach ($c in $schemaColumns) {
-                    $p = $it.PSObject.Properties[$c]
-                    $row[$c] = if ($null -ne $p) { $p.Value } else { $null }
-                }
-                [pscustomobject]$row
-            }
-
-            $ordered | Export-Csv -LiteralPath $outPath -NoTypeInformation -Encoding $enc -Force
-            Write-AdDiscoveryCsvResult -Path $outPath -RowCount $items.Count
-            return $outPath
         }
 
-        # Default: export as-is
-        $items | Export-Csv -LiteralPath $outPath -NoTypeInformation -Encoding $enc -Force
+        # CSV has no date type. Write native dates in UTC ISO 8601 so reimporting
+        # on another locale does not swap day/month or lose timezone information.
+        $columns = if ($schemaColumns -and $schemaColumns.Count -gt 0) {
+            @($schemaColumns)
+        } else { @($items[0].PSObject.Properties.Name) }
+        $rows = foreach ($it in $items) {
+            $row = [ordered]@{}
+            foreach ($c in $columns) {
+                $p = $it.PSObject.Properties[$c]
+                $value = if ($null -ne $p) { $p.Value } else { $null }
+                if ($value -is [datetime] -or $value -is [datetimeoffset]) {
+                    $value = $value.ToUniversalTime().ToString('o', [Globalization.CultureInfo]::InvariantCulture)
+                }
+                $row[$c] = $value
+            }
+            [pscustomobject]$row
+        }
+        $rows | Export-Csv -LiteralPath $outPath -NoTypeInformation -Encoding $enc -Force
         Write-AdDiscoveryCsvResult -Path $outPath -RowCount $items.Count
         return $outPath
     }

@@ -8,11 +8,11 @@ function Get-AdRiskSummary {
   $RiskRows |
     Group-Object -Property RiskCategory, RiskName, RiskLevel |
     ForEach-Object {
-      $parts = $_.Name -split ', '
+      $risk = $_.Group[0]
       [pscustomobject]@{
-        RiskCategory = $parts[0]
-        RiskName     = $parts[1]
-        RiskLevel    = $parts[2]
+        RiskCategory = $risk.RiskCategory
+        RiskName     = $risk.RiskName
+        RiskLevel    = $risk.RiskLevel
         Count        = $_.Count
       }
     } |

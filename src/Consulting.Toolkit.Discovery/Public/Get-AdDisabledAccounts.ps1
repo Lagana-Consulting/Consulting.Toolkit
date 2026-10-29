@@ -9,17 +9,17 @@ function Get-AdDisabledAccounts {
         [AllowEmptyCollection()]
         [array]$AllComputers,
 
-        [int]$StaleThresholdDays = 180
+        [ValidateRange(0, [int]::MaxValue)][int]$StaleThresholdDays = 180
     )
 
     $results = @()
+    $now = [datetime]::UtcNow
 
     # Process disabled users
     foreach ($u in $AllUsers) {
-        if ($u.Enabled -eq $false) {
-            $daysSinceChange = if ($u.WhenChanged) {
-                [int]((Get-Date) - [datetime]$u.WhenChanged).TotalDays
-            } else { 0 }
+        if ((ConvertTo-AdAssessmentBoolean $u.Enabled -Field 'Enabled') -eq $false) {
+            $changedUtc = ConvertTo-AdAssessmentUtcDate $u.WhenChanged -Field 'WhenChanged'
+            $daysSinceChange = Get-AdDaysSince -DateUtc $changedUtc -Now $now
 
             $results += [pscustomobject]@{
                 ObjectClass       = 'user'
@@ -30,17 +30,16 @@ function Get-AdDisabledAccounts {
                 WhenCreated       = $u.WhenCreated
                 WhenChanged       = $u.WhenChanged
                 DaysSinceChange   = $daysSinceChange
-                CleanupCandidate  = if ($daysSinceChange -gt $StaleThresholdDays) { 'Yes' } else { 'No' }
+                CleanupCandidate  = if ($null -eq $daysSinceChange) { 'Unknown' } elseif ($daysSinceChange -gt $StaleThresholdDays) { 'Yes' } else { 'No' }
             }
         }
     }
 
     # Process disabled computers
     foreach ($c in $AllComputers) {
-        if ($c.Enabled -eq $false) {
-            $daysSinceChange = if ($c.WhenChanged) {
-                [int]((Get-Date) - [datetime]$c.WhenChanged).TotalDays
-            } else { 0 }
+        if ((ConvertTo-AdAssessmentBoolean $c.Enabled -Field 'Enabled') -eq $false) {
+            $changedUtc = ConvertTo-AdAssessmentUtcDate $c.WhenChanged -Field 'WhenChanged'
+            $daysSinceChange = Get-AdDaysSince -DateUtc $changedUtc -Now $now
 
             $results += [pscustomobject]@{
                 ObjectClass       = 'computer'
@@ -51,7 +50,7 @@ function Get-AdDisabledAccounts {
                 WhenCreated       = $c.WhenCreated
                 WhenChanged       = $c.WhenChanged
                 DaysSinceChange   = $daysSinceChange
-                CleanupCandidate  = if ($daysSinceChange -gt $StaleThresholdDays) { 'Yes' } else { 'No' }
+                CleanupCandidate  = if ($null -eq $daysSinceChange) { 'Unknown' } elseif ($daysSinceChange -gt $StaleThresholdDays) { 'Yes' } else { 'No' }
             }
         }
     }

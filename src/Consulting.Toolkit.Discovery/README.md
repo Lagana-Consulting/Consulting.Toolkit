@@ -224,6 +224,25 @@ The privileged-account schema preserves `InPrivGroups`, `PrivGroups`, and
 actual fields. GPO inventory exposes both `Id` and `GpoId`, and its user and
 computer versions are numeric so analysis also works after CSV import.
 
+Native `DateTime` and `DateTimeOffset` values exported by `Export-AdCsvSafe`
+use UTC ISO 8601 timestamps. Existing string values are preserved. This avoids
+day/month ambiguity when exports are read on a machine with a different locale.
+Dates without a timezone are interpreted in the runner's local timezone.
+
+Assessment and migration analysis parse Boolean and integer fields explicitly
+for consistent results before and after CSV import. Blank values remain unknown;
+malformed nonblank Boolean, integer, or change-date values stop analysis with the
+field name in the error. Historical date strings are parsed using invariant
+culture; ambiguous exports from older versions may need their dates converted
+to ISO 8601 using the original runner's locale.
+
+`ObjectsRC4OnlyCount` counts explicit RC4 capability without AES. DES-only,
+unset, and capability-only values such as `FAST_SUPPORTED` do not enter that
+count. `Kerberos_NoAES` flags explicit DES or RC4 without AES, including when
+the recorded risk label differs. High-cost site links use numeric cost greater
+than 500. Disabled-account cleanup uses whole elapsed days and reports
+`CleanupCandidate=Unknown` when `WhenChanged` is missing.
+
 ## Troubleshooting
 
 If module import fails, confirm the path points to the `.psd1` file.
@@ -256,9 +275,13 @@ Local regression checks (mocked AD queries, real export and logging code):
 & .\Tests\DiscoveryDiagnostics.Module.Tests.ps1
 & .\Tests\DiscoveryTargetIntegrity.Tests.ps1
 & .\Tests\DiscoveryContracts.Tests.ps1
+& .\Tests\DiscoveryAssessment.Tests.ps1
 ```
 
 The contract suite checks all declared exports and registered schema shapes,
 then exercises collectors, CSV round trips, and consumers with empty, single-row,
 and multi-row mocked directory datasets. Run the checks in both Windows
 PowerShell 5.1 and PowerShell 7 when changing module contracts.
+The assessment suite verifies expected counts and flags before and after CSV
+import, threshold boundaries, missing values, and date exports under US, UK,
+and French locales.
